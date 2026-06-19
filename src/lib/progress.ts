@@ -2,11 +2,10 @@
 // Powers the /analytics dashboard.
 
 import type { AttemptResult } from "./test-session";
-import { QUESTIONS, type Difficulty } from "./questions";
+import { QUESTIONS } from "./questions";
 
 export type PracticeAttempt = {
   questionId: string;
-  difficulty: Difficulty;
   unit: number;
   passed: number;
   total: number;
@@ -70,14 +69,12 @@ export function recordPracticeAttempt(
   const s = read(userId);
   s.practice.unshift({
     questionId,
-    difficulty: q.difficulty,
     unit: q.unit,
     passed,
     total,
     solved: total > 0 && passed === total,
     at: Date.now(),
   });
-  // Cap log size
   s.practice = s.practice.slice(0, 500);
   write(userId, s);
 }
@@ -114,7 +111,6 @@ export type Analytics = {
   practiceAttempts: number;
   practiceSolvedUnique: number;
   practiceTotalQuestions: number;
-  byDifficulty: Record<Difficulty, { solved: number; total: number; attempts: number }>;
   byUnit: Record<number, { solved: number; total: number; attempts: number }>;
   mockCount: number;
   mockAvgPct: number;
@@ -125,32 +121,20 @@ export type Analytics = {
 };
 
 export function computeAnalytics(s: Store): Analytics {
-  const byDifficulty: Analytics["byDifficulty"] = {
-    easy: { solved: 0, total: 0, attempts: 0 },
-    medium: { solved: 0, total: 0, attempts: 0 },
-    hard: { solved: 0, total: 0, attempts: 0 },
-  };
   const byUnit: Analytics["byUnit"] = {};
-
   for (const q of QUESTIONS) {
-    byDifficulty[q.difficulty].total += 1;
     if (!byUnit[q.unit]) byUnit[q.unit] = { solved: 0, total: 0, attempts: 0 };
     byUnit[q.unit].total += 1;
   }
 
   const solvedIds = new Set<string>();
-  const attemptsByQ: Record<string, number> = {};
   for (const a of s.practice) {
-    attemptsByQ[a.questionId] = (attemptsByQ[a.questionId] ?? 0) + 1;
-    byDifficulty[a.difficulty].attempts += 1;
     if (byUnit[a.unit]) byUnit[a.unit].attempts += 1;
     if (a.solved) solvedIds.add(a.questionId);
   }
   for (const id of solvedIds) {
     const q = QUESTIONS.find((x) => x.id === id);
-    if (!q) continue;
-    byDifficulty[q.difficulty].solved += 1;
-    if (byUnit[q.unit]) byUnit[q.unit].solved += 1;
+    if (q && byUnit[q.unit]) byUnit[q.unit].solved += 1;
   }
 
   const mockPcts = s.mocks.map((m) => m.percentage);
@@ -162,7 +146,6 @@ export function computeAnalytics(s: Store): Analytics {
     practiceAttempts: s.practice.length,
     practiceSolvedUnique: solvedIds.size,
     practiceTotalQuestions: QUESTIONS.length,
-    byDifficulty,
     byUnit,
     mockCount: s.mocks.length,
     mockAvgPct: mockAvg,
