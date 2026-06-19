@@ -277,6 +277,50 @@ export function CodeRunner({
               </li>
             ))}
           </ul>
+
+          {outcome.passedCount < outcome.totalCount && (
+            <div className="mt-4 border-t border-border pt-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleExplain}
+                  disabled={aiBusy}
+                  className="rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                >
+                  {aiBusy ? "Analyzing…" : aiResult ? "Re-analyze" : "💡 Know what's wrong"}
+                </button>
+                {aiResult && (
+                  <button
+                    onClick={applyFix}
+                    className="rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                    style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                  >
+                    🔧 Fix this
+                  </button>
+                )}
+              </div>
+              {aiError && (
+                <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  {aiError}
+                </div>
+              )}
+              {aiResult && (
+                <div className="mt-3 space-y-3">
+                  <div className="rounded-md border border-accent/30 bg-accent/5 p-3 text-sm">
+                    <p className="mb-1 font-semibold">What went wrong</p>
+                    <p className="whitespace-pre-wrap leading-relaxed">{aiResult.explanation}</p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                      Suggested fix (click "Fix this" to apply)
+                    </p>
+                    <pre className="overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
+{aiResult.fixedCode}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
