@@ -12,6 +12,7 @@ import {
 } from "@/lib/test-session";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 import { recordMockResult } from "@/lib/progress";
+import { syncMyScore } from "@/lib/leaderboard";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
@@ -129,6 +130,7 @@ function RunTest() {
       } catch {
         recordMockResult(null, result);
       }
+      void syncMyScore();
       clearTestStarted(testId);
       navigate({ to: "/mock-tests/$testId/result", params: { testId } });
     },

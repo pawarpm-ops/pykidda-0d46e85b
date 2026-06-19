@@ -5,6 +5,7 @@ import { CodeRunner } from "@/components/CodeRunner";
 import { getQuestion, type Difficulty } from "@/lib/questions";
 import { supabase } from "@/integrations/supabase/client";
 import { recordPracticeAttempt } from "@/lib/progress";
+import { syncMyScore } from "@/lib/leaderboard";
 
 export const Route = createFileRoute("/_authenticated/practice/$difficulty/$qid")({
   head: () => ({
@@ -55,7 +56,10 @@ function SolvePage() {
             allowHint
             allowSolution
             submitLabel="Submit & Record"
-            onSubmit={(out) => recordPracticeAttempt(userId, q.id, out.passedCount, out.totalCount)}
+            onSubmit={(out) => {
+              recordPracticeAttempt(userId, q.id, out.passedCount, out.totalCount);
+              void syncMyScore();
+            }}
           />
         </div>
       </main>
