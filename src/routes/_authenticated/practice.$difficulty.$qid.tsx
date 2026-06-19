@@ -1,7 +1,10 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CodeRunner } from "@/components/CodeRunner";
 import { getQuestion, type Difficulty } from "@/lib/questions";
+import { supabase } from "@/integrations/supabase/client";
+import { recordPracticeAttempt } from "@/lib/progress";
 
 export const Route = createFileRoute("/_authenticated/practice/$difficulty/$qid")({
   head: () => ({
@@ -17,6 +20,10 @@ export const Route = createFileRoute("/_authenticated/practice/$difficulty/$qid"
 function SolvePage() {
   const { difficulty, qid } = Route.useParams();
   const q = getQuestion(qid);
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
   if (!q) return <Navigate to="/practice" />;
   const d = difficulty as Difficulty;
 
@@ -24,6 +31,7 @@ function SolvePage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-6 py-8">
+
         <Link to="/practice/$difficulty" params={{ difficulty: d }} className="text-sm text-muted-foreground hover:text-accent">
           ← Back to {d} questions
         </Link>
@@ -42,7 +50,13 @@ function SolvePage() {
         <p className="mt-2 text-muted-foreground">{q.prompt}</p>
 
         <div className="mt-6">
-          <CodeRunner question={q} allowHint allowSolution />
+          <CodeRunner
+            question={q}
+            allowHint
+            allowSolution
+            submitLabel="Submit & Record"
+            onSubmit={(out) => recordPracticeAttempt(userId, q.id, out.passedCount, out.totalCount)}
+          />
         </div>
       </main>
     </div>
