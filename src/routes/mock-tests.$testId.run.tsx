@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getMockTest, type Question } from "@/lib/mock-tests";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getMockTest, mockTestQuestions, type CodeQuestion } from "@/lib/questions";
 import {
   clearTestStarted,
   getStudentName,
@@ -8,7 +8,9 @@ import {
   isTestStarted,
   saveResult,
   type AttemptResult,
+  type QuestionAttempt,
 } from "@/lib/test-session";
+import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
   head: () => ({
@@ -23,58 +25,91 @@ export const Route = createFileRoute("/mock-tests/$testId/run")({
   errorComponent: () => <div className="p-10">Something went wrong.</div>,
 });
 
-type AnswerMap = Record<string, number | null>;
-type ReviewMap = Record<string, boolean>;
+type CodeMap = Record<string, string>;
 
 function RunTest() {
   const { testId } = Route.useParams();
   const navigate = useNavigate();
   const test = getMockTest(testId);
+  const questions: CodeQuestion[] = test ? mockTestQuestions(test) : [];
 
-  // Guard: must have started via warning page
   const [allowed, setAllowed] = useState<boolean | null>(null);
   useEffect(() => {
     setAllowed(isTestStarted(testId));
+    // Pre-warm Pyodide so grading is fast
+    loadPyodideOnce().catch(() => {});
   }, [testId]);
 
   const startedAt = useRef<number>(Date.now());
   const [remaining, setRemaining] = useState<number>(test?.durationSec ?? 0);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<AnswerMap>({});
-  const [reviewed, setReviewed] = useState<ReviewMap>({});
+  const [codes, setCodes] = useState<CodeMap>({});
+  const codesRef = useRef<CodeMap>({});
+  codesRef.current = codes;
   const submittedRef = useRef(false);
+  const [grading, setGrading] = useState(false);
+  const [gradeMsg, setGradeMsg] = useState("Submitting…");
 
-  const buildResult = useCallback(
-    (submissionType: "normal" | "auto-violation", violationReason?: string): AttemptResult => {
-      const t = test!;
-      const totalMarks = t.questions.reduce((a, q) => a + q.marks, 0);
+  // Seed starter code lazily once we know the test
+  useEffect(() => {
+    if (!test) return;
+    setCodes((c) => {
+      const next = { ...c };
+      for (const q of questions) if (!(q.id in next)) next[q.id] = q.starterCode;
+      return next;
+    });
+  }, [test, questions]);
+
+  const submit = useCallback(
+    async (submissionType: "normal" | "auto-violation" = "normal", violationReason?: string) => {
+      if (submittedRef.current || !test) return;
+      submittedRef.current = true;
+      setGrading(true);
+      setGradeMsg(submissionType === "auto-violation" ? "Auto-submitting & grading…" : "Grading your code…");
+
+      // Exit fullscreen immediately so user isn't trapped during grading
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+
+      const attempts: QuestionAttempt[] = [];
       let marksObtained = 0;
-      let correct = 0;
-      let wrong = 0;
-      let unattempted = 0;
-      const detailed = t.questions.map((q) => {
-        const sel = answers[q.id];
-        const has = sel !== undefined && sel !== null;
-        const isCorrect = has && sel === q.correctIndex;
-        if (!has) unattempted++;
-        else if (isCorrect) {
-          correct++;
-          marksObtained += q.marks;
-        } else wrong++;
-        return { questionId: q.id, selected: has ? (sel as number) : null, correct: q.correctIndex, isCorrect };
-      });
-      const attempted = t.questions.length - unattempted;
+      let totalMarks = 0;
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        const code = codesRef.current[q.id] ?? q.starterCode;
+        totalMarks += q.marks;
+        setGradeMsg(`Grading Q${i + 1} of ${questions.length}…`);
+        const results: QuestionAttempt["results"] = [];
+        let passed = 0;
+        for (const tc of q.tests) {
+          // eslint-disable-next-line no-await-in-loop
+          const r = await runPython(code, tc.stdin ?? "");
+          const ok = r.ok && outputsMatch(r.stdout, tc.expected);
+          if (ok) passed++;
+          results.push({ passed: ok, expected: tc.expected, actual: r.stdout, stderr: r.stderr });
+        }
+        const allPassed = passed === q.tests.length;
+        const marks = allPassed ? q.marks : 0;
+        marksObtained += marks;
+        attempts.push({
+          questionId: q.id,
+          code,
+          passed,
+          total: q.tests.length,
+          marksObtained: marks,
+          marksTotal: q.marks,
+          results,
+        });
+      }
+
       const percentage = totalMarks > 0 ? Math.round((marksObtained / totalMarks) * 100) : 0;
-      const timeTakenSec = Math.min(t.durationSec, Math.floor((Date.now() - startedAt.current) / 1000));
-      return {
-        testId: t.id,
-        testName: t.name,
+      const timeTakenSec = Math.min(test.durationSec, Math.floor((Date.now() - startedAt.current) / 1000));
+      const result: AttemptResult = {
+        testId: test.id,
+        testName: test.name,
         studentName: getStudentName(),
-        totalQuestions: t.questions.length,
-        attempted,
-        correct,
-        wrong,
-        unattempted,
+        totalQuestions: questions.length,
         marksObtained,
         totalMarks,
         percentage,
@@ -82,27 +117,14 @@ function RunTest() {
         timeTakenSec,
         submissionType,
         violationReason,
-        answers: detailed,
+        attempts,
         submittedAt: Date.now(),
       };
-    },
-    [answers, test],
-  );
-
-  const submit = useCallback(
-    (submissionType: "normal" | "auto-violation" = "normal", violationReason?: string) => {
-      if (submittedRef.current || !test) return;
-      submittedRef.current = true;
-      const r = buildResult(submissionType, violationReason);
-      saveResult(r);
+      saveResult(result);
       clearTestStarted(testId);
-      // Exit fullscreen if still in
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
       navigate({ to: "/mock-tests/$testId/result", params: { testId } });
     },
-    [buildResult, navigate, test, testId],
+    [navigate, questions, test, testId],
   );
 
   // Timer
@@ -112,7 +134,7 @@ function RunTest() {
       setRemaining((r) => {
         if (r <= 1) {
           clearInterval(id);
-          submit("normal");
+          void submit("normal");
           return 0;
         }
         return r - 1;
@@ -121,40 +143,33 @@ function RunTest() {
     return () => clearInterval(id);
   }, [test, allowed, submit]);
 
-  // Anti-cheating listeners
+  // Anti-cheat listeners
   useEffect(() => {
     if (!test || allowed !== true) return;
 
     let armed = false;
     const armTimer = setTimeout(() => {
       armed = true;
-    }, 600); // give fullscreen a moment to settle on entry
+    }, 800);
 
     const onFsChange = () => {
       if (!armed) return;
-      if (!document.fullscreenElement) {
-        submit("auto-violation", "Exited full-screen mode");
-      }
+      if (!document.fullscreenElement) void submit("auto-violation", "Exited full-screen mode");
     };
     const onVisibility = () => {
       if (!armed) return;
-      if (document.visibilityState === "hidden") {
-        submit("auto-violation", "Tab switched or browser hidden");
-      }
+      if (document.visibilityState === "hidden") void submit("auto-violation", "Tab switched or browser hidden");
     };
     const onBlur = () => {
       if (!armed) return;
-      submit("auto-violation", "Window lost focus");
+      void submit("auto-violation", "Window lost focus");
     };
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
     };
     const onKey = (e: KeyboardEvent) => {
-      // Block common shortcuts that could leave the test
-      if (e.key === "Escape") {
-        e.preventDefault();
-      }
+      if (e.key === "Escape") e.preventDefault();
     };
 
     document.addEventListener("fullscreenchange", onFsChange);
@@ -162,7 +177,6 @@ function RunTest() {
     window.addEventListener("blur", onBlur);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("keydown", onKey);
-
     return () => {
       clearTimeout(armTimer);
       document.removeEventListener("fullscreenchange", onFsChange);
@@ -173,77 +187,74 @@ function RunTest() {
     };
   }, [test, allowed, submit]);
 
-  if (allowed === false) {
-    return <Navigate to="/mock-tests/$testId/warning" params={{ testId }} />;
-  }
+  if (allowed === false) return <Navigate to="/mock-tests/$testId/warning" params={{ testId }} />;
   if (!test || allowed === null) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
 
-  const q: Question = test.questions[currentIdx];
+  const q = questions[currentIdx];
   const mins = Math.floor(remaining / 60);
   const secs = remaining % 60;
   const lowTime = remaining <= 30;
+  const currentCode = codes[q.id] ?? q.starterCode;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Top bar */}
-      <header
-        className="sticky top-0 z-10 border-b border-border bg-card"
-      >
+      <header className="sticky top-0 z-10 border-b border-border bg-card">
         <div className="px-6 py-3 flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Mock Test</p>
+            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Mock Test · PY Kidda</p>
             <p className="font-semibold leading-tight">{test.name}</p>
           </div>
           <div
             className={`px-4 py-2 rounded-md font-mono text-lg font-bold tabular-nums ${
               lowTime ? "bg-destructive text-destructive-foreground animate-pulse" : "bg-secondary text-foreground"
             }`}
-            aria-live="polite"
           >
             {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
           </div>
         </div>
       </header>
 
-      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-6 grid lg:grid-cols-[1fr_280px] gap-6">
-        {/* Question area */}
+      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-6 grid lg:grid-cols-[1fr_240px] gap-6">
         <section className="rounded-xl border border-border bg-card p-6">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              Question <strong className="text-foreground">{currentIdx + 1}</strong> of {test.questions.length}
+              Question <strong className="text-foreground">{currentIdx + 1}</strong> of {questions.length}
             </span>
             <span className="text-muted-foreground">Marks: {q.marks}</span>
           </div>
-          <h2 className="mt-4 text-xl font-semibold leading-snug">{q.text}</h2>
+          <h2 className="mt-3 text-xl font-semibold leading-snug">{q.title}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{q.prompt}</p>
 
-          <div className="mt-6 space-y-2">
-            {q.options.map((opt, i) => {
-              const selected = answers[q.id] === i;
-              return (
-                <label
-                  key={i}
-                  className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition ${
-                    selected
-                      ? "border-accent bg-accent/10"
-                      : "border-border hover:border-accent/60 bg-background"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name={q.id}
-                    className="mt-1 accent-[oklch(0.72_0.17_55)]"
-                    checked={selected}
-                    onChange={() => setAnswers((a) => ({ ...a, [q.id]: i }))}
-                  />
-                  <span className="text-sm">{opt}</span>
-                </label>
-              );
-            })}
+          <div className="mt-5 rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)]">
+            <div className="border-b border-white/10 px-3 py-2 text-xs font-mono uppercase tracking-widest opacity-70">
+              solution.py
+            </div>
+            <textarea
+              key={q.id}
+              value={currentCode}
+              onChange={(e) => setCodes((c) => ({ ...c, [q.id]: e.target.value }))}
+              spellCheck={false}
+              rows={16}
+              className="block w-full resize-y bg-transparent px-4 py-3 font-mono text-sm leading-relaxed outline-none"
+              style={{ tabSize: 4 }}
+              onKeyDown={(e) => {
+                if (e.key === "Tab") {
+                  e.preventDefault();
+                  const el = e.currentTarget;
+                  const s = el.selectionStart;
+                  const next = currentCode.slice(0, s) + "    " + currentCode.slice(el.selectionEnd);
+                  setCodes((c) => ({ ...c, [q.id]: next }));
+                  requestAnimationFrame(() => {
+                    el.selectionStart = el.selectionEnd = s + 4;
+                  });
+                }
+              }}
+            />
           </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-2">
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
               onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
               disabled={currentIdx === 0}
@@ -252,25 +263,15 @@ function RunTest() {
               ← Previous
             </button>
             <button
-              onClick={() => setReviewed((r) => ({ ...r, [q.id]: !r[q.id] }))}
-              className={`rounded-md border px-3 py-2 text-sm ${
-                reviewed[q.id]
-                  ? "border-[oklch(0.65_0.15_145)] bg-[oklch(0.65_0.15_145)]/10"
-                  : "border-border bg-background"
-              }`}
-            >
-              {reviewed[q.id] ? "Unmark Review" : "Mark for Review"}
-            </button>
-            <button
-              onClick={() => setAnswers((a) => ({ ...a, [q.id]: null }))}
+              onClick={() => setCodes((c) => ({ ...c, [q.id]: q.starterCode }))}
               className="rounded-md border border-border bg-background px-3 py-2 text-sm"
             >
-              Clear
+              Reset
             </button>
             <div className="ml-auto flex gap-2">
-              {currentIdx < test.questions.length - 1 ? (
+              {currentIdx < questions.length - 1 ? (
                 <button
-                  onClick={() => setCurrentIdx((i) => Math.min(test.questions.length - 1, i + 1))}
+                  onClick={() => setCurrentIdx((i) => Math.min(questions.length - 1, i + 1))}
                   className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground"
                   style={{ backgroundImage: "var(--gradient-sunrise)" }}
                 >
@@ -279,7 +280,7 @@ function RunTest() {
               ) : (
                 <button
                   onClick={() => {
-                    if (confirm("Submit your test now?")) submit("normal");
+                    if (confirm("Submit your test now? Your code will be graded.")) void submit("normal");
                   }}
                   className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground"
                   style={{ backgroundImage: "var(--gradient-sunrise)" }}
@@ -291,39 +292,28 @@ function RunTest() {
           </div>
         </section>
 
-        {/* Navigator */}
         <aside className="rounded-xl border border-border bg-card p-4 h-fit">
           <p className="text-sm font-semibold">Question Navigator</p>
-          <div className="mt-3 grid grid-cols-6 lg:grid-cols-5 gap-2">
-            {test.questions.map((qq, i) => {
-              const sel = answers[qq.id];
-              const isAttempted = sel !== undefined && sel !== null;
-              const isReview = reviewed[qq.id];
+          <div className="mt-3 grid grid-cols-5 gap-2">
+            {questions.map((qq, i) => {
+              const touched = (codes[qq.id] ?? qq.starterCode) !== qq.starterCode;
               const isCurrent = i === currentIdx;
-              let cls = "bg-background border-border text-foreground";
-              if (isReview) cls = "bg-[oklch(0.65_0.15_145)] border-[oklch(0.65_0.15_145)] text-white";
-              else if (isAttempted) cls = "bg-accent border-accent text-accent-foreground";
               return (
                 <button
                   key={qq.id}
                   onClick={() => setCurrentIdx(i)}
-                  className={`h-9 w-full rounded text-sm font-semibold border ${cls} ${
-                    isCurrent ? "ring-2 ring-ring" : ""
-                  }`}
+                  className={`h-9 w-full rounded text-sm font-semibold border ${
+                    touched ? "bg-accent border-accent text-accent-foreground" : "bg-background border-border"
+                  } ${isCurrent ? "ring-2 ring-ring" : ""}`}
                 >
                   {i + 1}
                 </button>
               );
             })}
           </div>
-          <div className="mt-4 space-y-1.5 text-xs">
-            <Legend swatch="bg-accent" label="Attempted" />
-            <Legend swatch="bg-background border border-border" label="Not Attempted" />
-            <Legend swatch="bg-[oklch(0.65_0.15_145)]" label="Marked for Review" />
-          </div>
           <button
             onClick={() => {
-              if (confirm("Submit your test now?")) submit("normal");
+              if (confirm("Submit your test now? Your code will be graded.")) void submit("normal");
             }}
             className="mt-4 w-full rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
             style={{ backgroundImage: "var(--gradient-sunrise)" }}
@@ -335,15 +325,16 @@ function RunTest() {
           </p>
         </aside>
       </main>
-    </div>
-  );
-}
 
-function Legend({ swatch, label }: { swatch: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className={`inline-block h-4 w-4 rounded ${swatch}`} />
-      <span className="text-muted-foreground">{label}</span>
+      {grading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur">
+          <div className="rounded-xl border border-border bg-card px-8 py-6 text-center shadow-[var(--shadow-warm)]">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+            <p className="mt-4 font-semibold">{gradeMsg}</p>
+            <p className="mt-1 text-sm text-muted-foreground">Running your code through Python — don't close this tab.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

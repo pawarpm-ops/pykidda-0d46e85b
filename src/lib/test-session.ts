@@ -1,14 +1,20 @@
-// Simple sessionStorage-backed handoff between warning → test → result pages.
+// Session storage for mock test handoff and final results (code-question version).
+
+export type QuestionAttempt = {
+  questionId: string;
+  code: string;
+  passed: number;
+  total: number;
+  marksObtained: number;
+  marksTotal: number;
+  results: { passed: boolean; expected: string; actual: string; stderr: string }[];
+};
 
 export type AttemptResult = {
   testId: string;
   testName: string;
   studentName: string;
   totalQuestions: number;
-  attempted: number;
-  correct: number;
-  wrong: number;
-  unattempted: number;
   marksObtained: number;
   totalMarks: number;
   percentage: number;
@@ -16,13 +22,13 @@ export type AttemptResult = {
   timeTakenSec: number;
   submissionType: "normal" | "auto-violation";
   violationReason?: string;
-  answers: Array<{ questionId: string; selected: number | null; correct: number; isCorrect: boolean }>;
+  attempts: QuestionAttempt[];
   submittedAt: number;
 };
 
-const KEY = "ppmtp:last-result";
-const STARTED_KEY = "ppmtp:started-tests";
-const NAME_KEY = "ppmtp:student-name";
+const KEY = "pykidda:last-result";
+const STARTED_KEY = "pykidda:started-tests";
+const NAME_KEY = "pykidda:student-name";
 
 export function saveResult(r: AttemptResult) {
   if (typeof window === "undefined") return;
@@ -36,7 +42,7 @@ export function loadResult(): AttemptResult | null {
 
 export function markTestStarted(testId: string) {
   if (typeof window === "undefined") return;
-  const set = new Set(JSON.parse(sessionStorage.getItem(STARTED_KEY) || "[]"));
+  const set = new Set<string>(JSON.parse(sessionStorage.getItem(STARTED_KEY) || "[]"));
   set.add(testId);
   sessionStorage.setItem(STARTED_KEY, JSON.stringify([...set]));
 }
