@@ -80,14 +80,17 @@ export const UNITS = [
   { id: 6, title: "Data Preprocessing", blurb: "Missing data, outliers, encoding, Seaborn, Scikit-learn." },
 ] as const;
 
-export const MOCK_TESTS: MockTest[] = UNITS.map((u) => ({
+const unitTests: MockTest[] = UNITS.map((u) => ({
   id: `mock-unit-${u.id}`,
   name: `Unit ${u.id} Mock Test — ${u.title}`,
-  unit: u.id,
+  unit: u.id as number,
   durationSec: 5 * 60,
-  description: u.blurb,
+  description: u.blurb as string,
   questions: UNIT_QUESTIONS.filter((qq) => qq.unit === u.id),
-})).concat([
+}));
+
+export const MOCK_TESTS: MockTest[] = [
+  ...unitTests,
   {
     id: "mock-mixed",
     name: "Full Syllabus Mock Test",
@@ -96,7 +99,7 @@ export const MOCK_TESTS: MockTest[] = UNITS.map((u) => ({
     description: "A mixed mock test covering all six units of the Python syllabus.",
     questions: UNIT_QUESTIONS,
   },
-]);
+];
 
 export function getMockTest(id: string) {
   return MOCK_TESTS.find((t) => t.id === id);
