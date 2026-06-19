@@ -178,14 +178,15 @@ function RunTest() {
       e.preventDefault();
       e.returnValue = "";
     };
+    // Escape / F11 are NOT gated by the 800ms arm timer — the user can only
+    // press them deliberately, and we want instant submit. Use capture phase
+    // on document so we run before the browser/iframe consumes the event
+    // (browsers intercept Escape to exit fullscreen and may not bubble it).
     const onKey = (e: KeyboardEvent) => {
-      if (!armed) return;
-      // Pressing Escape (or F11) typically exits fullscreen. Treat it as a violation
-      // and submit immediately — don't rely solely on fullscreenchange, which may
-      // not fire reliably inside iframes / preview environments.
-      if (e.key === "Escape" || e.key === "F11") {
+      if (e.key === "Escape" || e.key === "F11" || e.keyCode === 27 || e.keyCode === 122) {
         e.preventDefault();
-        void submit("auto-violation", "Pressed Escape — exited full-screen mode");
+        e.stopPropagation();
+        void submit("auto-violation", `Pressed ${e.key} — exited full-screen mode`);
       }
     };
 
@@ -193,16 +194,21 @@ function RunTest() {
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("blur", onBlur);
     window.addEventListener("beforeunload", onBeforeUnload);
-    window.addEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
+    window.addEventListener("keydown", onKey, true);
+    document.addEventListener("keyup", onKey, true);
     return () => {
       clearTimeout(armTimer);
       document.removeEventListener("fullscreenchange", onFsChange);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("beforeunload", onBeforeUnload);
-      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("keyup", onKey, true);
     };
   }, [test, allowed, submit]);
+
 
   if (allowed === false) return <Navigate to="/mock-tests/$testId/warning" params={{ testId }} />;
   if (!test || allowed === null) {
