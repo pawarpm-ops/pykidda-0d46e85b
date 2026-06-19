@@ -177,7 +177,14 @@ function RunTest() {
       e.returnValue = "";
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") e.preventDefault();
+      if (!armed) return;
+      // Pressing Escape (or F11) typically exits fullscreen. Treat it as a violation
+      // and submit immediately — don't rely solely on fullscreenchange, which may
+      // not fire reliably inside iframes / preview environments.
+      if (e.key === "Escape" || e.key === "F11") {
+        e.preventDefault();
+        void submit("auto-violation", "Pressed Escape — exited full-screen mode");
+      }
     };
 
     document.addEventListener("fullscreenchange", onFsChange);
