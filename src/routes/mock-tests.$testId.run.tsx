@@ -11,6 +11,8 @@ import {
   type QuestionAttempt,
 } from "@/lib/test-session";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
+import { recordMockResult } from "@/lib/progress";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
   head: () => ({
