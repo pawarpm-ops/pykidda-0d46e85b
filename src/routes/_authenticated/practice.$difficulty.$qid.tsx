@@ -55,7 +55,10 @@ function SolvePage() {
             allowHint
             allowSolution
             submitLabel="Submit & Record"
-            onSubmit={(out) => recordPracticeAttempt(userId, q.id, out.passedCount, out.totalCount)}
+            onSubmit={(out) => {
+              recordPracticeAttempt(userId, q.id, out.passedCount, out.totalCount);
+              void syncMyScore();
+            }}
           />
         </div>
       </main>
