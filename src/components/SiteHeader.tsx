@@ -32,6 +32,11 @@ export function SiteHeader() {
           <Link to="/mock-tests" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Mock Tests
           </Link>
+          {email && (
+            <Link to="/profile" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
+              Profile
+            </Link>
+          )}
           <ThemeToggle className="ml-1" />
           {email ? (
             <div className="flex items-center gap-2 ml-1">
