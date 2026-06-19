@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import type { CodeQuestion } from "@/lib/questions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
+import { explainAndFix } from "@/lib/ai-feedback.functions";
 
 export type RunOutcome = {
   code: string;
-  results: { passed: boolean; expected: string; actual: string; stderr: string; label?: string }[];
+  results: { passed: boolean; expected: string; actual: string; stderr: string; label?: string; stdin?: string }[];
   passedCount: number;
   totalCount: number;
 };
