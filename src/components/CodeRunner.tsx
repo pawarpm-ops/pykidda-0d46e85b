@@ -68,6 +68,8 @@ export function CodeRunner({
     if (busy) return;
     setBusy(true);
     setOutcome(null);
+    setAiResult(null);
+    setAiError(null);
     try {
       // Ensure runtime is loaded; this resolves immediately if already ready.
       await loadPyodideOnce();
@@ -90,6 +92,7 @@ export function CodeRunner({
         actual: r.stdout,
         stderr: r.stderr,
         label: tc.label,
+        stdin: tc.stdin ?? "",
       });
     }
     const out: RunOutcome = {
@@ -107,6 +110,37 @@ export function CodeRunner({
     const out = await runAll();
     if (out && onSubmit) onSubmit(out);
   }, [runAll, onSubmit]);
+
+  const handleExplain = useCallback(async () => {
+    if (!outcome) return;
+    setAiBusy(true);
+    setAiError(null);
+    try {
+      const failing = outcome.results
+        .filter((r) => !r.passed)
+        .slice(0, 5)
+        .map((r) => ({ stdin: r.stdin ?? "", expected: r.expected, actual: r.actual, stderr: r.stderr }));
+      const res = await explainFn({
+        data: {
+          title: question.title,
+          prompt: question.prompt,
+          userCode: codeRef.current,
+          referenceSolution: question.solution,
+          failingTests: failing,
+        },
+      });
+      setAiResult(res);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAiBusy(false);
+    }
+  }, [outcome, explainFn, question.title, question.prompt, question.solution]);
+
+  const applyFix = useCallback(() => {
+    if (!aiResult) return;
+    setAndEmit(aiResult.fixedCode);
+  }, [aiResult, setAndEmit]);
 
   return (
     <div className="flex flex-col gap-4">
