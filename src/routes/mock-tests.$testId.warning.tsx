@@ -1,16 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getMockTest } from "@/lib/mock-tests";
+import { getMockTest, mockTestQuestions } from "@/lib/questions";
 import { getStudentName, markTestStarted, setStudentName } from "@/lib/test-session";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/mock-tests/$testId/warning")({
   head: () => ({
     meta: [
-      { title: "Test Warning · Python Mock Test" },
+      { title: "Test Warning · PY Kidda" },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: Warning,
+  ssr: false,
   notFoundComponent: () => <div className="p-10">Test not found.</div>,
   errorComponent: () => <div className="p-10">Something went wrong.</div>,
 });
@@ -21,10 +23,19 @@ function Warning() {
   const test = getMockTest(testId);
   const [seconds, setSeconds] = useState(10);
   const [name, setName] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    setName(getStudentName());
-  }, []);
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        navigate({ to: "/auth" });
+        return;
+      }
+      setAuthChecked(true);
+      const fromMeta = data.session.user.user_metadata?.full_name as string | undefined;
+      setName(getStudentName() !== "Student" ? getStudentName() : fromMeta || "");
+    });
+  }, [navigate]);
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -42,7 +53,12 @@ function Warning() {
       </div>
     );
   }
+  if (!authChecked) {
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+  }
 
+  const qs = mockTestQuestions(test);
+  const marks = qs.reduce((a, q) => a + q.marks, 0);
   const ready = seconds <= 0 && name.trim().length > 0;
 
   async function startTest() {
@@ -52,7 +68,7 @@ function Warning() {
     try {
       await document.documentElement.requestFullscreen();
     } catch {
-      // If denied, still navigate — page will detect non-fullscreen and auto-submit.
+      /* if denied, the run page will detect and auto-submit */
     }
     navigate({ to: "/mock-tests/$testId/run", params: { testId } });
   }
@@ -76,16 +92,16 @@ function Warning() {
         <div className="mt-4 rounded-lg bg-secondary p-4 text-sm leading-relaxed">
           <p className="font-semibold text-foreground">{test.name}</p>
           <p className="text-muted-foreground mt-1">
-            {test.questions.length} questions · {Math.round(test.durationSec / 60)} minutes ·{" "}
-            {test.questions.reduce((a, q) => a + q.marks, 0)} marks
+            {qs.length} questions · {Math.round(test.durationSec / 60)} minutes · {marks} marks · Coding test (Python)
           </p>
         </div>
 
         <div className="mt-5 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm leading-relaxed text-foreground">
           This mock test will open in <strong>full-screen mode</strong>. Do <strong>not</strong> switch tabs,
-          minimize the browser, resize the window, press <kbd className="rounded bg-muted px-1.5 py-0.5 text-xs">Esc</kbd>,
-          open another app, or exit full-screen mode. If you leave the full-screen test window, your test will be
-          <strong> automatically submitted</strong> and your result will be generated immediately.
+          minimize the browser, resize the window, press{" "}
+          <kbd className="rounded bg-muted px-1.5 py-0.5 text-xs">Esc</kbd>, open another app, or exit full-screen
+          mode. If you leave the test window, your test will be{" "}
+          <strong>automatically submitted</strong> and graded immediately.
         </div>
 
         <label className="mt-6 block">

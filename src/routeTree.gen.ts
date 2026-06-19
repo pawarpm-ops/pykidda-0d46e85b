@@ -9,12 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MockTestsIndexRouteImport } from './routes/mock-tests.index'
+import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
 import { Route as MockTestsTestIdWarningRouteImport } from './routes/mock-tests.$testId.warning'
 import { Route as MockTestsTestIdRunRouteImport } from './routes/mock-tests.$testId.run'
 import { Route as MockTestsTestIdResultRouteImport } from './routes/mock-tests.$testId.result'
+import { Route as AuthenticatedPracticeDifficultyRouteImport } from './routes/_authenticated/practice.$difficulty'
+import { Route as AuthenticatedPracticeDifficultyQidRouteImport } from './routes/_authenticated/practice.$difficulty.$qid'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,6 +39,12 @@ const MockTestsIndexRoute = MockTestsIndexRouteImport.update({
   path: '/mock-tests/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPracticeIndexRoute =
+  AuthenticatedPracticeIndexRouteImport.update({
+    id: '/practice/',
+    path: '/practice/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const MockTestsTestIdWarningRoute = MockTestsTestIdWarningRouteImport.update({
   id: '/mock-tests/$testId/warning',
   path: '/mock-tests/$testId/warning',
@@ -40,55 +60,95 @@ const MockTestsTestIdResultRoute = MockTestsTestIdResultRouteImport.update({
   path: '/mock-tests/$testId/result',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPracticeDifficultyRoute =
+  AuthenticatedPracticeDifficultyRouteImport.update({
+    id: '/practice/$difficulty',
+    path: '/practice/$difficulty',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPracticeDifficultyQidRoute =
+  AuthenticatedPracticeDifficultyQidRouteImport.update({
+    id: '/$qid',
+    path: '/$qid',
+    getParentRoute: () => AuthenticatedPracticeDifficultyRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/mock-tests/': typeof MockTestsIndexRoute
+  '/practice/$difficulty': typeof AuthenticatedPracticeDifficultyRouteWithChildren
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/practice/$difficulty/$qid': typeof AuthenticatedPracticeDifficultyQidRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/mock-tests': typeof MockTestsIndexRoute
+  '/practice/$difficulty': typeof AuthenticatedPracticeDifficultyRouteWithChildren
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/practice': typeof AuthenticatedPracticeIndexRoute
+  '/practice/$difficulty/$qid': typeof AuthenticatedPracticeDifficultyQidRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/mock-tests/': typeof MockTestsIndexRoute
+  '/_authenticated/practice/$difficulty': typeof AuthenticatedPracticeDifficultyRouteWithChildren
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/_authenticated/practice/$difficulty/$qid': typeof AuthenticatedPracticeDifficultyQidRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/mock-tests/'
+    | '/practice/$difficulty'
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/practice/'
+    | '/practice/$difficulty/$qid'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/mock-tests'
+    | '/practice/$difficulty'
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/practice'
+    | '/practice/$difficulty/$qid'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
     | '/mock-tests/'
+    | '/_authenticated/practice/$difficulty'
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/_authenticated/practice/'
+    | '/_authenticated/practice/$difficulty/$qid'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   MockTestsIndexRoute: typeof MockTestsIndexRoute
   MockTestsTestIdResultRoute: typeof MockTestsTestIdResultRoute
   MockTestsTestIdRunRoute: typeof MockTestsTestIdRunRoute
@@ -97,6 +157,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -110,6 +184,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/mock-tests/'
       preLoaderRoute: typeof MockTestsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/practice/': {
+      id: '/_authenticated/practice/'
+      path: '/practice'
+      fullPath: '/practice/'
+      preLoaderRoute: typeof AuthenticatedPracticeIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/mock-tests/$testId/warning': {
       id: '/mock-tests/$testId/warning'
@@ -132,11 +213,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MockTestsTestIdResultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/practice/$difficulty': {
+      id: '/_authenticated/practice/$difficulty'
+      path: '/practice/$difficulty'
+      fullPath: '/practice/$difficulty'
+      preLoaderRoute: typeof AuthenticatedPracticeDifficultyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/practice/$difficulty/$qid': {
+      id: '/_authenticated/practice/$difficulty/$qid'
+      path: '/$qid'
+      fullPath: '/practice/$difficulty/$qid'
+      preLoaderRoute: typeof AuthenticatedPracticeDifficultyQidRouteImport
+      parentRoute: typeof AuthenticatedPracticeDifficultyRoute
+    }
   }
 }
 
+interface AuthenticatedPracticeDifficultyRouteChildren {
+  AuthenticatedPracticeDifficultyQidRoute: typeof AuthenticatedPracticeDifficultyQidRoute
+}
+
+const AuthenticatedPracticeDifficultyRouteChildren: AuthenticatedPracticeDifficultyRouteChildren =
+  {
+    AuthenticatedPracticeDifficultyQidRoute:
+      AuthenticatedPracticeDifficultyQidRoute,
+  }
+
+const AuthenticatedPracticeDifficultyRouteWithChildren =
+  AuthenticatedPracticeDifficultyRoute._addFileChildren(
+    AuthenticatedPracticeDifficultyRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPracticeDifficultyRoute: typeof AuthenticatedPracticeDifficultyRouteWithChildren
+  AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPracticeDifficultyRoute:
+    AuthenticatedPracticeDifficultyRouteWithChildren,
+  AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   MockTestsIndexRoute: MockTestsIndexRoute,
   MockTestsTestIdResultRoute: MockTestsTestIdResultRoute,
   MockTestsTestIdRunRoute: MockTestsTestIdRunRoute,
