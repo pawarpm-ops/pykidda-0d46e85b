@@ -62,6 +62,15 @@ export function CodeRunner({
     if (busy) return;
     setBusy(true);
     setOutcome(null);
+    try {
+      // Ensure runtime is loaded; this resolves immediately if already ready.
+      await loadPyodideOnce();
+      setPyReady(true);
+    } catch (e) {
+      setPyError(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+      return null;
+    }
     const results: RunOutcome["results"] = [];
     let passedCount = 0;
     for (const tc of question.tests) {
@@ -89,9 +98,9 @@ export function CodeRunner({
   }, [busy, question.tests]);
 
   const handleSubmit = useCallback(async () => {
-    const out = (await runAll()) ?? outcome;
+    const out = await runAll();
     if (out && onSubmit) onSubmit(out);
-  }, [runAll, onSubmit, outcome]);
+  }, [runAll, onSubmit]);
 
   return (
     <div className="flex flex-col gap-4">
