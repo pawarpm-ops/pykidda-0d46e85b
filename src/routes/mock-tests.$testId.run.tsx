@@ -229,6 +229,12 @@ function RunTest() {
             <p className="text-xs uppercase tracking-widest text-accent font-semibold">Mock Test · PY Kidda</p>
             <p className="font-semibold leading-tight">{test.name}</p>
           </div>
+          <div className={`text-right ${lowTime ? "text-red-500 animate-pulse" : "text-muted-foreground"}`}>
+            <p className="text-xs uppercase tracking-widest font-semibold">Time Left</p>
+            <p className="font-mono text-lg font-bold leading-tight">
+              {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+            </p>
+          </div>
         </div>
       </header>
 
