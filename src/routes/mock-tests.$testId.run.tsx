@@ -123,6 +123,12 @@ function RunTest() {
         submittedAt: Date.now(),
       };
       saveResult(result);
+      try {
+        const { data } = await supabase.auth.getUser();
+        recordMockResult(data.user?.id ?? null, result);
+      } catch {
+        recordMockResult(null, result);
+      }
       clearTestStarted(testId);
       navigate({ to: "/mock-tests/$testId/result", params: { testId } });
     },
