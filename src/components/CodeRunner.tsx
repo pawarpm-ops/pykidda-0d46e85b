@@ -62,6 +62,15 @@ export function CodeRunner({
     if (busy) return;
     setBusy(true);
     setOutcome(null);
+    try {
+      // Ensure runtime is loaded; this resolves immediately if already ready.
+      await loadPyodideOnce();
+      setPyReady(true);
+    } catch (e) {
+      setPyError(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+      return null;
+    }
     const results: RunOutcome["results"] = [];
     let passedCount = 0;
     for (const tc of question.tests) {
@@ -89,9 +98,9 @@ export function CodeRunner({
   }, [busy, question.tests]);
 
   const handleSubmit = useCallback(async () => {
-    const out = (await runAll()) ?? outcome;
+    const out = await runAll();
     if (out && onSubmit) onSubmit(out);
-  }, [runAll, onSubmit, outcome]);
+  }, [runAll, onSubmit]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -106,7 +115,7 @@ export function CodeRunner({
         <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
           <span className="font-mono uppercase tracking-widest opacity-70">solution.py</span>
           <span className="opacity-60">
-            {pyError ? "Python: error" : pyReady ? "Python: ready" : "Python: loading…"}
+            {pyError ? "Python: error" : pyReady ? "Python: ready" : "Python: loading… (first run ~10s)"}
           </span>
         </div>
         <textarea
@@ -134,19 +143,19 @@ export function CodeRunner({
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={runAll}
-          disabled={busy || !pyReady}
+          disabled={busy}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium disabled:opacity-50"
         >
-          {busy ? "Running…" : "Run Tests"}
+          {busy ? (pyReady ? "Running…" : "Loading Python…") : "Run Tests"}
         </button>
         {onSubmit && (
           <button
             onClick={handleSubmit}
-            disabled={busy || !pyReady}
+            disabled={busy}
             className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
             style={{ backgroundImage: "var(--gradient-sunrise)" }}
           >
-            {submitLabel}
+            {busy ? "Working…" : submitLabel}
           </button>
         )}
         {allowHint && (
