@@ -5,6 +5,7 @@ import { CodeRunner } from "@/components/CodeRunner";
 import { getQuestion, type Difficulty } from "@/lib/questions";
 import { supabase } from "@/integrations/supabase/client";
 import { recordPracticeAttempt } from "@/lib/progress";
+import { syncMyScore } from "@/lib/leaderboard";
 
 export const Route = createFileRoute("/_authenticated/practice/$difficulty/$qid")({
   head: () => ({
