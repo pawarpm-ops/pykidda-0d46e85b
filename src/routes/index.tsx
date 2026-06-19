@@ -1,23 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
-import { MOCK_TESTS, UNITS, questionsByDifficulty } from "@/lib/questions";
+import { MOCK_TESTS, UNITS, QUESTIONS } from "@/lib/questions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "PY Kidda — Be a PY Kidda with us" },
-      { name: "description", content: "PY Kidda is a Python practice & mock test portal. Practice by difficulty, take secure full-screen coding mock tests, and grow your Python skills." },
+      { name: "description", content: "PY Kidda is a Python practice & mock test portal. Practice syllabus questions and take secure full-screen coding mock tests." },
       { property: "og:title", content: "PY Kidda — Be a PY Kidda with us" },
-      { property: "og:description", content: "Practice Python by difficulty and take secure coding mock tests. Powered by in-browser Python." },
+      { property: "og:description", content: "Practice Python syllabus questions and take secure coding mock tests. Powered by in-browser Python." },
     ],
   }),
   component: Index,
 });
 
 function Index() {
-  const easyCount = questionsByDifficulty("easy").length;
-  const medCount = questionsByDifficulty("medium").length;
-  const hardCount = questionsByDifficulty("hard").length;
+  const totalQ = QUESTIONS.length;
+  const totalMarks = QUESTIONS.reduce((a, q) => a + q.marks, 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -44,7 +43,7 @@ function Index() {
             with us.
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl">
-            Write real Python in your browser. Practice by difficulty. Then prove yourself in a secure,
+            Write real Python in your browser. Work through the full syllabus question set. Then prove yourself in a secure,
             full-screen mock test that auto-submits if you wander off.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -66,30 +65,26 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-12">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            { label: "Easy", count: easyCount, color: "oklch(0.65 0.15 145)", to: "easy" as const },
-            { label: "Medium", count: medCount, color: "oklch(0.78 0.16 45)", to: "medium" as const },
-            { label: "Hard", count: hardCount, color: "oklch(0.6 0.22 25)", to: "hard" as const },
-          ].map((s) => (
-            <Link
-              key={s.label}
-              to="/practice/$difficulty"
-              params={{ difficulty: s.to }}
-              className="rounded-2xl border border-border bg-card p-6 hover:border-accent transition-colors"
-            >
-              <span
-                className="inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-widest text-primary-foreground"
-                style={{ backgroundColor: s.color }}
-              >
-                {s.label}
-              </span>
-              <p className="mt-4 text-3xl font-bold tabular-nums">{s.count}</p>
-              <p className="text-sm text-muted-foreground">coding questions ready to solve</p>
-            </Link>
-          ))}
-        </div>
+        <Link
+          to="/practice"
+          className="block rounded-2xl border border-border bg-card p-8 hover:border-accent transition-colors shadow-[var(--shadow-warm)]"
+        >
+          <span
+            className="inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-widest text-primary-foreground"
+            style={{ backgroundImage: "var(--gradient-sunrise)" }}
+          >
+            Practice
+          </span>
+          <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-3xl font-bold tabular-nums">{totalQ} questions</p>
+              <p className="text-sm text-muted-foreground">{totalMarks} marks total · straight from the syllabus</p>
+            </div>
+            <p className="text-sm font-semibold text-accent">Open the question list →</p>
+          </div>
+        </Link>
       </section>
+
 
       <section id="units" className="mx-auto max-w-6xl px-6 py-12">
         <div>
