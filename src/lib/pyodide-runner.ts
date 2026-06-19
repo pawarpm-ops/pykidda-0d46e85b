@@ -25,22 +25,42 @@ export function pyodideReady(): boolean {
   return Boolean(pyodidePromise);
 }
 
+function loadScript(src: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.async = true;
+    s.crossOrigin = "anonymous";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.appendChild(s);
+  });
+}
+
 export async function loadPyodideOnce(): Promise<PyodideInstance> {
   if (pyodidePromise) return pyodidePromise;
   pyodidePromise = (async () => {
+    console.log("[pyodide] starting load…");
     if (!window.loadPyodide) {
-      await new Promise<void>((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = PYODIDE_CDN;
-        s.async = true;
-        s.onload = () => resolve();
-        s.onerror = () => reject(new Error("Failed to load Pyodide script"));
-        document.head.appendChild(s);
-      });
+      try {
+        await loadScript(PYODIDE_CDN);
+        console.log("[pyodide] script loaded from jsdelivr");
+      } catch (e) {
+        console.warn("[pyodide] jsdelivr failed, trying unpkg…", e);
+        await loadScript(`https://unpkg.com/pyodide@${PYODIDE_VERSION}/pyodide.js`);
+        console.log("[pyodide] script loaded from unpkg");
+      }
     }
-    const py = await window.loadPyodide!({ indexURL: PYODIDE_INDEX });
+    if (!window.loadPyodide) throw new Error("loadPyodide global missing after script load");
+    const py = await window.loadPyodide({ indexURL: PYODIDE_INDEX });
+    console.log("[pyodide] runtime ready");
     return py;
   })();
+  // If load fails, reset the cached promise so a retry can try again.
+  pyodidePromise.catch((e) => {
+    console.error("[pyodide] load failed", e);
+    pyodidePromise = null;
+  });
   return pyodidePromise;
 }
 
