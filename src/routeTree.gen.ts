@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MockTestsIndexRouteImport } from './routes/mock-tests.index'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
 import { Route as MockTestsTestIdWarningRouteImport } from './routes/mock-tests.$testId.warning'
 import { Route as MockTestsTestIdRunRouteImport } from './routes/mock-tests.$testId.run'
@@ -38,6 +39,11 @@ const MockTestsIndexRoute = MockTestsIndexRouteImport.update({
   id: '/mock-tests/',
   path: '/mock-tests/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPracticeIndexRoute =
   AuthenticatedPracticeIndexRouteImport.update({
@@ -76,6 +82,7 @@ const AuthenticatedPracticeDifficultyQidRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/mock-tests/': typeof MockTestsIndexRoute
   '/practice/$difficulty': typeof AuthenticatedPracticeDifficultyRouteWithChildren
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/mock-tests': typeof MockTestsIndexRoute
   '/practice/$difficulty': typeof AuthenticatedPracticeDifficultyRouteWithChildren
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/mock-tests/': typeof MockTestsIndexRoute
   '/_authenticated/practice/$difficulty': typeof AuthenticatedPracticeDifficultyRouteWithChildren
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/profile'
     | '/mock-tests/'
     | '/practice/$difficulty'
     | '/mock-tests/$testId/result'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/profile'
     | '/mock-tests'
     | '/practice/$difficulty'
     | '/mock-tests/$testId/result'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/profile'
     | '/mock-tests/'
     | '/_authenticated/practice/$difficulty'
     | '/mock-tests/$testId/result'
@@ -184,6 +196,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/mock-tests/'
       preLoaderRoute: typeof MockTestsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/practice/': {
       id: '/_authenticated/practice/'
@@ -246,11 +265,13 @@ const AuthenticatedPracticeDifficultyRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedPracticeDifficultyRoute: typeof AuthenticatedPracticeDifficultyRouteWithChildren
   AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedPracticeDifficultyRoute:
     AuthenticatedPracticeDifficultyRouteWithChildren,
   AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
