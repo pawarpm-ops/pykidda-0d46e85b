@@ -39,6 +39,10 @@ export function CodeRunner({
   const [outcome, setOutcome] = useState<RunOutcome | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiResult, setAiResult] = useState<{ explanation: string; fixedCode: string } | null>(null);
+  const explainFn = useServerFn(explainAndFix);
   const codeRef = useRef(code);
   codeRef.current = code;
 
