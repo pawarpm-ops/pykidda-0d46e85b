@@ -20,6 +20,10 @@ export const Route = createFileRoute("/_authenticated/practice/$difficulty/$qid"
 function SolvePage() {
   const { difficulty, qid } = Route.useParams();
   const q = getQuestion(qid);
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
   if (!q) return <Navigate to="/practice" />;
   const d = difficulty as Difficulty;
 
@@ -27,6 +31,7 @@ function SolvePage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-6 py-8">
+
         <Link to="/practice/$difficulty" params={{ difficulty: d }} className="text-sm text-muted-foreground hover:text-accent">
           ← Back to {d} questions
         </Link>
