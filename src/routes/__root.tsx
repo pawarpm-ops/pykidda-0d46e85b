@@ -125,8 +125,58 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AuthGate>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </AuthGate>
     </QueryClientProvider>
   );
+}
+
+// Site-wide login gate: only the /auth route is reachable without a session.
+// Everything else redirects to /auth on the client.
+function AuthGate({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [checked, setChecked] = useState(false);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setAuthed(!!data.session);
+      setChecked(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setAuthed(!!session);
+      setChecked(true);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const isAuthRoute = pathname === "/auth" || pathname.startsWith("/auth/");
+
+  useEffect(() => {
+    if (!checked) return;
+    if (!authed && !isAuthRoute) {
+      navigate({ to: "/auth", replace: true });
+    }
+  }, [checked, authed, isAuthRoute, navigate]);
+
+  // While we don't know yet, render nothing on protected routes to avoid a flash.
+  if (!checked && !isAuthRoute) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
+        Loading…
+      </div>
+    );
+  }
+  if (!authed && !isAuthRoute) {
+    return null;
+  }
+  return <>{children}</>;
 }
