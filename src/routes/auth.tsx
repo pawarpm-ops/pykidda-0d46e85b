@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
+import { BrandLogo } from "@/components/BrandLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -47,18 +49,12 @@ function AuthPage() {
         style={{ background: "var(--gradient-sunrise)", filter: "blur(80px)" }}
         aria-hidden
       />
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
       <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-warm)]">
         <div className="flex items-center gap-3">
-          <span
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-primary-foreground font-black"
-            style={{ backgroundImage: "var(--gradient-sunrise)" }}
-          >
-            P
-          </span>
-          <div>
-            <h1 className="text-2xl font-bold leading-none">PY Kidda</h1>
-            <p className="text-xs text-muted-foreground mt-1">Be a PY Kidda with us</p>
-          </div>
+          <BrandLogo size={48} />
         </div>
 
         <h2 className="mt-6 text-lg font-semibold">Sign in to start practicing</h2>

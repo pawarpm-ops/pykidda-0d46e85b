@@ -1,6 +1,8 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { BrandLogo } from "@/components/BrandLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
@@ -20,18 +22,8 @@ export function SiteHeader() {
   return (
     <header className="border-b border-border/60 backdrop-blur sticky top-0 z-20 bg-background/80">
       <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
-          <span
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-primary-foreground font-black"
-            style={{ backgroundImage: "var(--gradient-sunrise)" }}
-          >
-            P
-          </span>
-          <span>
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-sunrise)" }}>
-              PY Kidda
-            </span>
-          </span>
+        <Link to="/" className="flex items-center gap-2">
+          <BrandLogo size={36} />
         </Link>
         <nav className="flex items-center gap-1 sm:gap-3 text-sm">
           <Link to="/practice" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
@@ -40,6 +32,7 @@ export function SiteHeader() {
           <Link to="/mock-tests" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Mock Tests
           </Link>
+          <ThemeToggle className="ml-1" />
           {email ? (
             <div className="flex items-center gap-2 ml-1">
               <span className="hidden sm:inline text-xs text-muted-foreground">{email}</span>
