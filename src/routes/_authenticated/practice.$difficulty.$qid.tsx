@@ -50,7 +50,13 @@ function SolvePage() {
         <p className="mt-2 text-muted-foreground">{q.prompt}</p>
 
         <div className="mt-6">
-          <CodeRunner question={q} allowHint allowSolution />
+          <CodeRunner
+            question={q}
+            allowHint
+            allowSolution
+            submitLabel="Submit & Record"
+            onSubmit={(out) => recordPracticeAttempt(userId, q.id, out.passedCount, out.totalCount)}
+          />
         </div>
       </main>
     </div>
