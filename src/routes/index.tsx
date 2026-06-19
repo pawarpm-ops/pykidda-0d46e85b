@@ -1,23 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
-import { MOCK_TESTS, UNITS, questionsByDifficulty } from "@/lib/questions";
+import { MOCK_TESTS, UNITS, QUESTIONS } from "@/lib/questions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "PY Kidda — Be a PY Kidda with us" },
-      { name: "description", content: "PY Kidda is a Python practice & mock test portal. Practice by difficulty, take secure full-screen coding mock tests, and grow your Python skills." },
+      { name: "description", content: "PY Kidda is a Python practice & mock test portal. Practice syllabus questions and take secure full-screen coding mock tests." },
       { property: "og:title", content: "PY Kidda — Be a PY Kidda with us" },
-      { property: "og:description", content: "Practice Python by difficulty and take secure coding mock tests. Powered by in-browser Python." },
+      { property: "og:description", content: "Practice Python syllabus questions and take secure coding mock tests. Powered by in-browser Python." },
     ],
   }),
   component: Index,
 });
 
 function Index() {
-  const easyCount = questionsByDifficulty("easy").length;
-  const medCount = questionsByDifficulty("medium").length;
-  const hardCount = questionsByDifficulty("hard").length;
+  const totalQ = QUESTIONS.length;
+  const totalMarks = QUESTIONS.reduce((a, q) => a + q.marks, 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
