@@ -1,0 +1,176 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { getMockTest } from "@/lib/mock-tests";
+import { loadResult, type AttemptResult } from "@/lib/test-session";
+
+export const Route = createFileRoute("/mock-tests/$testId/result")({
+  head: () => ({
+    meta: [
+      { title: "Result · Python Mock Test" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: ResultPage,
+  ssr: false,
+  notFoundComponent: () => <div className="p-10">Result not found.</div>,
+  errorComponent: () => <div className="p-10">Something went wrong.</div>,
+});
+
+function ResultPage() {
+  const { testId } = Route.useParams();
+  const test = getMockTest(testId);
+  const [r, setR] = useState<AttemptResult | null>(null);
+
+  useEffect(() => {
+    setR(loadResult());
+  }, []);
+
+  if (!test) return <div className="p-10">Test not found.</div>;
+  if (!r) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">No result data found. Please take the test from the start.</p>
+          <Link to="/mock-tests" className="underline mt-3 inline-block">Back to mock tests</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const auto = r.submissionType === "auto-violation";
+  const mins = Math.floor(r.timeTakenSec / 60);
+  const secs = r.timeTakenSec % 60;
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border/60">
+        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
+          <Link to="/" className="font-bold">← Portal</Link>
+          <span className="text-sm text-muted-foreground">Result</span>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-6 py-10">
+        {auto && (
+          <div className="mb-6 rounded-lg border border-destructive bg-destructive/10 text-foreground p-4">
+            <p className="font-semibold text-destructive">Auto-submitted due to violation</p>
+            <p className="text-sm mt-1">
+              Your test has been automatically submitted because you left the full-screen test environment.
+              Reason logged: <strong>{r.violationReason ?? "Unknown"}</strong>.
+            </p>
+          </div>
+        )}
+
+        <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-[var(--shadow-warm)]">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-accent font-semibold">Result</p>
+              <h1 className="text-2xl md:text-3xl font-bold mt-1">{r.testName}</h1>
+              <p className="text-muted-foreground mt-1 text-sm">Student: <strong className="text-foreground">{r.studentName}</strong></p>
+            </div>
+            <div className="text-right">
+              <div
+                className="inline-flex items-baseline gap-2 rounded-lg px-4 py-2 text-primary-foreground"
+                style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              >
+                <span className="text-3xl font-bold tabular-nums">{r.percentage}%</span>
+                <span className="text-sm opacity-90">Grade {r.grade}</span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {r.marksObtained} / {r.totalMarks} marks
+              </p>
+            </div>
+          </div>
+
+          <dl className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <Stat label="Correct" value={r.correct} tone="ok" />
+            <Stat label="Wrong" value={r.wrong} tone="bad" />
+            <Stat label="Unattempted" value={r.unattempted} tone="mute" />
+            <Stat label="Time Taken" value={`${mins}m ${secs}s`} tone="mute" />
+          </dl>
+
+          <p className="mt-6 text-sm text-muted-foreground">
+            Submission: <strong className="text-foreground">{auto ? "Auto-submitted (violation)" : "Normal submission"}</strong>
+          </p>
+        </div>
+
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold">Answer Review</h2>
+          <ol className="mt-4 space-y-3">
+            {test.questions.map((q, idx) => {
+              const a = r.answers.find((x) => x.questionId === q.id);
+              const sel = a?.selected;
+              const ok = a?.isCorrect;
+              const unattempted = sel === null || sel === undefined;
+              return (
+                <li key={q.id} className="rounded-lg border border-border bg-card p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-medium">
+                      <span className="text-muted-foreground mr-2">Q{idx + 1}.</span>
+                      {q.text}
+                    </p>
+                    <span
+                      className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
+                        unattempted
+                          ? "bg-muted text-muted-foreground"
+                          : ok
+                            ? "bg-[oklch(0.65_0.15_145)]/15 text-[oklch(0.4_0.15_145)]"
+                            : "bg-destructive/15 text-destructive"
+                      }`}
+                    >
+                      {unattempted ? "Skipped" : ok ? "Correct" : "Wrong"}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid sm:grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Your answer: </span>
+                      <span className="font-medium">{unattempted ? "—" : q.options[sel as number]}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Correct: </span>
+                      <span className="font-medium">{q.options[q.correctIndex]}</span>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    <strong className="text-foreground">Explanation: </strong>{q.explanation}
+                  </p>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+
+        <div className="mt-10 flex flex-wrap gap-3">
+          <Link
+            to="/mock-tests"
+            className="inline-flex items-center rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+            style={{ backgroundImage: "var(--gradient-sunrise)" }}
+          >
+            Take another mock test
+          </Link>
+          <Link
+            to="/"
+            className="inline-flex items-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium"
+          >
+            Back to portal
+          </Link>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function Stat({ label, value, tone }: { label: string; value: string | number; tone: "ok" | "bad" | "mute" }) {
+  const bg =
+    tone === "ok"
+      ? "bg-[oklch(0.65_0.15_145)]/10 border-[oklch(0.65_0.15_145)]/30"
+      : tone === "bad"
+        ? "bg-destructive/10 border-destructive/30"
+        : "bg-secondary border-border";
+  return (
+    <div className={`rounded-lg border p-3 ${bg}`}>
+      <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="mt-1 text-xl font-bold tabular-nums">{value}</div>
+    </div>
+  );
+}

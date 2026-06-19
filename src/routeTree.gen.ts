@@ -10,33 +10,89 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MockTestsIndexRouteImport } from './routes/mock-tests.index'
+import { Route as MockTestsTestIdWarningRouteImport } from './routes/mock-tests.$testId.warning'
+import { Route as MockTestsTestIdRunRouteImport } from './routes/mock-tests.$testId.run'
+import { Route as MockTestsTestIdResultRouteImport } from './routes/mock-tests.$testId.result'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MockTestsIndexRoute = MockTestsIndexRouteImport.update({
+  id: '/mock-tests/',
+  path: '/mock-tests/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockTestsTestIdWarningRoute = MockTestsTestIdWarningRouteImport.update({
+  id: '/mock-tests/$testId/warning',
+  path: '/mock-tests/$testId/warning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockTestsTestIdRunRoute = MockTestsTestIdRunRouteImport.update({
+  id: '/mock-tests/$testId/run',
+  path: '/mock-tests/$testId/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockTestsTestIdResultRoute = MockTestsTestIdResultRouteImport.update({
+  id: '/mock-tests/$testId/result',
+  path: '/mock-tests/$testId/result',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/mock-tests/': typeof MockTestsIndexRoute
+  '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
+  '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
+  '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/mock-tests': typeof MockTestsIndexRoute
+  '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
+  '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
+  '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/mock-tests/': typeof MockTestsIndexRoute
+  '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
+  '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
+  '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/mock-tests/'
+    | '/mock-tests/$testId/result'
+    | '/mock-tests/$testId/run'
+    | '/mock-tests/$testId/warning'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/mock-tests'
+    | '/mock-tests/$testId/result'
+    | '/mock-tests/$testId/run'
+    | '/mock-tests/$testId/warning'
+  id:
+    | '__root__'
+    | '/'
+    | '/mock-tests/'
+    | '/mock-tests/$testId/result'
+    | '/mock-tests/$testId/run'
+    | '/mock-tests/$testId/warning'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MockTestsIndexRoute: typeof MockTestsIndexRoute
+  MockTestsTestIdResultRoute: typeof MockTestsTestIdResultRoute
+  MockTestsTestIdRunRoute: typeof MockTestsTestIdRunRoute
+  MockTestsTestIdWarningRoute: typeof MockTestsTestIdWarningRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +104,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mock-tests/': {
+      id: '/mock-tests/'
+      path: '/mock-tests'
+      fullPath: '/mock-tests/'
+      preLoaderRoute: typeof MockTestsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mock-tests/$testId/warning': {
+      id: '/mock-tests/$testId/warning'
+      path: '/mock-tests/$testId/warning'
+      fullPath: '/mock-tests/$testId/warning'
+      preLoaderRoute: typeof MockTestsTestIdWarningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mock-tests/$testId/run': {
+      id: '/mock-tests/$testId/run'
+      path: '/mock-tests/$testId/run'
+      fullPath: '/mock-tests/$testId/run'
+      preLoaderRoute: typeof MockTestsTestIdRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mock-tests/$testId/result': {
+      id: '/mock-tests/$testId/result'
+      path: '/mock-tests/$testId/result'
+      fullPath: '/mock-tests/$testId/result'
+      preLoaderRoute: typeof MockTestsTestIdResultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MockTestsIndexRoute: MockTestsIndexRoute,
+  MockTestsTestIdResultRoute: MockTestsTestIdResultRoute,
+  MockTestsTestIdRunRoute: MockTestsTestIdRunRoute,
+  MockTestsTestIdWarningRoute: MockTestsTestIdWarningRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
