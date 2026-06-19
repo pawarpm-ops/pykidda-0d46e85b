@@ -78,7 +78,6 @@ function AnalyticsPage() {
     );
   }
 
-  const diffs: Array<"easy" | "medium" | "hard"> = ["easy", "medium", "hard"];
   const unitIds = Object.keys(a.byUnit)
     .map((n) => Number(n))
     .sort((x, y) => x - y);
@@ -119,16 +118,16 @@ function AnalyticsPage() {
           <Stat label="Average mock score" value={`${a.mockAvgPct}%`} />
         </section>
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-2">
+        <section className="mt-8">
           <div className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold">By difficulty</h2>
+            <h2 className="text-lg font-semibold">By unit (syllabus)</h2>
             <div className="mt-4 space-y-4">
-              {diffs.map((d) => {
-                const v = a.byDifficulty[d];
+              {unitIds.map((u) => {
+                const v = a.byUnit[u];
                 return (
-                  <div key={d}>
+                  <div key={u}>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="capitalize font-medium">{d}</span>
+                      <span className="font-medium">{UNIT_NAMES[u] ?? `Unit ${u}`}</span>
                       <span className="text-muted-foreground tabular-nums">
                         {v.solved} / {v.total} solved · {v.attempts} attempts
                       </span>
@@ -141,29 +140,8 @@ function AnalyticsPage() {
               })}
             </div>
           </div>
-
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold">By unit (syllabus)</h2>
-            <div className="mt-4 space-y-4">
-              {unitIds.map((u) => {
-                const v = a.byUnit[u];
-                return (
-                  <div key={u}>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{UNIT_NAMES[u] ?? `Unit ${u}`}</span>
-                      <span className="text-muted-foreground tabular-nums">
-                        {v.solved} / {v.total}
-                      </span>
-                    </div>
-                    <div className="mt-2">
-                      <Bar value={v.solved} max={v.total} tone="accent" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </section>
+
 
         <section className="mt-8 grid gap-6 lg:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card p-6">
@@ -184,8 +162,8 @@ function AnalyticsPage() {
                     <li key={i} className="py-2 flex items-center justify-between gap-3 text-sm">
                       <div className="min-w-0">
                         <p className="truncate font-medium">{q?.title ?? p.questionId}</p>
-                        <p className="text-xs text-muted-foreground capitalize">
-                          {p.difficulty} · Unit {p.unit} · {new Date(p.at).toLocaleString()}
+                        <p className="text-xs text-muted-foreground">
+                          Unit {p.unit} · {new Date(p.at).toLocaleString()}
                         </p>
                       </div>
                       <span
