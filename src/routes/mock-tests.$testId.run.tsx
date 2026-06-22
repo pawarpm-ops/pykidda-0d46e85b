@@ -153,59 +153,81 @@ function RunTest() {
     return () => clearInterval(id);
   }, [test, allowed, submit]);
 
-  // Anti-cheat listeners
+  // Anti-cheat listeners — attached immediately, driven by fullscreenchange.
+  // Using refs so handlers always see latest state and never go stale.
+  const testActiveRef = useRef(false);
   useEffect(() => {
     if (!test || allowed !== true) return;
 
-    let armed = false;
-    const armTimer = setTimeout(() => {
-      armed = true;
-    }, 800);
+    testActiveRef.current = true;
+
+    const autoSubmit = (reason: string) => {
+      if (!testActiveRef.current) return;
+      if (submittedRef.current) return;
+      void submit("auto-violation", reason);
+    };
 
     const onFsChange = () => {
-      if (!armed) return;
-      if (!document.fullscreenElement) void submit("auto-violation", "Exited full-screen mode");
+      const fsEl =
+        document.fullscreenElement ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (document as any).webkitFullscreenElement ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (document as any).mozFullScreenElement ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (document as any).msFullscreenElement;
+      if (!fsEl) autoSubmit("Exited fullscreen mode / Esc pressed");
     };
     const onVisibility = () => {
-      if (!armed) return;
-      if (document.visibilityState === "hidden") void submit("auto-violation", "Tab switched or browser hidden");
+      if (document.visibilityState === "hidden") autoSubmit("Tab switched or browser minimized");
     };
-    const onBlur = () => {
-      if (!armed) return;
-      void submit("auto-violation", "Window lost focus");
-    };
+    const onBlur = () => autoSubmit("Window lost focus");
+    const onPageHide = () => autoSubmit("Page hidden or closed");
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = "";
     };
-    // Escape / F11 are NOT gated by the 800ms arm timer — the user can only
-    // press them deliberately, and we want instant submit. Use capture phase
-    // on document so we run before the browser/iframe consumes the event
-    // (browsers intercept Escape to exit fullscreen and may not bubble it).
+    // Backup only — fullscreenchange is the primary detector.
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" || e.key === "F11" || e.keyCode === 27 || e.keyCode === 122) {
         e.preventDefault();
         e.stopPropagation();
-        void submit("auto-violation", `Pressed ${e.key} — exited full-screen mode`);
+        autoSubmit(`Pressed ${e.key} — exited fullscreen mode`);
       }
     };
 
     document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange);
+    document.addEventListener("mozfullscreenchange", onFsChange);
+    document.addEventListener("MSFullscreenChange", onFsChange);
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("blur", onBlur);
+    window.addEventListener("pagehide", onPageHide);
     window.addEventListener("beforeunload", onBeforeUnload);
     document.addEventListener("keydown", onKey, true);
     window.addEventListener("keydown", onKey, true);
-    document.addEventListener("keyup", onKey, true);
+
+    // Safety: if fullscreen wasn't granted on the warning page, request it
+    // here now that listeners are attached. If it fails or is already exited,
+    // the fullscreenchange handler will auto-submit.
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {
+        autoSubmit("Fullscreen permission denied");
+      });
+    }
+
     return () => {
-      clearTimeout(armTimer);
+      testActiveRef.current = false;
       document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange", onFsChange);
+      document.removeEventListener("mozfullscreenchange", onFsChange);
+      document.removeEventListener("MSFullscreenChange", onFsChange);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("blur", onBlur);
+      window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
       document.removeEventListener("keydown", onKey, true);
       window.removeEventListener("keydown", onKey, true);
-      document.removeEventListener("keyup", onKey, true);
     };
   }, [test, allowed, submit]);
 
