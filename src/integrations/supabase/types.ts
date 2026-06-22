@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcement_reads: {
+        Row: {
+          announcement_id: string
+          id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement_id: string
+          id?: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement_id?: string
+          id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_reads_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          priority: string
+          target_user_id: string | null
+          title: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          priority?: string
+          target_user_id?: string | null
+          title: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          priority?: string
+          target_user_id?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       leaderboard_scores: {
         Row: {
           avatar_url: string | null
@@ -47,6 +106,96 @@ export type Database = {
         }
         Relationships: []
       }
+      mock_results: {
+        Row: {
+          created_at: string
+          grade: string
+          id: string
+          marks_obtained: number
+          percentage: number
+          student_name: string | null
+          submission_type: string
+          submitted_at: string
+          test_id: string
+          test_name: string
+          time_taken_sec: number
+          total_marks: number
+          total_questions: number
+          user_id: string
+          violation_reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          grade?: string
+          id?: string
+          marks_obtained?: number
+          percentage?: number
+          student_name?: string | null
+          submission_type?: string
+          submitted_at?: string
+          test_id: string
+          test_name: string
+          time_taken_sec?: number
+          total_marks?: number
+          total_questions?: number
+          user_id: string
+          violation_reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          grade?: string
+          id?: string
+          marks_obtained?: number
+          percentage?: number
+          student_name?: string | null
+          submission_type?: string
+          submitted_at?: string
+          test_id?: string
+          test_name?: string
+          time_taken_sec?: number
+          total_marks?: number
+          total_questions?: number
+          user_id?: string
+          violation_reason?: string | null
+        }
+        Relationships: []
+      }
+      practice_attempts: {
+        Row: {
+          attempted_at: string
+          created_at: string
+          id: string
+          passed: number
+          question_id: string
+          solved: boolean
+          total: number
+          unit: number
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          created_at?: string
+          id?: string
+          passed?: number
+          question_id: string
+          solved?: boolean
+          total?: number
+          unit: number
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          created_at?: string
+          id?: string
+          passed?: number
+          question_id?: string
+          solved?: boolean
+          total?: number
+          unit?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -74,15 +223,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -209,6 +385,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "student"],
+    },
   },
 } as const

@@ -1,8 +1,11 @@
 // Local progress tracker. Stores attempts in localStorage keyed per user (or guest).
+// Also mirrors writes to Lovable Cloud (mock_results / practice_attempts) so
+// admins/teachers can see cross-student progress.
 // Powers the /analytics dashboard.
 
 import type { AttemptResult } from "./test-session";
 import { QUESTIONS } from "./questions";
+import { supabase } from "@/integrations/supabase/client";
 
 export type PracticeAttempt = {
   questionId: string;
@@ -67,16 +70,29 @@ export function recordPracticeAttempt(
   const q = QUESTIONS.find((x) => x.id === questionId);
   if (!q) return;
   const s = read(userId);
+  const solved = total > 0 && passed === total;
   s.practice.unshift({
     questionId,
     unit: q.unit,
     passed,
     total,
-    solved: total > 0 && passed === total,
+    solved,
     at: Date.now(),
   });
   s.practice = s.practice.slice(0, 500);
   write(userId, s);
+
+  // Mirror to DB so admins can see cross-student progress (best-effort).
+  if (userId) {
+    void supabase.from("practice_attempts").insert({
+      user_id: userId,
+      question_id: questionId,
+      unit: q.unit,
+      passed,
+      total,
+      solved,
+    });
+  }
 }
 
 export function recordMockResult(userId: string | null, r: AttemptResult) {
@@ -96,6 +112,24 @@ export function recordMockResult(userId: string | null, r: AttemptResult) {
   });
   s.mocks = s.mocks.slice(0, 200);
   write(userId, s);
+
+  if (userId) {
+    void supabase.from("mock_results").insert({
+      user_id: userId,
+      test_id: r.testId,
+      test_name: r.testName,
+      student_name: r.studentName,
+      marks_obtained: r.marksObtained,
+      total_marks: r.totalMarks,
+      percentage: r.percentage,
+      grade: r.grade,
+      total_questions: r.totalQuestions,
+      time_taken_sec: r.timeTakenSec,
+      submission_type: r.submissionType,
+      violation_reason: r.violationReason ?? null,
+      submitted_at: new Date(r.submittedAt).toISOString(),
+    });
+  }
 }
 
 export function getProgress(userId: string | null): Store {
