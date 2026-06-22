@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+
 
 const Input = z.object({
   title: z.string(),
@@ -24,8 +26,11 @@ const Output = z.object({
 });
 
 export const explainAndFix = createServerFn({ method: "POST" })
+
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data }) => {
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
