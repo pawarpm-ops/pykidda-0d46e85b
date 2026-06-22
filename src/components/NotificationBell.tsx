@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { listAnnouncements, listReadIds, type Announcement } from "@/lib/notifications";
+import { listAnnouncements, listReadIds, markAllRead, type Announcement } from "@/lib/notifications";
 
 export function NotificationBell() {
   const [userId, setUserId] = useState<string | null>(null);
