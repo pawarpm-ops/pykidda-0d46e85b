@@ -3,11 +3,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/NotificationBell";
+import { useIsAdmin } from "@/lib/role";
 
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
   const navigate = useNavigate();
   const router = useRouter();
+  const isAdmin = useIsAdmin();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -40,12 +43,21 @@ export function SiteHeader() {
               Analytics
             </Link>
           )}
+          {email && isAdmin && (
+            <Link
+              to="/admin"
+              className="px-2 py-1 rounded hover:bg-secondary transition-colors text-accent font-semibold"
+            >
+              Admin
+            </Link>
+          )}
           {email && (
             <Link to="/profile" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
               Profile
             </Link>
           )}
           <ThemeToggle className="ml-1" />
+          {email && <NotificationBell />}
           {email ? (
             <div className="flex items-center gap-2 ml-1">
               <span className="hidden sm:inline text-xs text-muted-foreground">{email}</span>
@@ -74,3 +86,4 @@ export function SiteHeader() {
     </header>
   );
 }
+
