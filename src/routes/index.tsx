@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MOCK_TESTS, UNITS, QUESTIONS } from "@/lib/questions";
+import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
