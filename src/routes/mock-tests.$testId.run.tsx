@@ -355,9 +355,23 @@ function RunTest() {
   }
 
   const q = questions[currentIdx];
-  const mins = Math.floor(remaining / 60);
+  const totalSec = test.durationSec;
+  const hrs = Math.floor(remaining / 3600);
+  const mins = Math.floor((remaining % 3600) / 60);
   const secs = remaining % 60;
-  const lowTime = remaining <= 30;
+  const criticalTime = remaining <= 60;
+  const lowTime = remaining <= 300; // 5 min warning
+  const elapsedPct = totalSec > 0 ? Math.min(100, ((totalSec - remaining) / totalSec) * 100) : 0;
+  const timeColor = criticalTime
+    ? "text-red-500"
+    : lowTime
+      ? "text-amber-500"
+      : "text-foreground";
+  const barColor = criticalTime
+    ? "bg-red-500"
+    : lowTime
+      ? "bg-amber-500"
+      : "bg-accent";
   const currentCode = codes[q.id] ?? q.starterCode;
 
   return (
@@ -383,12 +397,27 @@ function RunTest() {
             <p className="text-xs uppercase tracking-widest text-accent font-semibold">Mock Test · PY Kidda</p>
             <p className="font-semibold leading-tight">{test.name}</p>
           </div>
-          <div className={`text-right ${lowTime ? "text-red-500 animate-pulse" : "text-muted-foreground"}`}>
-            <p className="text-xs uppercase tracking-widest font-semibold">Time Left</p>
-            <p className="font-mono text-lg font-bold leading-tight">
+          <div
+            className={`text-right ${timeColor} ${criticalTime ? "animate-pulse" : ""}`}
+            role="timer"
+            aria-live={criticalTime ? "assertive" : "polite"}
+            aria-label={`Time remaining: ${hrs} hours ${mins} minutes ${secs} seconds`}
+          >
+            <p className="text-[10px] uppercase tracking-widest font-semibold opacity-80">
+              {criticalTime ? "⏰ Time Almost Up!" : lowTime ? "⚠ Time Running Out" : "Time Left"}
+            </p>
+            <p className="font-mono text-2xl font-bold leading-tight tabular-nums">
+              {hrs > 0 && `${String(hrs).padStart(2, "0")}:`}
               {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
             </p>
           </div>
+        </div>
+        {/* Progress bar showing elapsed time */}
+        <div className="h-1 w-full bg-border/40 overflow-hidden" aria-hidden="true">
+          <div
+            className={`h-full ${barColor} transition-all duration-1000 ease-linear`}
+            style={{ width: `${elapsedPct}%` }}
+          />
         </div>
       </header>
 
