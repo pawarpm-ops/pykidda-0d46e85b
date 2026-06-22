@@ -1,8 +1,11 @@
 // Local progress tracker. Stores attempts in localStorage keyed per user (or guest).
+// Also mirrors writes to Lovable Cloud (mock_results / practice_attempts) so
+// admins/teachers can see cross-student progress.
 // Powers the /analytics dashboard.
 
 import type { AttemptResult } from "./test-session";
 import { QUESTIONS } from "./questions";
+import { supabase } from "@/integrations/supabase/client";
 
 export type PracticeAttempt = {
   questionId: string;
