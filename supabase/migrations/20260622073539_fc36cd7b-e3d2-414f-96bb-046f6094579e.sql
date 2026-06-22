@@ -1,0 +1,1 @@
+ALTER TABLE public.announcements REPLICA IDENTITY FULL; ALTER PUBLICATION supabase_realtime ADD TABLE public.announcements;
