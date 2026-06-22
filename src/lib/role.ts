@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const ADMIN_EMAIL = "siddhustudyhard@gmail.com";
+
 export function useIsAdmin() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   useEffect(() => {
@@ -11,6 +13,11 @@ export function useIsAdmin() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
         if (!cancelled) setIsAdmin(false);
+        return;
+      }
+      // Fast client-side fallback for the hardcoded admin email
+      if (u.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        if (!cancelled) setIsAdmin(true);
         return;
       }
       const { data, error } = await supabase
