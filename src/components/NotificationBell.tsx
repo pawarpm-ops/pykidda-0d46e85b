@@ -41,10 +41,31 @@ export function NotificationBell() {
   if (!userId) return null;
   const unread = items.filter((i) => !readIds.has(i.id));
 
+  async function handleToggle() {
+    const next = !open;
+    setOpen(next);
+    // When opening, mark every currently-unseen announcement as read
+    // so the badge clears and stays cleared after refresh.
+    if (next && userId && unread.length > 0) {
+      const unreadIds = unread.map((i) => i.id);
+      // Optimistic update so badge disappears immediately
+      setReadIds((prev) => {
+        const nextSet = new Set(prev);
+        for (const id of unreadIds) nextSet.add(id);
+        return nextSet;
+      });
+      try {
+        await markAllRead(userId, unreadIds);
+      } catch {
+        // ignore — next refresh will reconcile
+      }
+    }
+  }
+
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
         className="relative rounded-md border border-border bg-background px-2.5 py-1.5 hover:border-accent transition"
         aria-label="Notifications"
       >
