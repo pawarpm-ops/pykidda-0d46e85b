@@ -26,8 +26,11 @@ const Output = z.object({
 });
 
 export const explainAndFix = createServerFn({ method: "POST" })
+export const explainAndFix = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data }) => {
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
