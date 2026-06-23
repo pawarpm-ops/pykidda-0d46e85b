@@ -201,7 +201,7 @@ function AdminPage() {
       if (cur) cur.practiceSolved = set.size;
     }
     return Array.from(map.values()).sort((a, b) => b.avgPct - a.avgPct);
-  }, [mocks, practice, profiles]);
+  }, [mocks, practice, profiles, studentIds]);
 
   if (isAdmin === null || loading) {
     return (
