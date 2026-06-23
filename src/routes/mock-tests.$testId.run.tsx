@@ -473,9 +473,12 @@ function RunTest() {
               {criticalTime ? "⏰ Time Almost Up!" : lowTime ? "⚠ Time Running Out" : "Time Left"}
             </p>
             <p className="font-mono text-2xl font-bold leading-tight tabular-nums">
-              {hrs > 0 && `${String(hrs).padStart(2, "0")}:`}
-              {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+              {String(hrs).padStart(2, "0")}:{String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
             </p>
+            <p className="text-[10px] uppercase tracking-wider opacity-70 mt-0.5">
+              {hrs}h {mins}m {secs}s left
+            </p>
+
           </div>
         </div>
         {/* Progress bar showing elapsed time */}
