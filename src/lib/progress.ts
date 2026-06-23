@@ -7,6 +7,7 @@ import type { AttemptResult } from "./test-session";
 import { QUESTIONS } from "./questions";
 import { supabase } from "@/integrations/supabase/client";
 import { submitMockResult } from "./mock-results.functions";
+import { submitPracticeAttempt } from "./practice-attempts.functions";
 
 export type PracticeAttempt = {
   questionId: string;
