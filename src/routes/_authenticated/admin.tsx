@@ -113,6 +113,7 @@ function AdminPage() {
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, { display_name: string | null }>>({});
+  const [studentIds, setStudentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorId, setAuthorId] = useState<string | null>(null);
 
@@ -124,22 +125,36 @@ function AdminPage() {
       const { data: u } = await supabase.auth.getUser();
       setAuthorId(u.user?.id ?? null);
 
-      const [m, p, pr] = await Promise.all([
+      const [m, p, pr, sr] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
         supabase.from("practice_attempts").select("*").order("attempted_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id, display_name"),
+        supabase.from("user_roles").select("user_id").eq("role", "student"),
       ]);
       setMocks((m.data ?? []) as MockRow[]);
       setPractice((p.data ?? []) as PracticeRow[]);
       const pmap: Record<string, { display_name: string | null }> = {};
       for (const row of pr.data ?? []) pmap[row.id] = { display_name: row.display_name };
       setProfiles(pmap);
+      setStudentIds(((sr.data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
       setLoading(false);
     })();
   }, [isAdmin]);
 
   const students = useMemo<StudentRow[]>(() => {
     const map = new Map<string, StudentRow>();
+    for (const uid of studentIds) {
+      map.set(uid, {
+        user_id: uid,
+        name: profiles[uid]?.display_name || uid.slice(0, 8),
+        mocks: 0,
+        bestPct: 0,
+        avgPct: 0,
+        practiceAttempts: 0,
+        practiceSolved: 0,
+        violations: 0,
+      });
+    }
     for (const m of mocks) {
       const cur = map.get(m.user_id) ?? {
         user_id: m.user_id,
@@ -186,7 +201,7 @@ function AdminPage() {
       if (cur) cur.practiceSolved = set.size;
     }
     return Array.from(map.values()).sort((a, b) => b.avgPct - a.avgPct);
-  }, [mocks, practice, profiles]);
+  }, [mocks, practice, profiles, studentIds]);
 
   if (isAdmin === null || loading) {
     return (
