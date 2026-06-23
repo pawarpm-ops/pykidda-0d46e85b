@@ -117,7 +117,8 @@ function AdminPage() {
   const [authorId, setAuthorId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAdmin !== true) return;
+    if (isAdmin === null) return;
+    if (isAdmin === false) { setLoading(false); return; }
     (async () => {
       setLoading(true);
       const { data: u } = await supabase.auth.getUser();
