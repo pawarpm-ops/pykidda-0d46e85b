@@ -260,6 +260,46 @@ function RunTest() {
     const onKey = (e: KeyboardEvent) => {
       if (!testActiveRef.current || submittedRef.current) return;
 
+      // Block PrintScreen / Screenshot attempts — clear clipboard and warn
+      if (e.key === "PrintScreen" || e.code === "PrintScreen") {
+        e.preventDefault();
+        e.stopPropagation();
+        try { navigator.clipboard?.writeText(""); } catch { /* ignore */ }
+        autoSubmit("Screenshot attempt detected (PrintScreen)");
+        return;
+      }
+
+      // Block Snipping Tool shortcut on Windows: Win+Shift+S (best-effort)
+      if (e.shiftKey && (e.metaKey || e.getModifierState?.("Meta")) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Snipping Tool shortcut detected");
+        return;
+      }
+      // Block macOS screenshot shortcuts: Cmd+Shift+3/4/5
+      if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Screenshot shortcut detected");
+        return;
+      }
+
+      // Block clipboard / print / save / view-source / devtools shortcuts
+      const lower = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "s", "u"].includes(lower)) {
+        // allow our own Ctrl+S (submit) shortcut? we use Alt+S, so block Ctrl+S
+        if (lower === "enter") return;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      // Block F12, Ctrl+Shift+I/J/C (devtools)
+      if (e.key === "F12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(lower))) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
       // Esc → auto-submit violation (primary detector is fullscreen, this is backup)
       if (e.key === "Escape") {
         e.preventDefault();
@@ -298,6 +338,20 @@ function RunTest() {
         if (k === "h") { e.preventDefault(); setShowHelp((v) => !v); return; }
       }
     };
+
+    // Block clipboard operations and printing
+    const blockClipboard = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        const ce = e as ClipboardEvent;
+        ce.clipboardData?.setData("text/plain", "");
+      } catch { /* ignore */ }
+    };
+    const onBeforePrint = () => {
+      autoSubmit("Print attempt detected");
+    };
+
 
     document.addEventListener("fullscreenchange", onFsChange);
     document.addEventListener("webkitfullscreenchange", onFsChange);
