@@ -113,6 +113,7 @@ function AdminPage() {
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, { display_name: string | null }>>({});
+  const [studentIds, setStudentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorId, setAuthorId] = useState<string | null>(null);
 
