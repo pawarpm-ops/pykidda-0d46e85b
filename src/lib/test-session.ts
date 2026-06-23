@@ -28,6 +28,7 @@ export type AttemptResult = {
 
 const KEY = "pykidda:last-result";
 const STARTED_KEY = "pykidda:started-tests";
+const STARTED_AT_KEY = "pykidda:started-tests-at";
 const NAME_KEY = "pykidda:student-name";
 
 export function saveResult(r: AttemptResult) {
@@ -40,21 +41,35 @@ export function loadResult(): AttemptResult | null {
   return raw ? (JSON.parse(raw) as AttemptResult) : null;
 }
 
-export function markTestStarted(testId: string) {
+export function markTestStarted(testId: string, startedAt = Date.now()) {
   if (typeof window === "undefined") return;
   const set = new Set<string>(JSON.parse(sessionStorage.getItem(STARTED_KEY) || "[]"));
   set.add(testId);
   sessionStorage.setItem(STARTED_KEY, JSON.stringify([...set]));
+
+  const startedTimes = JSON.parse(sessionStorage.getItem(STARTED_AT_KEY) || "{}") as Record<string, number>;
+  startedTimes[testId] = startedAt;
+  sessionStorage.setItem(STARTED_AT_KEY, JSON.stringify(startedTimes));
 }
 export function isTestStarted(testId: string): boolean {
   if (typeof window === "undefined") return false;
   const set: string[] = JSON.parse(sessionStorage.getItem(STARTED_KEY) || "[]");
   return set.includes(testId);
 }
+export function getTestStartedAt(testId: string): number | null {
+  if (typeof window === "undefined") return null;
+  const startedTimes = JSON.parse(sessionStorage.getItem(STARTED_AT_KEY) || "{}") as Record<string, number>;
+  const startedAt = startedTimes[testId];
+  return Number.isFinite(startedAt) ? startedAt : null;
+}
 export function clearTestStarted(testId: string) {
   if (typeof window === "undefined") return;
   const set: string[] = JSON.parse(sessionStorage.getItem(STARTED_KEY) || "[]");
   sessionStorage.setItem(STARTED_KEY, JSON.stringify(set.filter((id) => id !== testId)));
+
+  const startedTimes = JSON.parse(sessionStorage.getItem(STARTED_AT_KEY) || "{}") as Record<string, number>;
+  delete startedTimes[testId];
+  sessionStorage.setItem(STARTED_AT_KEY, JSON.stringify(startedTimes));
 }
 
 export function getStudentName(): string {
