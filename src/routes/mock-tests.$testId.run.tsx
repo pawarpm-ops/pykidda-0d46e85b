@@ -401,6 +401,11 @@ function RunTest() {
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
       window.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("copy", blockClipboard, true);
+      document.removeEventListener("cut", blockClipboard, true);
+      document.removeEventListener("paste", blockClipboard, true);
+      window.removeEventListener("beforeprint", onBeforePrint);
+      document.body.classList.remove("secure-test-printing-blocked");
       if (container) {
         for (const evt of blockedMouseEvents) {
           container.removeEventListener(evt, mouseListener, true);
@@ -408,6 +413,7 @@ function RunTest() {
       }
     };
   }, [test, allowed, submit, questions, focusEditor]);
+
 
   if (allowed === false) return <Navigate to="/mock-tests/$testId/warning" params={{ testId }} />;
   if (!test || allowed === null) {
