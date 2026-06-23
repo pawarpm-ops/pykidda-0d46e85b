@@ -290,8 +290,8 @@ function AdminPage() {
             <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">Teacher dashboard</h1>
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
-          <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm">
-            {(["overview", "students", "announce"] as const).map((t) => (
+          <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
+            {(["overview", "students", "activity", "announce"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -299,10 +299,11 @@ function AdminPage() {
                   tab === t ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-secondary"
                 }`}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : "Announcements"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : "Announcements"}
               </button>
             ))}
           </div>
+
         </div>
 
         {tab === "overview" && (
