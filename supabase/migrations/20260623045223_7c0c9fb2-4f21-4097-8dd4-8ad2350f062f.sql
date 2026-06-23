@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Students insert own practice" ON public.practice_attempts;

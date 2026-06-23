@@ -7,6 +7,7 @@ import type { AttemptResult } from "./test-session";
 import { QUESTIONS } from "./questions";
 import { supabase } from "@/integrations/supabase/client";
 import { submitMockResult } from "./mock-results.functions";
+import { submitPracticeAttempt } from "./practice-attempts.functions";
 
 export type PracticeAttempt = {
   questionId: string;
@@ -85,14 +86,9 @@ export function recordPracticeAttempt(
 
   // Mirror to DB so admins can see cross-student progress (best-effort).
   if (userId) {
-    void supabase.from("practice_attempts").insert({
-      user_id: userId,
-      question_id: questionId,
-      unit: q.unit,
-      passed,
-      total,
-      solved,
-    });
+    void submitPracticeAttempt({
+      data: { questionId, unit: q.unit, passed, total, solved },
+    }).catch((e) => console.error("submitPracticeAttempt failed", e));
   }
 }
 
