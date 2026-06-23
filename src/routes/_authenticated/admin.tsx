@@ -112,13 +112,15 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function AdminPage() {
   const isAdmin = useIsAdmin();
-  const [tab, setTab] = useState<"overview" | "students" | "announce">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, { display_name: string | null }>>({});
   const [studentIds, setStudentIds] = useState<string[]>([]);
+  const [authInfo, setAuthInfo] = useState<StudentAuthInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorId, setAuthorId] = useState<string | null>(null);
+  const fetchAuthInfo = useServerFn(listStudentAuthInfo);
 
   useEffect(() => {
     if (isAdmin === null) return;
@@ -128,11 +130,12 @@ function AdminPage() {
       const { data: u } = await supabase.auth.getUser();
       setAuthorId(u.user?.id ?? null);
 
-      const [m, p, pr, sr] = await Promise.all([
+      const [m, p, pr, sr, ai] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
         supabase.from("practice_attempts").select("*").order("attempted_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id, display_name"),
         supabase.from("user_roles").select("user_id").eq("role", "student"),
+        fetchAuthInfo().catch((e) => { console.error("auth info", e); return [] as StudentAuthInfo[]; }),
       ]);
       setMocks((m.data ?? []) as MockRow[]);
       setPractice((p.data ?? []) as PracticeRow[]);
@@ -140,9 +143,11 @@ function AdminPage() {
       for (const row of pr.data ?? []) pmap[row.id] = { display_name: row.display_name };
       setProfiles(pmap);
       setStudentIds(((sr.data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
+      setAuthInfo(ai);
       setLoading(false);
     })();
-  }, [isAdmin]);
+  }, [isAdmin, fetchAuthInfo]);
+
 
   const students = useMemo<StudentRow[]>(() => {
     const map = new Map<string, StudentRow>();
