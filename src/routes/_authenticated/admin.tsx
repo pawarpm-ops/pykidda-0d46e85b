@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/lib/role";
@@ -22,6 +23,8 @@ import {
   listAnnouncements,
   type Announcement,
 } from "@/lib/notifications";
+import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -109,13 +112,15 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function AdminPage() {
   const isAdmin = useIsAdmin();
-  const [tab, setTab] = useState<"overview" | "students" | "announce">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, { display_name: string | null }>>({});
   const [studentIds, setStudentIds] = useState<string[]>([]);
+  const [authInfo, setAuthInfo] = useState<StudentAuthInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorId, setAuthorId] = useState<string | null>(null);
+  const fetchAuthInfo = useServerFn(listStudentAuthInfo);
 
   useEffect(() => {
     if (isAdmin === null) return;
@@ -125,11 +130,12 @@ function AdminPage() {
       const { data: u } = await supabase.auth.getUser();
       setAuthorId(u.user?.id ?? null);
 
-      const [m, p, pr, sr] = await Promise.all([
+      const [m, p, pr, sr, ai] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
         supabase.from("practice_attempts").select("*").order("attempted_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id, display_name"),
         supabase.from("user_roles").select("user_id").eq("role", "student"),
+        fetchAuthInfo().catch((e) => { console.error("auth info", e); return [] as StudentAuthInfo[]; }),
       ]);
       setMocks((m.data ?? []) as MockRow[]);
       setPractice((p.data ?? []) as PracticeRow[]);
@@ -137,9 +143,11 @@ function AdminPage() {
       for (const row of pr.data ?? []) pmap[row.id] = { display_name: row.display_name };
       setProfiles(pmap);
       setStudentIds(((sr.data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
+      setAuthInfo(ai);
       setLoading(false);
     })();
-  }, [isAdmin]);
+  }, [isAdmin, fetchAuthInfo]);
+
 
   const students = useMemo<StudentRow[]>(() => {
     const map = new Map<string, StudentRow>();
@@ -282,8 +290,8 @@ function AdminPage() {
             <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">Teacher dashboard</h1>
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
-          <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm">
-            {(["overview", "students", "announce"] as const).map((t) => (
+          <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
+            {(["overview", "students", "activity", "announce"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -291,10 +299,11 @@ function AdminPage() {
                   tab === t ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-secondary"
                 }`}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : "Announcements"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : "Announcements"}
               </button>
             ))}
           </div>
+
         </div>
 
         {tab === "overview" && (
@@ -401,22 +410,55 @@ function AdminPage() {
         )}
 
         {tab === "students" && (
-          <StudentsTab students={students} mocks={mocks} practice={practice} />
+          <StudentsTab students={students} mocks={mocks} practice={practice} authInfo={authInfo} />
+        )}
+
+        {tab === "activity" && (
+          <ActivityTab authInfo={authInfo} students={students} profiles={profiles} />
         )}
 
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
         )}
+
       </main>
     </div>
   );
 }
 
-function StudentsTab({ students, mocks, practice }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[] }) {
+function fmtDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleString(); } catch { return iso; }
+}
+
+function fmtRelative(iso: string | null | undefined) {
+  if (!iso) return "Never";
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return "Never";
+  const diff = Date.now() - t;
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function StudentsTab({ students, mocks, practice, authInfo }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[]; authInfo: StudentAuthInfo[] }) {
   const [selected, setSelected] = useState<string | null>(null);
   const selStudent = students.find((s) => s.user_id === selected);
   const selMocks = mocks.filter((m) => m.user_id === selected);
   const selPractice = practice.filter((p) => p.user_id === selected);
+  const authMap = useMemo(() => {
+    const m = new Map<string, StudentAuthInfo>();
+    for (const a of authInfo) m.set(a.user_id, a);
+    return m;
+  }, [authInfo]);
+  const selAuth = selected ? authMap.get(selected) : undefined;
+
 
   return (
     <section className="mt-6 grid gap-6 lg:grid-cols-[360px_1fr]">
@@ -473,6 +515,62 @@ function StudentsTab({ students, mocks, practice }: { students: StudentRow[]; mo
                 </div>
               </div>
             </div>
+
+            <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Account & activity</h3>
+            {!selAuth ? (
+              <p className="mt-2 text-sm text-muted-foreground">No account details available.</p>
+            ) : (
+              <dl className="mt-2 grid gap-2 sm:grid-cols-2 text-sm">
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Email</dt>
+                  <dd className="font-medium break-all">{selAuth.email ?? "—"}</dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Sign-in providers</dt>
+                  <dd className="font-medium">{selAuth.providers.join(", ") || "—"}</dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Account created</dt>
+                  <dd className="font-medium">{fmtDate(selAuth.created_at)}</dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Email confirmed</dt>
+                  <dd className="font-medium">{fmtDate(selAuth.email_confirmed_at)}</dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Last sign-in</dt>
+                  <dd className="font-medium">
+                    {fmtDate(selAuth.last_sign_in_at)}
+                    <span className="ml-2 text-xs text-muted-foreground">({fmtRelative(selAuth.last_sign_in_at)})</span>
+                  </dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Last activity (token refresh / logout)</dt>
+                  <dd className="font-medium">
+                    {fmtDate(selAuth.updated_at)}
+                    <span className="ml-2 text-xs text-muted-foreground">({fmtRelative(selAuth.updated_at)})</span>
+                  </dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Status</dt>
+                  <dd className="font-medium">
+                    {selAuth.is_banned ? (
+                      <span className="text-destructive">Banned</span>
+                    ) : selAuth.email_confirmed_at ? (
+                      <span className="text-[oklch(0.4_0.16_145)]">Active</span>
+                    ) : (
+                      <span className="text-[oklch(0.6_0.16_85)]">Pending verification</span>
+                    )}
+                  </dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Phone</dt>
+                  <dd className="font-medium">{selAuth.phone || "—"}</dd>
+                </div>
+              </dl>
+            )}
+
+
 
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Mock tests</h3>
             {selMocks.length === 0 ? (
@@ -539,7 +637,150 @@ function StudentsTab({ students, mocks, practice }: { students: StudentRow[]; mo
   );
 }
 
+function ActivityTab({
+  authInfo,
+  students,
+  profiles,
+}: {
+  authInfo: StudentAuthInfo[];
+  students: StudentRow[];
+  profiles: Record<string, { display_name: string | null }>;
+}) {
+  const [sort, setSort] = useState<"last_sign_in" | "created" | "name">("last_sign_in");
+  const [filter, setFilter] = useState("");
+
+  const studentIdSet = useMemo(() => new Set(students.map((s) => s.user_id)), [students]);
+  const rows = useMemo(() => {
+    const enriched = authInfo
+      .filter((a) => studentIdSet.size === 0 || studentIdSet.has(a.user_id))
+      .map((a) => ({
+        ...a,
+        name: profiles[a.user_id]?.display_name || a.email || a.user_id.slice(0, 8),
+      }));
+    const q = filter.trim().toLowerCase();
+    const filtered = q
+      ? enriched.filter(
+          (r) =>
+            r.name.toLowerCase().includes(q) ||
+            (r.email ?? "").toLowerCase().includes(q) ||
+            r.user_id.toLowerCase().includes(q),
+        )
+      : enriched;
+    return [...filtered].sort((a, b) => {
+      if (sort === "name") return a.name.localeCompare(b.name);
+      const aKey = sort === "created" ? a.created_at : a.last_sign_in_at;
+      const bKey = sort === "created" ? b.created_at : b.last_sign_in_at;
+      const at = aKey ? new Date(aKey).getTime() : 0;
+      const bt = bKey ? new Date(bKey).getTime() : 0;
+      return bt - at;
+    });
+  }, [authInfo, studentIdSet, profiles, filter, sort]);
+
+  const now = Date.now();
+  const active24h = rows.filter((r) => r.last_sign_in_at && now - new Date(r.last_sign_in_at).getTime() < 24 * 3600 * 1000).length;
+  const active7d = rows.filter((r) => r.last_sign_in_at && now - new Date(r.last_sign_in_at).getTime() < 7 * 24 * 3600 * 1000).length;
+  const neverSignedIn = rows.filter((r) => !r.last_sign_in_at).length;
+  const newWeek = rows.filter((r) => r.created_at && now - new Date(r.created_at).getTime() < 7 * 24 * 3600 * 1000).length;
+
+  return (
+    <section className="mt-6 space-y-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Total accounts" value={rows.length} />
+        <Stat label="Active in 24h" value={active24h} tone="good" />
+        <Stat label="Active in 7 days" value={active7d} tone="good" />
+        <Stat label="New in 7 days" value={newWeek} tone="warn" />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 className="text-base font-semibold">Student account activity</h2>
+            <p className="text-xs text-muted-foreground">
+              Created, last sign-in, and last activity (token refresh / logout) timestamps.
+              {neverSignedIn > 0 && ` ${neverSignedIn} have never signed in.`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="search"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="Search name or email…"
+              className="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+            >
+              <option value="last_sign_in">Sort: Last sign-in</option>
+              <option value="created">Sort: Newest account</option>
+              <option value="name">Sort: Name</option>
+            </select>
+          </div>
+        </div>
+
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No accounts found.</p>
+        ) : (
+          <div className="overflow-auto max-h-[640px]">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-muted-foreground border-b border-border sticky top-0 bg-card">
+                <tr>
+                  <th className="py-2 pr-3">Student</th>
+                  <th className="py-2 pr-3">Email</th>
+                  <th className="py-2 pr-3">Provider</th>
+                  <th className="py-2 pr-3">Created</th>
+                  <th className="py-2 pr-3">Last sign-in</th>
+                  <th className="py-2 pr-3">Last activity</th>
+                  <th className="py-2 pr-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {rows.map((r) => (
+                  <tr key={r.user_id}>
+                    <td className="py-2 pr-3 font-medium">{r.name}</td>
+                    <td className="py-2 pr-3 text-xs text-muted-foreground break-all">{r.email ?? "—"}</td>
+                    <td className="py-2 pr-3 text-xs">{r.providers.join(", ") || "—"}</td>
+                    <td className="py-2 pr-3 text-xs">
+                      <div>{fmtDate(r.created_at)}</div>
+                      <div className="text-muted-foreground">{fmtRelative(r.created_at)}</div>
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      <div>{fmtDate(r.last_sign_in_at)}</div>
+                      <div className="text-muted-foreground">{fmtRelative(r.last_sign_in_at)}</div>
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      <div>{fmtDate(r.updated_at)}</div>
+                      <div className="text-muted-foreground">{fmtRelative(r.updated_at)}</div>
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      {r.is_banned ? (
+                        <span className="text-destructive font-semibold">Banned</span>
+                      ) : !r.email_confirmed_at ? (
+                        <span className="text-[oklch(0.6_0.16_85)]">Unverified</span>
+                      ) : !r.last_sign_in_at ? (
+                        <span className="text-muted-foreground">Never signed in</span>
+                      ) : (
+                        <span className="text-[oklch(0.4_0.16_145)]">Active</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Note: Supabase doesn't store per-event login/logout logs in the public database. "Last activity" reflects the most recent session refresh or sign-out (whichever is later).
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function AnnounceTab({ authorId, students }: { authorId: string; students: StudentRow[] }) {
+
   const [list, setList] = useState<Announcement[]>([]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
