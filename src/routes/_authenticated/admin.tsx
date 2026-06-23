@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/lib/role";
@@ -22,6 +23,8 @@ import {
   listAnnouncements,
   type Announcement,
 } from "@/lib/notifications";
+import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
