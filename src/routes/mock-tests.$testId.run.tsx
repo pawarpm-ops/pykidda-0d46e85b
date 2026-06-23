@@ -32,15 +32,17 @@ type CodeMap = Record<string, string>;
 
 const SECURE_CSS = `
 .secure-keyboard-test, .secure-keyboard-test * { cursor: none !important; }
-.secure-keyboard-test { user-select: none; }
+.secure-keyboard-test { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .secure-keyboard-test button,
 .secure-keyboard-test label,
 .secure-keyboard-test .question-nav,
 .secure-keyboard-test .submit-button,
 .secure-keyboard-test .reset-button { pointer-events: none !important; }
 .secure-keyboard-test .code-editor { pointer-events: none !important; }
-.secure-keyboard-test .code-editor textarea { pointer-events: none !important; user-select: text; }
+.secure-keyboard-test .code-editor textarea { pointer-events: none !important; user-select: text; -webkit-user-select: text; }
+@media print { body.secure-test-printing-blocked * { display: none !important; visibility: hidden !important; } }
 `;
+
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
@@ -258,6 +260,46 @@ function RunTest() {
     const onKey = (e: KeyboardEvent) => {
       if (!testActiveRef.current || submittedRef.current) return;
 
+      // Block PrintScreen / Screenshot attempts — clear clipboard and warn
+      if (e.key === "PrintScreen" || e.code === "PrintScreen") {
+        e.preventDefault();
+        e.stopPropagation();
+        try { navigator.clipboard?.writeText(""); } catch { /* ignore */ }
+        autoSubmit("Screenshot attempt detected (PrintScreen)");
+        return;
+      }
+
+      // Block Snipping Tool shortcut on Windows: Win+Shift+S (best-effort)
+      if (e.shiftKey && (e.metaKey || e.getModifierState?.("Meta")) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Snipping Tool shortcut detected");
+        return;
+      }
+      // Block macOS screenshot shortcuts: Cmd+Shift+3/4/5
+      if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Screenshot shortcut detected");
+        return;
+      }
+
+      // Block clipboard / print / save / view-source / devtools shortcuts
+      const lower = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "s", "u"].includes(lower)) {
+        // allow our own Ctrl+S (submit) shortcut? we use Alt+S, so block Ctrl+S
+        if (lower === "enter") return;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      // Block F12, Ctrl+Shift+I/J/C (devtools)
+      if (e.key === "F12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(lower))) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
       // Esc → auto-submit violation (primary detector is fullscreen, this is backup)
       if (e.key === "Escape") {
         e.preventDefault();
@@ -297,6 +339,20 @@ function RunTest() {
       }
     };
 
+    // Block clipboard operations and printing
+    const blockClipboard = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        const ce = e as ClipboardEvent;
+        ce.clipboardData?.setData("text/plain", "");
+      } catch { /* ignore */ }
+    };
+    const onBeforePrint = () => {
+      autoSubmit("Print attempt detected");
+    };
+
+
     document.addEventListener("fullscreenchange", onFsChange);
     document.addEventListener("webkitfullscreenchange", onFsChange);
     document.addEventListener("mozfullscreenchange", onFsChange);
@@ -306,6 +362,12 @@ function RunTest() {
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("keydown", onKey, true);
+    document.addEventListener("copy", blockClipboard, true);
+    document.addEventListener("cut", blockClipboard, true);
+    document.addEventListener("paste", blockClipboard, true);
+    window.addEventListener("beforeprint", onBeforePrint);
+    document.body.classList.add("secure-test-printing-blocked");
+
 
     const container = containerRef.current;
     const mouseListener = (e: Event) => {
@@ -339,6 +401,11 @@ function RunTest() {
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
       window.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("copy", blockClipboard, true);
+      document.removeEventListener("cut", blockClipboard, true);
+      document.removeEventListener("paste", blockClipboard, true);
+      window.removeEventListener("beforeprint", onBeforePrint);
+      document.body.classList.remove("secure-test-printing-blocked");
       if (container) {
         for (const evt of blockedMouseEvents) {
           container.removeEventListener(evt, mouseListener, true);
@@ -346,6 +413,7 @@ function RunTest() {
       }
     };
   }, [test, allowed, submit, questions, focusEditor]);
+
 
   if (allowed === false) return <Navigate to="/mock-tests/$testId/warning" params={{ testId }} />;
   if (!test || allowed === null) {
