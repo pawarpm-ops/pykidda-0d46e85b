@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Students insert own mock results" ON public.mock_results;
