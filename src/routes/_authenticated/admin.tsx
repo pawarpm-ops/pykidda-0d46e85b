@@ -637,7 +637,150 @@ function StudentsTab({ students, mocks, practice, authInfo }: { students: Studen
   );
 }
 
+function ActivityTab({
+  authInfo,
+  students,
+  profiles,
+}: {
+  authInfo: StudentAuthInfo[];
+  students: StudentRow[];
+  profiles: Record<string, { display_name: string | null }>;
+}) {
+  const [sort, setSort] = useState<"last_sign_in" | "created" | "name">("last_sign_in");
+  const [filter, setFilter] = useState("");
+
+  const studentIdSet = useMemo(() => new Set(students.map((s) => s.user_id)), [students]);
+  const rows = useMemo(() => {
+    const enriched = authInfo
+      .filter((a) => studentIdSet.size === 0 || studentIdSet.has(a.user_id))
+      .map((a) => ({
+        ...a,
+        name: profiles[a.user_id]?.display_name || a.email || a.user_id.slice(0, 8),
+      }));
+    const q = filter.trim().toLowerCase();
+    const filtered = q
+      ? enriched.filter(
+          (r) =>
+            r.name.toLowerCase().includes(q) ||
+            (r.email ?? "").toLowerCase().includes(q) ||
+            r.user_id.toLowerCase().includes(q),
+        )
+      : enriched;
+    return [...filtered].sort((a, b) => {
+      if (sort === "name") return a.name.localeCompare(b.name);
+      const aKey = sort === "created" ? a.created_at : a.last_sign_in_at;
+      const bKey = sort === "created" ? b.created_at : b.last_sign_in_at;
+      const at = aKey ? new Date(aKey).getTime() : 0;
+      const bt = bKey ? new Date(bKey).getTime() : 0;
+      return bt - at;
+    });
+  }, [authInfo, studentIdSet, profiles, filter, sort]);
+
+  const now = Date.now();
+  const active24h = rows.filter((r) => r.last_sign_in_at && now - new Date(r.last_sign_in_at).getTime() < 24 * 3600 * 1000).length;
+  const active7d = rows.filter((r) => r.last_sign_in_at && now - new Date(r.last_sign_in_at).getTime() < 7 * 24 * 3600 * 1000).length;
+  const neverSignedIn = rows.filter((r) => !r.last_sign_in_at).length;
+  const newWeek = rows.filter((r) => r.created_at && now - new Date(r.created_at).getTime() < 7 * 24 * 3600 * 1000).length;
+
+  return (
+    <section className="mt-6 space-y-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Total accounts" value={rows.length} />
+        <Stat label="Active in 24h" value={active24h} tone="good" />
+        <Stat label="Active in 7 days" value={active7d} tone="good" />
+        <Stat label="New in 7 days" value={newWeek} tone="warn" />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 className="text-base font-semibold">Student account activity</h2>
+            <p className="text-xs text-muted-foreground">
+              Created, last sign-in, and last activity (token refresh / logout) timestamps.
+              {neverSignedIn > 0 && ` ${neverSignedIn} have never signed in.`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="search"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder="Search name or email…"
+              className="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+            >
+              <option value="last_sign_in">Sort: Last sign-in</option>
+              <option value="created">Sort: Newest account</option>
+              <option value="name">Sort: Name</option>
+            </select>
+          </div>
+        </div>
+
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No accounts found.</p>
+        ) : (
+          <div className="overflow-auto max-h-[640px]">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs text-muted-foreground border-b border-border sticky top-0 bg-card">
+                <tr>
+                  <th className="py-2 pr-3">Student</th>
+                  <th className="py-2 pr-3">Email</th>
+                  <th className="py-2 pr-3">Provider</th>
+                  <th className="py-2 pr-3">Created</th>
+                  <th className="py-2 pr-3">Last sign-in</th>
+                  <th className="py-2 pr-3">Last activity</th>
+                  <th className="py-2 pr-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {rows.map((r) => (
+                  <tr key={r.user_id}>
+                    <td className="py-2 pr-3 font-medium">{r.name}</td>
+                    <td className="py-2 pr-3 text-xs text-muted-foreground break-all">{r.email ?? "—"}</td>
+                    <td className="py-2 pr-3 text-xs">{r.providers.join(", ") || "—"}</td>
+                    <td className="py-2 pr-3 text-xs">
+                      <div>{fmtDate(r.created_at)}</div>
+                      <div className="text-muted-foreground">{fmtRelative(r.created_at)}</div>
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      <div>{fmtDate(r.last_sign_in_at)}</div>
+                      <div className="text-muted-foreground">{fmtRelative(r.last_sign_in_at)}</div>
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      <div>{fmtDate(r.updated_at)}</div>
+                      <div className="text-muted-foreground">{fmtRelative(r.updated_at)}</div>
+                    </td>
+                    <td className="py-2 pr-3 text-xs">
+                      {r.is_banned ? (
+                        <span className="text-destructive font-semibold">Banned</span>
+                      ) : !r.email_confirmed_at ? (
+                        <span className="text-[oklch(0.6_0.16_85)]">Unverified</span>
+                      ) : !r.last_sign_in_at ? (
+                        <span className="text-muted-foreground">Never signed in</span>
+                      ) : (
+                        <span className="text-[oklch(0.4_0.16_145)]">Active</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Note: Supabase doesn't store per-event login/logout logs in the public database. "Last activity" reflects the most recent session refresh or sign-out (whichever is later).
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function AnnounceTab({ authorId, students }: { authorId: string; students: StudentRow[] }) {
+
   const [list, setList] = useState<Announcement[]>([]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
