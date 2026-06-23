@@ -4,8 +4,10 @@ import { getMockTest, mockTestQuestions, type CodeQuestion } from "@/lib/questio
 import {
   clearTestStarted,
   getStudentName,
+  getTestStartedAt,
   gradeFor,
   isTestStarted,
+  markTestStarted,
   saveResult,
   type AttemptResult,
   type QuestionAttempt,
@@ -86,9 +88,12 @@ function RunTest() {
 
   useEffect(() => {
     if (!test) return;
-    startedAt.current = Date.now();
-    setRemaining(test.durationSec);
-  }, [test]);
+    const persistedStartedAt = getTestStartedAt(testId) ?? Date.now();
+    if (!getTestStartedAt(testId)) markTestStarted(testId, persistedStartedAt);
+    startedAt.current = persistedStartedAt;
+    const elapsed = Math.max(0, Math.floor((Date.now() - persistedStartedAt) / 1000));
+    setRemaining(Math.max(0, test.durationSec - elapsed));
+  }, [test, testId]);
 
   useEffect(() => {
     if (!test) return;
@@ -182,17 +187,22 @@ function RunTest() {
   // Timer
   useEffect(() => {
     if (!test || allowed !== true) return;
-    const id = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(id);
-          void submit("normal");
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
+    let timeoutId: number | undefined;
+    const tick = () => {
+      const elapsed = Math.max(0, Math.floor((Date.now() - startedAt.current) / 1000));
+      const nextRemaining = Math.max(0, test.durationSec - elapsed);
+      setRemaining(nextRemaining);
+      if (nextRemaining <= 0) {
+        void submit("normal");
+        return;
+      }
+      const msUntilNextSecond = 1000 - ((Date.now() - startedAt.current) % 1000);
+      timeoutId = window.setTimeout(tick, Math.max(100, msUntilNextSecond));
+    };
+    tick();
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
   }, [test, allowed, submit]);
 
   const focusEditor = useCallback(() => {
