@@ -115,21 +115,22 @@ export function recordMockResult(userId: string | null, r: AttemptResult) {
   write(userId, s);
 
   if (userId) {
-    void supabase.from("mock_results").insert({
-      user_id: userId,
-      test_id: r.testId,
-      test_name: r.testName,
-      student_name: r.studentName,
-      marks_obtained: r.marksObtained,
-      total_marks: r.totalMarks,
-      percentage: r.percentage,
-      grade: r.grade,
-      total_questions: r.totalQuestions,
-      time_taken_sec: r.timeTakenSec,
-      submission_type: r.submissionType,
-      violation_reason: r.violationReason ?? null,
-      submitted_at: new Date(r.submittedAt).toISOString(),
-    });
+    void submitMockResult({
+      data: {
+        testId: r.testId,
+        testName: r.testName,
+        studentName: r.studentName,
+        marksObtained: r.marksObtained,
+        totalMarks: r.totalMarks,
+        percentage: r.percentage,
+        grade: r.grade,
+        totalQuestions: r.totalQuestions,
+        timeTakenSec: r.timeTakenSec,
+        submissionType: r.submissionType,
+        violationReason: r.violationReason ?? null,
+        submittedAt: r.submittedAt,
+      },
+    }).catch((e) => console.error("submitMockResult failed", e));
   }
 }
 
