@@ -87,13 +87,14 @@ function RunTest() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!test) return;
-    const persistedStartedAt = getTestStartedAt(testId) ?? Date.now();
-    if (!getTestStartedAt(testId)) markTestStarted(testId, persistedStartedAt);
+    if (!test || allowed !== true) return;
+    const existingStartedAt = getTestStartedAt(testId);
+    const persistedStartedAt = existingStartedAt ?? Date.now();
+    if (!existingStartedAt) markTestStarted(testId, persistedStartedAt);
     startedAt.current = persistedStartedAt;
     const elapsed = Math.max(0, Math.floor((Date.now() - persistedStartedAt) / 1000));
     setRemaining(Math.max(0, test.durationSec - elapsed));
-  }, [test, testId]);
+  }, [test, testId, allowed]);
 
   useEffect(() => {
     if (!test) return;
