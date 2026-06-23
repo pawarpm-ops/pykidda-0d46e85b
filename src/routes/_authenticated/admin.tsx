@@ -143,6 +143,18 @@ function AdminPage() {
 
   const students = useMemo<StudentRow[]>(() => {
     const map = new Map<string, StudentRow>();
+    for (const uid of studentIds) {
+      map.set(uid, {
+        user_id: uid,
+        name: profiles[uid]?.display_name || uid.slice(0, 8),
+        mocks: 0,
+        bestPct: 0,
+        avgPct: 0,
+        practiceAttempts: 0,
+        practiceSolved: 0,
+        violations: 0,
+      });
+    }
     for (const m of mocks) {
       const cur = map.get(m.user_id) ?? {
         user_id: m.user_id,
