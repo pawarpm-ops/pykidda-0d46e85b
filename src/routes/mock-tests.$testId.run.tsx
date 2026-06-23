@@ -1,5 +1,5 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getMockTest, mockTestQuestions, type CodeQuestion } from "@/lib/questions";
 import {
   clearTestStarted,
@@ -56,7 +56,7 @@ function RunTest() {
   const { testId } = Route.useParams();
   const navigate = useNavigate();
   const test = getMockTest(testId);
-  const questions: CodeQuestion[] = test ? mockTestQuestions(test) : [];
+  const questions: CodeQuestion[] = useMemo(() => (test ? mockTestQuestions(test) : []), [test]);
 
   const [allowed, setAllowed] = useState<boolean | null>(null);
   useEffect(() => {
@@ -86,10 +86,22 @@ function RunTest() {
 
   useEffect(() => {
     if (!test) return;
+    startedAt.current = Date.now();
+    setRemaining(test.durationSec);
+  }, [test]);
+
+  useEffect(() => {
+    if (!test) return;
     setCodes((c) => {
       const next = { ...c };
-      for (const q of questions) if (!(q.id in next)) next[q.id] = q.starterCode;
-      return next;
+      let changed = false;
+      for (const q of questions) {
+        if (!(q.id in next)) {
+          next[q.id] = q.starterCode;
+          changed = true;
+        }
+      }
+      return changed ? next : c;
     });
   }, [test, questions]);
 
