@@ -338,7 +338,6 @@ function RunTest() {
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
-      document.removeEventListener("keydown", onKey, true);
       window.removeEventListener("keydown", onKey, true);
       if (container) {
         for (const evt of blockedMouseEvents) {
