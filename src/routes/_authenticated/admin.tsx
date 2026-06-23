@@ -426,11 +426,39 @@ function AdminPage() {
   );
 }
 
-function StudentsTab({ students, mocks, practice }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[] }) {
+function fmtDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleString(); } catch { return iso; }
+}
+
+function fmtRelative(iso: string | null | undefined) {
+  if (!iso) return "Never";
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return "Never";
+  const diff = Date.now() - t;
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function StudentsTab({ students, mocks, practice, authInfo }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[]; authInfo: StudentAuthInfo[] }) {
   const [selected, setSelected] = useState<string | null>(null);
   const selStudent = students.find((s) => s.user_id === selected);
   const selMocks = mocks.filter((m) => m.user_id === selected);
   const selPractice = practice.filter((p) => p.user_id === selected);
+  const authMap = useMemo(() => {
+    const m = new Map<string, StudentAuthInfo>();
+    for (const a of authInfo) m.set(a.user_id, a);
+    return m;
+  }, [authInfo]);
+  const selAuth = selected ? authMap.get(selected) : undefined;
+
 
   return (
     <section className="mt-6 grid gap-6 lg:grid-cols-[360px_1fr]">
