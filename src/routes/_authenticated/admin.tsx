@@ -410,12 +410,17 @@ function AdminPage() {
         )}
 
         {tab === "students" && (
-          <StudentsTab students={students} mocks={mocks} practice={practice} />
+          <StudentsTab students={students} mocks={mocks} practice={practice} authInfo={authInfo} />
+        )}
+
+        {tab === "activity" && (
+          <ActivityTab authInfo={authInfo} students={students} profiles={profiles} />
         )}
 
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
         )}
+
       </main>
     </div>
   );
