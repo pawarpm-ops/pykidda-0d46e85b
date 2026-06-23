@@ -124,16 +124,18 @@ function AdminPage() {
       const { data: u } = await supabase.auth.getUser();
       setAuthorId(u.user?.id ?? null);
 
-      const [m, p, pr] = await Promise.all([
+      const [m, p, pr, sr] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
         supabase.from("practice_attempts").select("*").order("attempted_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id, display_name"),
+        supabase.from("user_roles").select("user_id").eq("role", "student"),
       ]);
       setMocks((m.data ?? []) as MockRow[]);
       setPractice((p.data ?? []) as PracticeRow[]);
       const pmap: Record<string, { display_name: string | null }> = {};
       for (const row of pr.data ?? []) pmap[row.id] = { display_name: row.display_name };
       setProfiles(pmap);
+      setStudentIds(((sr.data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
       setLoading(false);
     })();
   }, [isAdmin]);
