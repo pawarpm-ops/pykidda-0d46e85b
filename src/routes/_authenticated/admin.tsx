@@ -516,6 +516,62 @@ function StudentsTab({ students, mocks, practice, authInfo }: { students: Studen
               </div>
             </div>
 
+            <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Account & activity</h3>
+            {!selAuth ? (
+              <p className="mt-2 text-sm text-muted-foreground">No account details available.</p>
+            ) : (
+              <dl className="mt-2 grid gap-2 sm:grid-cols-2 text-sm">
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Email</dt>
+                  <dd className="font-medium break-all">{selAuth.email ?? "—"}</dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Sign-in providers</dt>
+                  <dd className="font-medium">{selAuth.providers.join(", ") || "—"}</dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Account created</dt>
+                  <dd className="font-medium">{fmtDate(selAuth.created_at)}</dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Email confirmed</dt>
+                  <dd className="font-medium">{fmtDate(selAuth.email_confirmed_at)}</dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Last sign-in</dt>
+                  <dd className="font-medium">
+                    {fmtDate(selAuth.last_sign_in_at)}
+                    <span className="ml-2 text-xs text-muted-foreground">({fmtRelative(selAuth.last_sign_in_at)})</span>
+                  </dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Last activity (token refresh / logout)</dt>
+                  <dd className="font-medium">
+                    {fmtDate(selAuth.updated_at)}
+                    <span className="ml-2 text-xs text-muted-foreground">({fmtRelative(selAuth.updated_at)})</span>
+                  </dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Status</dt>
+                  <dd className="font-medium">
+                    {selAuth.is_banned ? (
+                      <span className="text-destructive">Banned</span>
+                    ) : selAuth.email_confirmed_at ? (
+                      <span className="text-[oklch(0.4_0.16_145)]">Active</span>
+                    ) : (
+                      <span className="text-[oklch(0.6_0.16_85)]">Pending verification</span>
+                    )}
+                  </dd>
+                </div>
+                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Phone</dt>
+                  <dd className="font-medium">{selAuth.phone || "—"}</dd>
+                </div>
+              </dl>
+            )}
+
+
+
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Mock tests</h3>
             {selMocks.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">None.</p>
