@@ -305,7 +305,6 @@ function RunTest() {
     window.addEventListener("blur", onBlur);
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("beforeunload", onBeforeUnload);
-    document.addEventListener("keydown", onKey, true);
     window.addEventListener("keydown", onKey, true);
 
     const container = containerRef.current;
