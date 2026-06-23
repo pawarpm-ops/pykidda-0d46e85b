@@ -362,6 +362,12 @@ function RunTest() {
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("keydown", onKey, true);
+    document.addEventListener("copy", blockClipboard, true);
+    document.addEventListener("cut", blockClipboard, true);
+    document.addEventListener("paste", blockClipboard, true);
+    window.addEventListener("beforeprint", onBeforePrint);
+    document.body.classList.add("secure-test-printing-blocked");
+
 
     const container = containerRef.current;
     const mouseListener = (e: Event) => {
