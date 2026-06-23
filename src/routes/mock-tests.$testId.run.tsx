@@ -32,15 +32,17 @@ type CodeMap = Record<string, string>;
 
 const SECURE_CSS = `
 .secure-keyboard-test, .secure-keyboard-test * { cursor: none !important; }
-.secure-keyboard-test { user-select: none; }
+.secure-keyboard-test { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .secure-keyboard-test button,
 .secure-keyboard-test label,
 .secure-keyboard-test .question-nav,
 .secure-keyboard-test .submit-button,
 .secure-keyboard-test .reset-button { pointer-events: none !important; }
 .secure-keyboard-test .code-editor { pointer-events: none !important; }
-.secure-keyboard-test .code-editor textarea { pointer-events: none !important; user-select: text; }
+.secure-keyboard-test .code-editor textarea { pointer-events: none !important; user-select: text; -webkit-user-select: text; }
+@media print { body.secure-test-printing-blocked * { display: none !important; visibility: hidden !important; } }
 `;
+
 
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
