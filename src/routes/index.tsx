@@ -175,21 +175,6 @@ function Index() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="ml-auto md:w-96 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-warm)] flex items-center gap-4">
-          <img
-            src={siddharthPhoto.url}
-            alt="Siddharth Prashant Pawar — creator of PY Kidda"
-            className="h-20 w-20 rounded-full object-cover border-2 border-accent shrink-0"
-            loading="lazy"
-          />
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Crafted by</p>
-            <p className="mt-1 font-bold text-lg leading-tight">Siddharth Prashant Pawar</p>
-            <p className="text-xs text-muted-foreground mt-1">Creator &amp; developer of PY Kidda Hub</p>
-          </div>
-        </div>
-      </section>
 
       <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
         PY Kidda · Be a PY Kidda with us · © Siddharth Prashant Pawar
