@@ -40,9 +40,42 @@ function Index() {
           aria-hidden
         />
         <div className="relative mx-auto max-w-6xl px-6 pt-20 pb-24">
+          <div className="absolute right-6 top-6 z-10 w-[19rem] max-w-[calc(100%-3rem)] rounded-2xl border border-border bg-card/95 backdrop-blur p-4 shadow-[var(--shadow-warm)]">
+            <div className="flex items-center gap-3">
+              <img
+                src={siddharthPhoto.url}
+                alt="Siddharth Prashant Pawar — creator of PY Kidda"
+                className="h-14 w-14 rounded-full object-cover border-2 border-accent shrink-0"
+                loading="lazy"
+              />
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Crafted by</p>
+                <p className="font-bold leading-tight truncate">Siddharth Prashant Pawar</p>
+                <p className="text-[11px] text-muted-foreground">Creator of PY Kidda Hub</p>
+              </div>
+            </div>
+            <Dialog>
+              <DialogTrigger className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-border bg-background px-3 py-2 text-xs font-semibold hover:border-accent transition">
+                Know more
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>About the creator</DialogTitle>
+                  <DialogDescription className="pt-2 text-base text-foreground">
+                    Hello everyone, I have developed this website for college students to help them practise coding languages and attempt highly secure mock tests with strong anti-cheating features.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="mt-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
+                  <p className="font-semibold">Siddharth Prashant Pawar</p>
+                  <p className="text-muted-foreground">Contact: <a href="tel:9172504205" className="font-medium text-accent hover:underline">9172504205</a></p>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-accent">
             Python practice &amp; mock test portal
           </p>
+
           <h1 className="mt-4 text-5xl md:text-7xl font-black tracking-tight leading-[1.02]">
             Be a{" "}
             <span
