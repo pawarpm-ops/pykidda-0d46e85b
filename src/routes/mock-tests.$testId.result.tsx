@@ -153,11 +153,16 @@ function ResultPage() {
                   </details>
 
                   {q && (
-                    <details className="mt-3 rounded-md border border-accent/30 bg-accent/5 p-3">
-                      <summary className="cursor-pointer text-sm font-semibold text-accent">
-                        Show answer key
+                    <details className="group mt-4 rounded-xl border-2 border-accent/60 bg-accent/10 p-4 shadow-[var(--shadow-warm)]">
+                      <summary className="flex cursor-pointer items-center justify-between gap-3 list-none [&::-webkit-details-marker]:hidden">
+                        <span className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-[var(--shadow-warm)] transition hover:opacity-95"
+                          style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                        >
+                          <span aria-hidden>🔑</span> Show answer key
+                        </span>
+                        <span className="text-xs font-semibold text-accent transition group-open:rotate-180">▼</span>
                       </summary>
-                      <div className="mt-3 space-y-3">
+                      <div className="mt-4 space-y-3">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Problem</p>
                           <p className="mt-1 text-sm whitespace-pre-wrap">{q.prompt}</p>
@@ -177,6 +182,7 @@ function ResultPage() {
                       </div>
                     </details>
                   )}
+
 
                 </li>
               );
