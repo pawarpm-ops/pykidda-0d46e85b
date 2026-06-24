@@ -151,6 +151,33 @@ function ResultPage() {
                       ))}
                     </div>
                   </details>
+
+                  {q && (
+                    <details className="mt-3 rounded-md border border-accent/30 bg-accent/5 p-3">
+                      <summary className="cursor-pointer text-sm font-semibold text-accent">
+                        Show answer key
+                      </summary>
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Problem</p>
+                          <p className="mt-1 text-sm whitespace-pre-wrap">{q.prompt}</p>
+                        </div>
+                        {q.hint && (
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Hint</p>
+                            <p className="mt-1 text-sm whitespace-pre-wrap">{q.hint}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Reference solution</p>
+                          <pre className="mt-1 overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
+{q.solution}
+                          </pre>
+                        </div>
+                      </div>
+                    </details>
+                  )}
+
                 </li>
               );
             })}
