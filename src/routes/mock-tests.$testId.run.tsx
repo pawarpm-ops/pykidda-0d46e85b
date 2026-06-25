@@ -283,43 +283,88 @@ function RunTest() {
     const onKey = (e: KeyboardEvent) => {
       if (!testActiveRef.current || submittedRef.current) return;
 
-      // Block PrintScreen / Screenshot attempts — clear clipboard and warn
+      const lower = e.key.toLowerCase();
+
+      // === Screenshot detection — every known combo auto-submits ===
+      // 1) PrintScreen (any modifier: plain / Alt+ / Ctrl+ / Shift+ / Win+)
       if (e.key === "PrintScreen" || e.code === "PrintScreen") {
         e.preventDefault();
         e.stopPropagation();
         try { navigator.clipboard?.writeText(""); } catch { /* ignore */ }
-        autoSubmit("Screenshot attempt detected (PrintScreen)");
+        const mods = [
+          e.ctrlKey && "Ctrl",
+          e.altKey && "Alt",
+          e.shiftKey && "Shift",
+          e.metaKey && "Win/Cmd",
+        ].filter(Boolean).join("+");
+        autoSubmit(`Auto-submitted: screenshot attempt (${mods ? mods + "+" : ""}PrintScreen key)`);
         return;
       }
 
-      // Block Snipping Tool shortcut on Windows: Win+Shift+S (best-effort)
-      if (e.shiftKey && (e.metaKey || e.getModifierState?.("Meta")) && e.key.toLowerCase() === "s") {
+      // 2) Windows Snipping Tool: Win+Shift+S
+      if (e.shiftKey && (e.metaKey || e.getModifierState?.("Meta")) && lower === "s") {
         e.preventDefault();
         e.stopPropagation();
-        autoSubmit("Snipping Tool shortcut detected");
-        return;
-      }
-      // Block macOS screenshot shortcuts: Cmd+Shift+3/4/5
-      if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
-        e.preventDefault();
-        e.stopPropagation();
-        autoSubmit("Screenshot shortcut detected");
+        autoSubmit("Auto-submitted: screenshot attempt (Windows Snipping Tool — Win+Shift+S)");
         return;
       }
 
-      // Block clipboard / print / save / view-source / devtools shortcuts
-      const lower = e.key.toLowerCase();
-      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "s", "u"].includes(lower)) {
-        // allow our own Ctrl+S (submit) shortcut? we use Alt+S, so block Ctrl+S
-        if (lower === "enter") return;
+      // 3) Windows Game Bar screenshot: Win+Alt+PrintScreen / Win+G / Win+Alt+G
+      if ((e.metaKey || e.getModifierState?.("Meta")) && (lower === "g")) {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Auto-submitted: screenshot attempt (Windows Game Bar — Win+G)");
+        return;
+      }
+
+      // 4) macOS screenshot: Cmd+Shift+3 / 4 / 5 / 6, and Cmd+Ctrl+Shift+3/4 (to clipboard)
+      if (e.metaKey && e.shiftKey && ["3", "4", "5", "6"].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit(`Auto-submitted: screenshot attempt (macOS Cmd+Shift+${e.key})`);
+        return;
+      }
+      if (e.metaKey && e.ctrlKey && e.shiftKey && ["3", "4"].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit(`Auto-submitted: screenshot attempt (macOS Cmd+Ctrl+Shift+${e.key})`);
+        return;
+      }
+
+      // 5) ChromeOS screenshot: Ctrl+Show-Windows (F5) / Ctrl+Shift+Show-Windows
+      if (e.ctrlKey && (e.key === "F5" || (e.shiftKey && e.key === "F5"))) {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Auto-submitted: screenshot attempt (ChromeOS Ctrl+Show-Windows)");
+        return;
+      }
+
+      // 6) Lone Windows / Meta key press (opens Start / could trigger snip overlays)
+      if (e.key === "Meta" || e.key === "OS" || e.code === "MetaLeft" || e.code === "MetaRight") {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Auto-submitted: Windows/Command key pressed (possible screenshot/menu trigger)");
+        return;
+      }
+
+      // === Clipboard / save / view-source — silently blocked (no auto-submit) ===
+      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "u"].includes(lower)) {
         e.preventDefault();
         e.stopPropagation();
         return;
       }
-      // Block F12, Ctrl+Shift+I/J/C (devtools)
+      // Ctrl+S used to be blocked outright; if you also want auto-submit on save, swap to autoSubmit
+      if ((e.ctrlKey || e.metaKey) && lower === "s" && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      // Block F12 / Ctrl+Shift+I/J/C (devtools)
       if (e.key === "F12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(lower))) {
         e.preventDefault();
         e.stopPropagation();
+        autoSubmit("Auto-submitted: developer tools shortcut detected");
         return;
       }
 
@@ -327,7 +372,7 @@ function RunTest() {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        autoSubmit("Escape key pressed");
+        autoSubmit("Auto-submitted: Escape key pressed");
         return;
       }
 
@@ -359,26 +404,6 @@ function RunTest() {
         }
         if (k === "e") { e.preventDefault(); focusEditor(); return; }
         if (k === "h") { e.preventDefault(); setShowHelp((v) => !v); return; }
-        // Any other Alt+key combo is not useful → block
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-
-      // Whitelist of keys allowed during the test. Everything else (F1–F11,
-      // CapsLock, NumLock, ScrollLock, Insert, ContextMenu, Pause, media keys,
-      // browser back/forward, etc.) is blocked so students can only use keys
-      // needed to write code and navigate questions.
-      const ALLOWED_NON_PRINTABLE = new Set([
-        "Backspace", "Tab", "Enter", "Shift", "Control", "Alt", "Meta",
-        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
-        "Home", "End", "PageUp", "PageDown", "Delete",
-      ]);
-      const isPrintable = e.key.length === 1;
-      if (!isPrintable && !ALLOWED_NON_PRINTABLE.has(e.key)) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
       }
     };
 
