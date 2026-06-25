@@ -359,8 +359,27 @@ function RunTest() {
         }
         if (k === "e") { e.preventDefault(); focusEditor(); return; }
         if (k === "h") { e.preventDefault(); setShowHelp((v) => !v); return; }
+        // Any other Alt+key combo is not useful → block
+        e.preventDefault();
+        e.stopPropagation();
+        return;
       }
-    };
+
+      // Whitelist of keys allowed during the test. Everything else (F1–F11,
+      // CapsLock, NumLock, ScrollLock, Insert, ContextMenu, Pause, media keys,
+      // browser back/forward, etc.) is blocked so students can only use keys
+      // needed to write code and navigate questions.
+      const ALLOWED_NON_PRINTABLE = new Set([
+        "Backspace", "Tab", "Enter", "Shift", "Control", "Alt", "Meta",
+        "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+        "Home", "End", "PageUp", "PageDown", "Delete",
+      ]);
+      const isPrintable = e.key.length === 1;
+      if (!isPrintable && !ALLOWED_NON_PRINTABLE.has(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
 
     // Block clipboard operations and printing
     const blockClipboard = (e: Event) => {
