@@ -49,25 +49,25 @@ function Index() {
                 loading="lazy"
               />
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Crafted by</p>
-                <p className="font-bold leading-tight truncate">Siddharth Prashant Pawar</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-yellow-300 dark:text-yellow-300">Crafted by</p>
+                <p className="font-bold leading-tight truncate text-foreground">Siddharth Prashant Pawar</p>
                 <p className="text-[11px] text-muted-foreground">Creator of PY Kidda Hub</p>
               </div>
             </div>
             <Dialog>
-              <DialogTrigger className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-border bg-background px-3 py-2 text-xs font-semibold hover:border-accent transition">
+              <DialogTrigger className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-border bg-background px-3 py-2 text-xs font-semibold text-yellow-400 dark:text-yellow-300 hover:border-accent transition">
                 Know more
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>About the creator</DialogTitle>
+                  <DialogTitle className="text-yellow-500 dark:text-yellow-300">About the creator</DialogTitle>
                   <DialogDescription className="pt-2 text-base text-foreground">
                     Hello everyone, I have developed this website for college students to help them practise coding languages and attempt highly secure mock tests with strong anti-cheating features.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="mt-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
-                  <p className="font-semibold">Siddharth Prashant Pawar</p>
-                  <p className="text-muted-foreground">Contact: <a href="tel:9172504205" className="font-medium text-accent hover:underline">9172504205</a></p>
+                  <p className="font-semibold text-foreground">Siddharth Prashant Pawar</p>
+                  <p className="text-muted-foreground">Contact: <a href="tel:9172504205" className="font-bold text-yellow-500 dark:text-yellow-300 hover:underline">9172504205</a></p>
                 </div>
               </DialogContent>
             </Dialog>

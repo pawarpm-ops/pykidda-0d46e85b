@@ -155,12 +155,12 @@ function ResultPage() {
                   {q && (
                     <details className="group mt-4 rounded-xl border-2 border-accent/60 bg-accent/10 p-4 shadow-[var(--shadow-warm)]">
                       <summary className="flex cursor-pointer items-center justify-between gap-3 list-none [&::-webkit-details-marker]:hidden">
-                        <span className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-[var(--shadow-warm)] transition hover:opacity-95"
+                        <span className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-extrabold uppercase tracking-wider text-[oklch(0.18_0.02_250)] shadow-[var(--shadow-warm)] transition hover:opacity-95"
                           style={{ backgroundImage: "var(--gradient-sunrise)" }}
                         >
                           <span aria-hidden>🔑</span> Show answer key
                         </span>
-                        <span className="text-xs font-semibold text-accent transition group-open:rotate-180">▼</span>
+                        <span className="text-xs font-semibold text-yellow-400 dark:text-yellow-300 transition group-open:rotate-180">▼</span>
                       </summary>
                       <div className="mt-4 space-y-3">
                         <div>
