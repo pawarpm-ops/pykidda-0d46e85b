@@ -380,6 +380,9 @@ function RunTest() {
         e.stopPropagation();
         return;
       }
+    };
+
+
 
     // Block clipboard operations and printing
     const blockClipboard = (e: Event) => {
