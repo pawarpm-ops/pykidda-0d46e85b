@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { restartTutorial } from "@/components/OnboardingTutorial";
 import { z } from "zod";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -202,6 +203,20 @@ function ProfilePage() {
             </div>
           </form>
         )}
+
+        <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
+          <h2 className="text-lg font-bold">Website tutorial</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Replay the friendly onboarding tour with Pyko, your Python guide.
+          </p>
+          <button
+            type="button"
+            onClick={() => restartTutorial()}
+            className="mt-4 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold hover:border-accent transition-colors"
+          >
+            🐍 Restart website tutorial
+          </button>
+        </div>
       </main>
     </div>
   );

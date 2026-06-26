@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tutorial_status text NOT NULL DEFAULT 'not_started' CHECK (tutorial_status IN ('not_started','completed','skipped'));

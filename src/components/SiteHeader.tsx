@@ -29,7 +29,7 @@ export function SiteHeader() {
           <BrandLogo size={36} />
         </Link>
         <nav className="flex items-center gap-1 sm:gap-3 text-sm">
-          <Link to="/practice" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
+          <Link to="/practice" data-tour="nav-practice" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Practice
           </Link>
           {email && isAdmin && (
@@ -40,24 +40,28 @@ export function SiteHeader() {
               Admin
             </Link>
           )}
-          <Link to="/mock-tests" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
+          <Link to="/mock-tests" data-tour="nav-mock" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Mock Tests
           </Link>
-          <Link to="/leaderboard" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
+          <Link to="/leaderboard" data-tour="nav-leaderboard" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Leaderboard
           </Link>
           {email && (
-            <Link to="/analytics" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
+            <Link to="/analytics" data-tour="nav-analytics" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
               Analytics
             </Link>
           )}
           {email && (
-            <Link to="/profile" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
+            <Link to="/profile" data-tour="nav-profile" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
               Profile
             </Link>
           )}
           <ThemeToggle className="ml-1" />
-          {email && <NotificationBell />}
+          {email && (
+            <span data-tour="nav-notifications">
+              <NotificationBell />
+            </span>
+          )}
           {email ? (
             <div className="flex items-center gap-2 ml-1">
               <span className="hidden sm:inline text-xs text-muted-foreground">{email}</span>
