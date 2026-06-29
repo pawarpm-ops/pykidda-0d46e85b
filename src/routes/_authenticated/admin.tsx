@@ -469,7 +469,7 @@ function fmtRelative(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString();
 }
 
-function StudentsTab({ students, mocks, practice, authInfo }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[]; authInfo: StudentAuthInfo[] }) {
+function StudentsTab({ students, mocks, practice, authInfo, profiles }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[]; authInfo: StudentAuthInfo[]; profiles: Record<string, ProfileInfo> }) {
   const [selected, setSelected] = useState<string | null>(null);
   const selStudent = students.find((s) => s.user_id === selected);
   const selMocks = mocks.filter((m) => m.user_id === selected);
