@@ -432,7 +432,7 @@ function AdminPage() {
         )}
 
         {tab === "students" && (
-          <StudentsTab students={students} mocks={mocks} practice={practice} authInfo={authInfo} />
+          <StudentsTab students={students} mocks={mocks} practice={practice} authInfo={authInfo} profiles={profiles} />
         )}
 
         {tab === "activity" && (
