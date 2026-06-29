@@ -74,6 +74,17 @@ type PracticeRow = {
   solved: boolean;
   attempted_at: string;
 };
+type ProfileInfo = {
+  display_name: string | null;
+  full_name: string | null;
+  contact_number: string | null;
+  college_name: string | null;
+  age: number | null;
+  gender: string | null;
+  birth_date: string | null;
+  onboarded: boolean | null;
+};
+
 
 const C = {
   primary: "oklch(0.62 0.18 250)",
