@@ -538,6 +538,34 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
               </div>
             </div>
 
+            {(() => {
+              const pi = profiles[selStudent.user_id];
+              return (
+                <>
+                  <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                    Personal info
+                    {pi && pi.onboarded === false && (
+                      <span className="ml-2 inline-block rounded bg-destructive/15 px-2 py-0.5 text-[10px] text-destructive normal-case tracking-normal">
+                        Onboarding incomplete
+                      </span>
+                    )}
+                  </h3>
+                  {!pi || !pi.onboarded ? (
+                    <p className="mt-2 text-sm text-muted-foreground">Student has not completed onboarding yet.</p>
+                  ) : (
+                    <dl className="mt-2 grid gap-2 sm:grid-cols-2 text-sm">
+                      <InfoCell label="Full name" value={pi.full_name} />
+                      <InfoCell label="Contact number" value={pi.contact_number} />
+                      <InfoCell label="College" value={pi.college_name} />
+                      <InfoCell label="Age" value={pi.age?.toString() ?? null} />
+                      <InfoCell label="Gender" value={pi.gender} />
+                      <InfoCell label="Birth date" value={pi.birth_date} />
+                    </dl>
+                  )}
+                </>
+              );
+            })()}
+
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Account & activity</h3>
             {!selAuth ? (
               <p className="mt-2 text-sm text-muted-foreground">No account details available.</p>
