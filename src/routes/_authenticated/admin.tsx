@@ -115,7 +115,7 @@ function AdminPage() {
   const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, { display_name: string | null }>>({});
+  const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
   const [studentIds, setStudentIds] = useState<string[]>([]);
   const [authInfo, setAuthInfo] = useState<StudentAuthInfo[]>([]);
   const [loading, setLoading] = useState(true);
