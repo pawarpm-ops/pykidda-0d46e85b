@@ -468,6 +468,15 @@ function fmtRelative(iso: string | null | undefined) {
   if (d < 30) return `${d}d ago`;
   return new Date(iso).toLocaleDateString();
 }
+function InfoCell({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+      <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</dt>
+      <dd className="font-medium break-words">{value && value.trim() ? value : "—"}</dd>
+    </div>
+  );
+}
+
 
 function StudentsTab({ students, mocks, practice, authInfo, profiles }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[]; authInfo: StudentAuthInfo[]; profiles: Record<string, ProfileInfo> }) {
   const [selected, setSelected] = useState<string | null>(null);
