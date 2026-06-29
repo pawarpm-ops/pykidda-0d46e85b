@@ -144,14 +144,25 @@ function AdminPage() {
       const [m, p, pr, sr, ai] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
         supabase.from("practice_attempts").select("*").order("attempted_at", { ascending: false }).limit(2000),
-        supabase.from("profiles").select("id, display_name"),
+        supabase.from("profiles").select("id, display_name, full_name, contact_number, college_name, age, gender, birth_date, onboarded"),
         supabase.from("user_roles").select("user_id").eq("role", "student"),
         fetchAuthInfo().catch((e) => { console.error("auth info", e); return [] as StudentAuthInfo[]; }),
       ]);
       setMocks((m.data ?? []) as MockRow[]);
       setPractice((p.data ?? []) as PracticeRow[]);
-      const pmap: Record<string, { display_name: string | null }> = {};
-      for (const row of pr.data ?? []) pmap[row.id] = { display_name: row.display_name };
+      const pmap: Record<string, ProfileInfo> = {};
+      for (const row of (pr.data ?? []) as Array<ProfileInfo & { id: string }>) {
+        pmap[row.id] = {
+          display_name: row.display_name,
+          full_name: row.full_name,
+          contact_number: row.contact_number,
+          college_name: row.college_name,
+          age: row.age,
+          gender: row.gender,
+          birth_date: row.birth_date,
+          onboarded: row.onboarded,
+        };
+      }
       setProfiles(pmap);
       setStudentIds(((sr.data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
       setAuthInfo(ai);
