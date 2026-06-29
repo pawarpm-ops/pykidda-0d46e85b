@@ -198,29 +198,50 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
+          college_name: string | null
+          contact_number: string | null
           created_at: string
           display_name: string | null
+          full_name: string | null
+          gender: string | null
           id: string
+          onboarded: boolean
           tutorial_status: string
           updated_at: string
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
+          college_name?: string | null
+          contact_number?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
+          gender?: string | null
           id: string
+          onboarded?: boolean
           tutorial_status?: string
           updated_at?: string
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
+          college_name?: string | null
+          contact_number?: string | null
           created_at?: string
           display_name?: string | null
+          full_name?: string | null
+          gender?: string | null
           id?: string
+          onboarded?: boolean
           tutorial_status?: string
           updated_at?: string
         }

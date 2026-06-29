@@ -74,6 +74,17 @@ type PracticeRow = {
   solved: boolean;
   attempted_at: string;
 };
+type ProfileInfo = {
+  display_name: string | null;
+  full_name: string | null;
+  contact_number: string | null;
+  college_name: string | null;
+  age: number | null;
+  gender: string | null;
+  birth_date: string | null;
+  onboarded: boolean | null;
+};
+
 
 const C = {
   primary: "oklch(0.62 0.18 250)",
@@ -115,7 +126,7 @@ function AdminPage() {
   const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, { display_name: string | null }>>({});
+  const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
   const [studentIds, setStudentIds] = useState<string[]>([]);
   const [authInfo, setAuthInfo] = useState<StudentAuthInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,14 +144,25 @@ function AdminPage() {
       const [m, p, pr, sr, ai] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
         supabase.from("practice_attempts").select("*").order("attempted_at", { ascending: false }).limit(2000),
-        supabase.from("profiles").select("id, display_name"),
+        supabase.from("profiles").select("id, display_name, full_name, contact_number, college_name, age, gender, birth_date, onboarded"),
         supabase.from("user_roles").select("user_id").eq("role", "student"),
         fetchAuthInfo().catch((e) => { console.error("auth info", e); return [] as StudentAuthInfo[]; }),
       ]);
       setMocks((m.data ?? []) as MockRow[]);
       setPractice((p.data ?? []) as PracticeRow[]);
-      const pmap: Record<string, { display_name: string | null }> = {};
-      for (const row of pr.data ?? []) pmap[row.id] = { display_name: row.display_name };
+      const pmap: Record<string, ProfileInfo> = {};
+      for (const row of (pr.data ?? []) as Array<ProfileInfo & { id: string }>) {
+        pmap[row.id] = {
+          display_name: row.display_name,
+          full_name: row.full_name,
+          contact_number: row.contact_number,
+          college_name: row.college_name,
+          age: row.age,
+          gender: row.gender,
+          birth_date: row.birth_date,
+          onboarded: row.onboarded,
+        };
+      }
       setProfiles(pmap);
       setStudentIds(((sr.data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
       setAuthInfo(ai);
@@ -410,7 +432,7 @@ function AdminPage() {
         )}
 
         {tab === "students" && (
-          <StudentsTab students={students} mocks={mocks} practice={practice} authInfo={authInfo} />
+          <StudentsTab students={students} mocks={mocks} practice={practice} authInfo={authInfo} profiles={profiles} />
         )}
 
         {tab === "activity" && (
@@ -446,8 +468,17 @@ function fmtRelative(iso: string | null | undefined) {
   if (d < 30) return `${d}d ago`;
   return new Date(iso).toLocaleDateString();
 }
+function InfoCell({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="rounded-md border border-border bg-background/40 px-3 py-2">
+      <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</dt>
+      <dd className="font-medium break-words">{value && value.trim() ? value : "—"}</dd>
+    </div>
+  );
+}
 
-function StudentsTab({ students, mocks, practice, authInfo }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[]; authInfo: StudentAuthInfo[] }) {
+
+function StudentsTab({ students, mocks, practice, authInfo, profiles }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[]; authInfo: StudentAuthInfo[]; profiles: Record<string, ProfileInfo> }) {
   const [selected, setSelected] = useState<string | null>(null);
   const selStudent = students.find((s) => s.user_id === selected);
   const selMocks = mocks.filter((m) => m.user_id === selected);
@@ -515,6 +546,34 @@ function StudentsTab({ students, mocks, practice, authInfo }: { students: Studen
                 </div>
               </div>
             </div>
+
+            {(() => {
+              const pi = profiles[selStudent.user_id];
+              return (
+                <>
+                  <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                    Personal info
+                    {pi && pi.onboarded === false && (
+                      <span className="ml-2 inline-block rounded bg-destructive/15 px-2 py-0.5 text-[10px] text-destructive normal-case tracking-normal">
+                        Onboarding incomplete
+                      </span>
+                    )}
+                  </h3>
+                  {!pi || !pi.onboarded ? (
+                    <p className="mt-2 text-sm text-muted-foreground">Student has not completed onboarding yet.</p>
+                  ) : (
+                    <dl className="mt-2 grid gap-2 sm:grid-cols-2 text-sm">
+                      <InfoCell label="Full name" value={pi.full_name} />
+                      <InfoCell label="Contact number" value={pi.contact_number} />
+                      <InfoCell label="College" value={pi.college_name} />
+                      <InfoCell label="Age" value={pi.age?.toString() ?? null} />
+                      <InfoCell label="Gender" value={pi.gender} />
+                      <InfoCell label="Birth date" value={pi.birth_date} />
+                    </dl>
+                  )}
+                </>
+              );
+            })()}
 
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Account & activity</h3>
             {!selAuth ? (

@@ -142,17 +142,50 @@ function AuthGate({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [checked, setChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [onboardChecked, setOnboardChecked] = useState(false);
+  const [onboarded, setOnboarded] = useState(true);
 
   useEffect(() => {
     let mounted = true;
+
+    async function loadOnboarded(userId: string, email: string | null) {
+      if (email === "siddhustudyhard@gmail.com") {
+        if (!mounted) return;
+        setOnboarded(true);
+        setOnboardChecked(true);
+        return;
+      }
+      const { data } = await supabase
+        .from("profiles")
+        .select("onboarded")
+        .eq("id", userId)
+        .maybeSingle();
+      if (!mounted) return;
+      setOnboarded(!!data?.onboarded);
+      setOnboardChecked(true);
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
-      setAuthed(!!data.session);
+      const session = data.session;
+      setAuthed(!!session);
       setChecked(true);
+      if (session?.user) {
+        loadOnboarded(session.user.id, session.user.email ?? null);
+      } else {
+        setOnboardChecked(true);
+      }
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setAuthed(!!session);
       setChecked(true);
+      if (session?.user) {
+        setOnboardChecked(false);
+        loadOnboarded(session.user.id, session.user.email ?? null);
+      } else {
+        setOnboarded(true);
+        setOnboardChecked(true);
+      }
     });
     return () => {
       mounted = false;
@@ -161,15 +194,22 @@ function AuthGate({ children }: { children: ReactNode }) {
   }, []);
 
   const isAuthRoute = pathname === "/auth" || pathname.startsWith("/auth/");
+  const isOnboardingRoute = pathname === "/onboarding";
 
   useEffect(() => {
     if (!checked) return;
     if (!authed && !isAuthRoute) {
       navigate({ to: "/auth", replace: true });
+      return;
     }
-  }, [checked, authed, isAuthRoute, navigate]);
+    if (authed && onboardChecked && !onboarded && !isOnboardingRoute && !isAuthRoute) {
+      navigate({ to: "/onboarding", replace: true });
+    }
+    if (authed && onboardChecked && onboarded && isOnboardingRoute) {
+      navigate({ to: "/", replace: true });
+    }
+  }, [checked, authed, isAuthRoute, isOnboardingRoute, onboardChecked, onboarded, navigate]);
 
-  // While we don't know yet, render nothing on protected routes to avoid a flash.
   if (!checked && !isAuthRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
@@ -178,6 +218,9 @@ function AuthGate({ children }: { children: ReactNode }) {
     );
   }
   if (!authed && !isAuthRoute) {
+    return null;
+  }
+  if (authed && onboardChecked && !onboarded && !isOnboardingRoute) {
     return null;
   }
   return <>{children}</>;
