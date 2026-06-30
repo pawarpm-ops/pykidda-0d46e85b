@@ -54,8 +54,26 @@ function Warning() {
   const [seconds, setSeconds] = useState(10);
   const [name, setName] = useState("");
   const [authChecked, setAuthChecked] = useState(false);
+  const [unsupported, setUnsupported] = useState<string | null>(null);
 
   useEffect(() => {
+    // Block touch-primary / mobile / tablet devices — fullscreen + key-blocking can't be enforced.
+    const isTouchOnly =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(pointer: coarse)").matches &&
+      !window.matchMedia?.("(pointer: fine)").matches;
+    const tooSmall = typeof window !== "undefined" && (window.innerWidth < 900 || window.innerHeight < 600);
+    const noFs =
+      typeof document !== "undefined" &&
+      !document.documentElement.requestFullscreen &&
+      // @ts-expect-error vendor
+      !document.documentElement.webkitRequestFullscreen;
+    if (isTouchOnly || tooSmall) {
+      setUnsupported("Mock tests can only be taken on a desktop or laptop with a physical keyboard and mouse. Please switch to a laptop/desktop in fullscreen mode.");
+    } else if (noFs) {
+      setUnsupported("Your browser does not support secure fullscreen mode. Please use the latest Chrome, Edge, or Firefox on desktop.");
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
         navigate({ to: "/auth" });
@@ -66,6 +84,7 @@ function Warning() {
       setName(getStudentName() !== "Student" ? getStudentName() : fromMeta || "");
     });
   }, [navigate]);
+
 
   useEffect(() => {
     if (seconds <= 0) return;
