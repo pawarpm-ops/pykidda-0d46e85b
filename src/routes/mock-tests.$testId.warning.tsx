@@ -105,10 +105,25 @@ function Warning() {
   if (!authChecked) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
+  if (unsupported) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-lg rounded-xl border-2 border-destructive/50 bg-destructive/10 p-6 text-center">
+          <p className="text-xs uppercase tracking-widest text-destructive font-bold">Device Not Supported</p>
+          <h1 className="mt-2 text-xl font-bold">Mock test cannot start</h1>
+          <p className="mt-3 text-sm text-foreground">{unsupported}</p>
+          <Link to="/mock-tests" className="mt-5 inline-block rounded-md border border-border bg-background px-4 py-2 text-sm font-medium">
+            Back to mock tests
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const qs = mockTestQuestions(test);
   const marks = qs.reduce((a, q) => a + q.marks, 0);
   const ready = seconds <= 0 && name.trim().length > 0;
+
 
   async function startTest() {
     if (!ready) return;
