@@ -357,6 +357,50 @@ function RunTest() {
         return;
       }
 
+      // 6b) Shift+F10 / dedicated ContextMenu key — opens right-click menu without mouse
+      if ((e.shiftKey && e.key === "F10") || e.key === "ContextMenu" || e.code === "ContextMenu") {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Auto-submitted: context-menu key combination");
+        return;
+      }
+
+      // 6c) Reload attempts: F5 / Ctrl+R / Ctrl+Shift+R / Ctrl+F5
+      if (
+        e.key === "F5" ||
+        ((e.ctrlKey || e.metaKey) && lower === "r") ||
+        ((e.ctrlKey || e.metaKey) && e.key === "F5")
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        try { sessionStorage.setItem(`pykidda:violation:${testId}`, "reload-attempt"); } catch { /* ignore */ }
+        autoSubmit("Auto-submitted: page reload attempt");
+        return;
+      }
+
+      // 6d) Browser tab/window control: Ctrl+T / Ctrl+N / Ctrl+W / Ctrl+Shift+T / Ctrl+Tab / Ctrl+Shift+Tab / Ctrl+PgUp / Ctrl+PgDn
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (["t", "n", "w"].includes(lower) ||
+          (e.shiftKey && lower === "t") ||
+          e.key === "Tab" ||
+          e.key === "PageUp" ||
+          e.key === "PageDown")
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit(`Auto-submitted: browser tab/window shortcut (${e.key})`);
+        return;
+      }
+
+      // 6e) Alt+F4 / Alt+Space (close / system menu on Windows)
+      if (e.altKey && (e.key === "F4" || e.key === " " || e.code === "Space")) {
+        e.preventDefault();
+        e.stopPropagation();
+        autoSubmit("Auto-submitted: window-close shortcut");
+        return;
+      }
+
       // === Clipboard / save / view-source — silently blocked (no auto-submit) ===
       if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "u"].includes(lower)) {
         e.preventDefault();
@@ -370,13 +414,17 @@ function RunTest() {
         return;
       }
 
-      // Block F12 / Ctrl+Shift+I/J/C (devtools)
-      if (e.key === "F12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(lower))) {
+      // Block F12 / Ctrl+Shift+I/J/C/K (devtools across browsers)
+      if (
+        e.key === "F12" ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c", "k"].includes(lower))
+      ) {
         e.preventDefault();
         e.stopPropagation();
         autoSubmit("Auto-submitted: developer tools shortcut detected");
         return;
       }
+
 
       // Esc → auto-submit violation (primary detector is fullscreen, this is backup)
       if (e.key === "Escape") {
