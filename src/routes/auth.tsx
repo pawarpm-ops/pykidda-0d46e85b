@@ -114,10 +114,10 @@ function AuthPage() {
               colorful hub built for curious coders.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
-              <Badge>🐍 100+ Practice Qs</Badge>
               <Badge>⏱ Timed Mock Tests</Badge>
               <Badge>📊 Smart Analytics</Badge>
             </div>
+
           </div>
 
           <p className="text-xs text-white/50">
