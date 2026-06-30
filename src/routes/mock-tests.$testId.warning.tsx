@@ -54,8 +54,26 @@ function Warning() {
   const [seconds, setSeconds] = useState(10);
   const [name, setName] = useState("");
   const [authChecked, setAuthChecked] = useState(false);
+  const [unsupported, setUnsupported] = useState<string | null>(null);
 
   useEffect(() => {
+    // Block touch-primary / mobile / tablet devices — fullscreen + key-blocking can't be enforced.
+    const isTouchOnly =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(pointer: coarse)").matches &&
+      !window.matchMedia?.("(pointer: fine)").matches;
+    const tooSmall = typeof window !== "undefined" && (window.innerWidth < 900 || window.innerHeight < 600);
+    const noFs =
+      typeof document !== "undefined" &&
+      !document.documentElement.requestFullscreen &&
+      // @ts-expect-error vendor
+      !document.documentElement.webkitRequestFullscreen;
+    if (isTouchOnly || tooSmall) {
+      setUnsupported("Mock tests can only be taken on a desktop or laptop with a physical keyboard and mouse. Please switch to a laptop/desktop in fullscreen mode.");
+    } else if (noFs) {
+      setUnsupported("Your browser does not support secure fullscreen mode. Please use the latest Chrome, Edge, or Firefox on desktop.");
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
         navigate({ to: "/auth" });
@@ -66,6 +84,7 @@ function Warning() {
       setName(getStudentName() !== "Student" ? getStudentName() : fromMeta || "");
     });
   }, [navigate]);
+
 
   useEffect(() => {
     if (seconds <= 0) return;
@@ -86,10 +105,25 @@ function Warning() {
   if (!authChecked) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
+  if (unsupported) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-lg rounded-xl border-2 border-destructive/50 bg-destructive/10 p-6 text-center">
+          <p className="text-xs uppercase tracking-widest text-destructive font-bold">Device Not Supported</p>
+          <h1 className="mt-2 text-xl font-bold">Mock test cannot start</h1>
+          <p className="mt-3 text-sm text-foreground">{unsupported}</p>
+          <Link to="/mock-tests" className="mt-5 inline-block rounded-md border border-border bg-background px-4 py-2 text-sm font-medium">
+            Back to mock tests
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const qs = mockTestQuestions(test);
   const marks = qs.reduce((a, q) => a + q.marks, 0);
   const ready = seconds <= 0 && name.trim().length > 0;
+
 
   async function startTest() {
     if (!ready) return;
