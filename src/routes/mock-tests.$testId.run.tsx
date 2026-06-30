@@ -466,6 +466,58 @@ function RunTest() {
     };
 
 
+    // PrintScreen on Windows-Chrome only fires on keyup — catch it there too
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (!testActiveRef.current || submittedRef.current) return;
+      if (e.key === "PrintScreen" || e.code === "PrintScreen") {
+        e.preventDefault();
+        e.stopPropagation();
+        try { navigator.clipboard?.writeText(""); } catch { /* ignore */ }
+        autoSubmit("Auto-submitted: PrintScreen key (captured on release)");
+      }
+    };
+
+    // Document-level context menu block (Shift+F10, Menu key, long-press)
+    const onContextMenu = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Drag-and-drop guard (text file or selection drop into editor)
+    const onDrop = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      autoSubmit("Auto-submitted: drag-and-drop into test window");
+    };
+    const onDragOver = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Window resize / split-screen detection: if outer/inner shrink substantially mid-test, flag it.
+    // Captures: window snap, drag-resize, picture-in-picture sidebar, opening docked DevTools.
+    const baselineW = window.innerWidth;
+    const baselineH = window.innerHeight;
+    const onResize = () => {
+      if (!testActiveRef.current || submittedRef.current) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      // 15% shrink in either axis after going fullscreen = student left fullscreen / split window
+      if (w < baselineW * 0.85 || h < baselineH * 0.85) {
+        autoSubmit("Auto-submitted: window resized or split-screen detected");
+      }
+    };
+
+    // DevTools size-based detection (works when DevTools opened via menu, not shortcut)
+    const devtoolsPoll = window.setInterval(() => {
+      if (!testActiveRef.current || submittedRef.current) return;
+      const widthGap = window.outerWidth - window.innerWidth;
+      const heightGap = window.outerHeight - window.innerHeight;
+      // Normal browser chrome is ~80–120px tall, ~16px wide; docked DevTools adds >160px on one axis
+      if (widthGap > 200 || heightGap > 220) {
+        autoSubmit("Auto-submitted: developer tools panel detected");
+      }
+    }, 1000);
 
     // Block clipboard operations and printing
     const blockClipboard = (e: Event) => {
@@ -490,11 +542,17 @@ function RunTest() {
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("keydown", onKey, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("resize", onResize);
+    document.addEventListener("contextmenu", onContextMenu, true);
+    document.addEventListener("drop", onDrop, true);
+    document.addEventListener("dragover", onDragOver, true);
     document.addEventListener("copy", blockClipboard, true);
     document.addEventListener("cut", blockClipboard, true);
     document.addEventListener("paste", blockClipboard, true);
     window.addEventListener("beforeprint", onBeforePrint);
     document.body.classList.add("secure-test-printing-blocked");
+
 
 
     const container = containerRef.current;
