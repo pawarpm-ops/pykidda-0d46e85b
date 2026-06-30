@@ -587,11 +587,18 @@ function RunTest() {
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
       window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("contextmenu", onContextMenu, true);
+      document.removeEventListener("drop", onDrop, true);
+      document.removeEventListener("dragover", onDragOver, true);
+      window.clearInterval(devtoolsPoll);
       document.removeEventListener("copy", blockClipboard, true);
       document.removeEventListener("cut", blockClipboard, true);
       document.removeEventListener("paste", blockClipboard, true);
       window.removeEventListener("beforeprint", onBeforePrint);
       document.body.classList.remove("secure-test-printing-blocked");
+
       if (container) {
         for (const evt of blockedMouseEvents) {
           container.removeEventListener(evt, mouseListener, true);
