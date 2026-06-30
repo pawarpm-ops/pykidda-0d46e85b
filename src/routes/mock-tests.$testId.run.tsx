@@ -260,13 +260,23 @@ function RunTest() {
       "pointermove",
       "contextmenu",
       "dragstart",
+      "dragover",
+      "dragend",
+      "drop",
       "selectstart",
       "auxclick",
+      "touchstart",
+      "touchend",
+      "touchmove",
+      "gesturestart",
+      "gesturechange",
+      "gestureend",
     ];
     const blockMouse = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
     };
+
 
     // Keyboard handler
     const goPrev = () => setCurrentIdx((i) => Math.max(0, i - 1));
