@@ -24,6 +24,7 @@ import {
   type Announcement,
 } from "@/lib/notifications";
 import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
+import { getScreenshotSignedUrl } from "@/components/ReportProblem";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
