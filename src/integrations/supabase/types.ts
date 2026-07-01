@@ -196,6 +196,87 @@ export type Database = {
         }
         Relationships: []
       }
+      problem_reports: {
+        Row: {
+          admin_remarks: string | null
+          admin_response: string | null
+          browser_info: string | null
+          created_at: string
+          description: string
+          id: string
+          page_url: string | null
+          priority: string
+          problem_type: string
+          question_id: string | null
+          question_number: string | null
+          related_section: string
+          resolved_at: string | null
+          roll_number: string | null
+          screenshot_url: string | null
+          status: string
+          student_email: string | null
+          student_name: string | null
+          subject: string
+          test_id: string | null
+          topic: string | null
+          unit: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_remarks?: string | null
+          admin_response?: string | null
+          browser_info?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          page_url?: string | null
+          priority?: string
+          problem_type: string
+          question_id?: string | null
+          question_number?: string | null
+          related_section: string
+          resolved_at?: string | null
+          roll_number?: string | null
+          screenshot_url?: string | null
+          status?: string
+          student_email?: string | null
+          student_name?: string | null
+          subject: string
+          test_id?: string | null
+          topic?: string | null
+          unit?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_remarks?: string | null
+          admin_response?: string | null
+          browser_info?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          page_url?: string | null
+          priority?: string
+          problem_type?: string
+          question_id?: string | null
+          question_number?: string | null
+          related_section?: string
+          resolved_at?: string | null
+          roll_number?: string | null
+          screenshot_url?: string | null
+          status?: string
+          student_email?: string | null
+          student_name?: string | null
+          subject?: string
+          test_id?: string | null
+          topic?: string | null
+          unit?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null

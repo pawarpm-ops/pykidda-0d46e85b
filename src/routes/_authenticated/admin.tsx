@@ -24,6 +24,7 @@ import {
   type Announcement,
 } from "@/lib/notifications";
 import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
+import { getScreenshotSignedUrl } from "@/components/ReportProblem";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -123,7 +124,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function AdminPage() {
   const isAdmin = useIsAdmin();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
@@ -313,7 +314,7 @@ function AdminPage() {
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "announce"] as const).map((t) => (
+            {(["overview", "students", "activity", "announce", "reports"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -321,7 +322,7 @@ function AdminPage() {
                   tab === t ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-secondary"
                 }`}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : "Announcements"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "announce" ? "Announcements" : "Reports"}
               </button>
             ))}
           </div>
@@ -442,6 +443,9 @@ function AdminPage() {
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
         )}
+
+        {tab === "reports" && <ReportsTab />}
+
 
       </main>
     </div>
@@ -987,6 +991,381 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
             See student view →
           </Link>
         </p>
+      </div>
+    </section>
+  );
+}
+
+type ReportRow = {
+  id: string;
+  user_id: string;
+  student_name: string | null;
+  student_email: string | null;
+  roll_number: string | null;
+  problem_type: string;
+  related_section: string;
+  subject: string;
+  description: string;
+  priority: string;
+  question_id: string | null;
+  test_id: string | null;
+  page_url: string | null;
+  browser_info: string | null;
+  screenshot_url: string | null;
+  status: string;
+  admin_remarks: string | null;
+  admin_response: string | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+};
+
+const STATUS_TONES: Record<string, string> = {
+  Open: "bg-amber-500/15 text-amber-600 border-amber-500/30",
+  "In Progress": "bg-sky-500/15 text-sky-600 border-sky-500/30",
+  Resolved: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
+  Rejected: "bg-destructive/15 text-destructive border-destructive/30",
+};
+
+const PRIORITY_TONES: Record<string, string> = {
+  Low: "text-muted-foreground",
+  Medium: "text-sky-600",
+  High: "text-amber-600",
+  Urgent: "text-destructive font-semibold",
+};
+
+function ReportsTab() {
+  const [rows, setRows] = useState<ReportRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<ReportRow | null>(null);
+  const [shotUrl, setShotUrl] = useState<string | null>(null);
+  const [remarks, setRemarks] = useState("");
+  const [response, setResponse] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      const { data, error } = await supabase
+        .from("problem_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!mounted) return;
+      if (!error && data) setRows(data as ReportRow[]);
+      setLoading(false);
+    }
+    load();
+    const channel = supabase
+      .channel("problem_reports_admin")
+      .on("postgres_changes", { event: "*", schema: "public", table: "problem_reports" }, load)
+      .subscribe();
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setShotUrl(null);
+      return;
+    }
+    setRemarks(selected.admin_remarks ?? "");
+    setResponse(selected.admin_response ?? "");
+    if (selected.screenshot_url) {
+      getScreenshotSignedUrl(selected.screenshot_url).then(setShotUrl);
+    } else {
+      setShotUrl(null);
+    }
+  }, [selected]);
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (statusFilter !== "all" && r.status !== statusFilter) return false;
+      if (typeFilter !== "all" && r.problem_type !== typeFilter) return false;
+      if (priorityFilter !== "all" && r.priority !== priorityFilter) return false;
+      if (!term) return true;
+      return (
+        r.subject.toLowerCase().includes(term) ||
+        r.description.toLowerCase().includes(term) ||
+        (r.student_email ?? "").toLowerCase().includes(term) ||
+        (r.student_name ?? "").toLowerCase().includes(term) ||
+        (r.question_id ?? "").toLowerCase().includes(term) ||
+        (r.test_id ?? "").toLowerCase().includes(term)
+      );
+    });
+  }, [rows, statusFilter, typeFilter, priorityFilter, q]);
+
+  const counts = useMemo(() => {
+    const c = { Open: 0, "In Progress": 0, Resolved: 0, Rejected: 0 } as Record<string, number>;
+    for (const r of rows) c[r.status] = (c[r.status] ?? 0) + 1;
+    return c;
+  }, [rows]);
+
+  const types = useMemo(() => Array.from(new Set(rows.map((r) => r.problem_type))).sort(), [rows]);
+
+  async function updateStatus(status: string) {
+    if (!selected) return;
+    setSaving(true);
+    const patch: {
+      status: string;
+      admin_remarks: string | null;
+      admin_response: string | null;
+      resolved_at?: string;
+    } = {
+      status,
+      admin_remarks: remarks || null,
+      admin_response: response || null,
+    };
+    if (status === "Resolved") patch.resolved_at = new Date().toISOString();
+    const { error } = await supabase.from("problem_reports").update(patch).eq("id", selected.id);
+    setSaving(false);
+    if (!error) setSelected({ ...selected, ...patch } as ReportRow);
+  }
+
+  async function saveNotes() {
+    if (!selected) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("problem_reports")
+      .update({ admin_remarks: remarks || null, admin_response: response || null })
+      .eq("id", selected.id);
+    setSaving(false);
+    if (!error) setSelected({ ...selected, admin_remarks: remarks, admin_response: response });
+  }
+
+  async function deleteReport() {
+    if (!selected) return;
+    if (!confirm("Delete this report permanently?")) return;
+    const { error } = await supabase.from("problem_reports").delete().eq("id", selected.id);
+    if (!error) {
+      setRows((rs) => rs.filter((r) => r.id !== selected.id));
+      setSelected(null);
+    }
+  }
+
+  if (loading) return <p className="mt-6 text-sm text-muted-foreground">Loading reports…</p>;
+
+  return (
+    <section className="mt-6 space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Open" value={counts.Open ?? 0} tone="warn" />
+        <Stat label="In Progress" value={counts["In Progress"] ?? 0} />
+        <Stat label="Resolved" value={counts.Resolved ?? 0} tone="good" />
+        <Stat label="Rejected" value={counts.Rejected ?? 0} tone="bad" />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search subject, email, question/test id…"
+            className="flex-1 min-w-[220px] rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+          >
+            <option value="all">All status</option>
+            {["Open", "In Progress", "Resolved", "Rejected"].map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+          >
+            <option value="all">All types</option>
+            {types.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+          >
+            <option value="all">All priority</option>
+            {["Low", "Medium", "High", "Urgent"].map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[420px_1fr]">
+        <div className="rounded-2xl border border-border bg-card shadow-sm max-h-[70vh] overflow-auto">
+          {filtered.length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground">No reports match your filters.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {filtered.map((r) => (
+                <li key={r.id}>
+                  <button
+                    onClick={() => setSelected(r)}
+                    className={`w-full text-left px-4 py-3 transition ${
+                      selected?.id === r.id ? "bg-accent/10" : "hover:bg-secondary"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold truncate">{r.subject}</p>
+                      <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] ${STATUS_TONES[r.status] ?? ""}`}>
+                        {r.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {r.problem_type} · <span className={PRIORITY_TONES[r.priority] ?? ""}>{r.priority}</span>
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {r.student_name || r.student_email || r.user_id.slice(0, 8)} · {fmtRelative(r.created_at)}
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          {!selected ? (
+            <p className="text-sm text-muted-foreground">Select a report to view details.</p>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div>
+                  <h3 className="text-xl font-bold">{selected.subject}</h3>
+                  <p className="text-xs text-muted-foreground">Report ID: {selected.id}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded border px-2 py-0.5 text-xs ${STATUS_TONES[selected.status] ?? ""}`}>
+                    {selected.status}
+                  </span>
+                  <span className={`text-xs ${PRIORITY_TONES[selected.priority] ?? ""}`}>{selected.priority}</span>
+                </div>
+              </div>
+
+              <dl className="grid gap-2 sm:grid-cols-2 text-sm">
+                <InfoCell label="Student" value={selected.student_name} />
+                <InfoCell label="Email" value={selected.student_email} />
+                <InfoCell label="Roll number" value={selected.roll_number} />
+                <InfoCell label="Problem type" value={selected.problem_type} />
+                <InfoCell label="Section" value={selected.related_section} />
+                <InfoCell label="Submitted" value={fmtDate(selected.created_at)} />
+                <InfoCell label="Question ID" value={selected.question_id} />
+                <InfoCell label="Test ID" value={selected.test_id} />
+                <InfoCell label="Page URL" value={selected.page_url} />
+                <InfoCell label="Browser" value={selected.browser_info} />
+              </dl>
+
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+                  Description
+                </h4>
+                <p className="whitespace-pre-wrap rounded-md border border-border bg-background/40 p-3 text-sm">
+                  {selected.description}
+                </p>
+              </div>
+
+              {selected.question_id && (
+                <Link
+                  to="/practice/$qid"
+                  params={{ qid: selected.question_id }}
+                  className="inline-flex rounded-md border border-border px-3 py-1.5 text-xs hover:bg-secondary"
+                >
+                  Open related question →
+                </Link>
+              )}
+
+              {shotUrl && (
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+                    Screenshot
+                  </h4>
+                  <a href={shotUrl} target="_blank" rel="noreferrer">
+                    <img
+                      src={shotUrl}
+                      alt="Screenshot from user"
+                      className="max-h-72 rounded-md border border-border"
+                    />
+                  </a>
+                </div>
+              )}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm">
+                  <span className="mb-1 block font-semibold">Admin remarks (internal)</span>
+                  <textarea
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-1 block font-semibold">Response to student</span>
+                  <textarea
+                    value={response}
+                    onChange={(e) => setResponse(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  />
+                </label>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => updateStatus("Open")}
+                  disabled={saving}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-secondary"
+                >
+                  Mark Open
+                </button>
+                <button
+                  onClick={() => updateStatus("In Progress")}
+                  disabled={saving}
+                  className="rounded-md bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-600"
+                >
+                  In Progress
+                </button>
+                <button
+                  onClick={() => updateStatus("Resolved")}
+                  disabled={saving}
+                  className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600"
+                >
+                  Resolved
+                </button>
+                <button
+                  onClick={() => updateStatus("Rejected")}
+                  disabled={saving}
+                  className="rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-white hover:bg-destructive/80"
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={saveNotes}
+                  disabled={saving}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-secondary"
+                >
+                  Save notes
+                </button>
+                <button
+                  onClick={deleteReport}
+                  className="ml-auto rounded-md border border-destructive/40 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

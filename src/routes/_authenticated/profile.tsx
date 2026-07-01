@@ -217,7 +217,100 @@ function ProfilePage() {
             🐍 Restart website tutorial
           </button>
         </div>
+
+        {userId && <MyReports userId={userId} />}
       </main>
+    </div>
+  );
+}
+
+type MyReport = {
+  id: string;
+  subject: string;
+  problem_type: string;
+  status: string;
+  priority: string;
+  admin_response: string | null;
+  created_at: string;
+};
+
+function MyReports({ userId }: { userId: string }) {
+  const [rows, setRows] = useState<MyReport[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      const { data } = await supabase
+        .from("problem_reports")
+        .select("id, subject, problem_type, status, priority, admin_response, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      if (!mounted) return;
+      setRows((data as MyReport[]) ?? []);
+      setLoading(false);
+    }
+    load();
+    const channel = supabase
+      .channel("my_reports_" + userId)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "problem_reports", filter: `user_id=eq.${userId}` },
+        load,
+      )
+      .subscribe();
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
+  const tone = (s: string) =>
+    s === "Resolved"
+      ? "bg-emerald-500/15 text-emerald-600"
+      : s === "In Progress"
+        ? "bg-sky-500/15 text-sky-600"
+        : s === "Rejected"
+          ? "bg-destructive/15 text-destructive"
+          : "bg-amber-500/15 text-amber-600";
+
+  return (
+    <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
+      <h2 className="text-lg font-bold">My reports</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Problems you've reported. You'll see the admin's response here once it's added.
+      </p>
+      {loading ? (
+        <p className="mt-4 text-sm text-muted-foreground">Loading…</p>
+      ) : rows.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          You haven't reported anything yet. Use the floating "Report a problem" button on any page.
+        </p>
+      ) : (
+        <ul className="mt-4 divide-y divide-border">
+          {rows.map((r) => (
+            <li key={r.id} className="py-3">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <p className="font-semibold">{r.subject}</p>
+                <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${tone(r.status)}`}>
+                  {r.status}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {r.problem_type} · {r.priority} · {new Date(r.created_at).toLocaleString()}
+              </p>
+              {r.admin_response && (
+                <p className="mt-2 whitespace-pre-wrap rounded-md border border-border bg-background/40 p-2 text-sm">
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Admin response
+                  </span>
+                  <br />
+                  {r.admin_response}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
