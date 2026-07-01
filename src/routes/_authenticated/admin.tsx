@@ -444,6 +444,9 @@ function AdminPage() {
           <AnnounceTab authorId={authorId} students={students} />
         )}
 
+        {tab === "reports" && <ReportsTab />}
+
+
       </main>
     </div>
   );
