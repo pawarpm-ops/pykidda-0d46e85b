@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
+import { ReportProblem } from "@/components/ReportProblem";
 
 function NotFoundComponent() {
   return (
