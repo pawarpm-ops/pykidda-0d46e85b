@@ -1112,7 +1112,12 @@ function ReportsTab() {
   async function updateStatus(status: string) {
     if (!selected) return;
     setSaving(true);
-    const patch: Record<string, unknown> = {
+    const patch: {
+      status: string;
+      admin_remarks: string | null;
+      admin_response: string | null;
+      resolved_at?: string;
+    } = {
       status,
       admin_remarks: remarks || null,
       admin_response: response || null,
