@@ -314,7 +314,7 @@ function AdminPage() {
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "announce"] as const).map((t) => (
+            {(["overview", "students", "activity", "announce", "reports"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -322,7 +322,7 @@ function AdminPage() {
                   tab === t ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-secondary"
                 }`}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : "Announcements"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "announce" ? "Announcements" : "Reports"}
               </button>
             ))}
           </div>
