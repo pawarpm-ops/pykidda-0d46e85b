@@ -124,7 +124,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function AdminPage() {
   const isAdmin = useIsAdmin();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
