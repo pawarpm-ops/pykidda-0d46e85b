@@ -328,6 +328,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_reviews: {
+        Row: {
+          category: string | null
+          created_at: string
+          device_info: string | null
+          id: string
+          is_important: boolean
+          page_url: string | null
+          quick_reaction: string | null
+          rating: number
+          review_text: string | null
+          roll_number: string | null
+          status: string
+          student_email: string | null
+          student_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          device_info?: string | null
+          id?: string
+          is_important?: boolean
+          page_url?: string | null
+          quick_reaction?: string | null
+          rating: number
+          review_text?: string | null
+          roll_number?: string | null
+          status?: string
+          student_email?: string | null
+          student_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          device_info?: string | null
+          id?: string
+          is_important?: boolean
+          page_url?: string | null
+          quick_reaction?: string | null
+          rating?: number
+          review_text?: string | null
+          roll_number?: string | null
+          status?: string
+          student_email?: string | null
+          student_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
