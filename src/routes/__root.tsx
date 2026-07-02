@@ -133,6 +133,7 @@ function RootComponent() {
         <Outlet />
         <OnboardingTutorial />
         <ReportProblem />
+        <ReviewPopup />
       </AuthGate>
     </QueryClientProvider>
   );
