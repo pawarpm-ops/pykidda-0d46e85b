@@ -124,7 +124,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function AdminPage() {
   const isAdmin = useIsAdmin();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
@@ -314,7 +314,7 @@ function AdminPage() {
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "announce", "reports"] as const).map((t) => (
+            {(["overview", "students", "activity", "announce", "reports", "reviews"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -322,7 +322,7 @@ function AdminPage() {
                   tab === t ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-secondary"
                 }`}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "announce" ? "Announcements" : "Reports"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : "Reviews"}
               </button>
             ))}
           </div>
@@ -445,6 +445,8 @@ function AdminPage() {
         )}
 
         {tab === "reports" && <ReportsTab />}
+
+        {tab === "reviews" && <ReviewsTab />}
 
 
       </main>
@@ -1367,6 +1369,273 @@ function ReportsTab() {
           )}
         </div>
       </div>
+    </section>
+  );
+}
+
+type ReviewRow = {
+  id: string;
+  user_id: string;
+  student_name: string | null;
+  student_email: string | null;
+  roll_number: string | null;
+  rating: number;
+  review_text: string | null;
+  category: string | null;
+  quick_reaction: string | null;
+  page_url: string | null;
+  status: string;
+  is_important: boolean;
+  created_at: string;
+};
+
+function ReviewsTab() {
+  const [rows, setRows] = useState<ReviewRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const [catFilter, setCatFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<ReviewRow | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      const { data } = await supabase
+        .from("user_reviews")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!mounted) return;
+      if (data) setRows(data as ReviewRow[]);
+      setLoading(false);
+    }
+    load();
+    const ch = supabase
+      .channel("user_reviews_admin")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_reviews" }, load)
+      .subscribe();
+    return () => {
+      mounted = false;
+      supabase.removeChannel(ch);
+    };
+  }, []);
+
+  const cats = useMemo(() => Array.from(new Set(rows.map((r) => r.category).filter(Boolean))) as string[], [rows]);
+
+  const filtered = rows.filter((r) => {
+    if (ratingFilter !== "all" && String(r.rating) !== ratingFilter) return false;
+    if (catFilter !== "all" && r.category !== catFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (
+        !(r.student_name || "").toLowerCase().includes(q) &&
+        !(r.student_email || "").toLowerCase().includes(q) &&
+        !(r.review_text || "").toLowerCase().includes(q)
+      )
+        return false;
+    }
+    return true;
+  });
+
+  const unread = rows.filter((r) => r.status === "unread").length;
+  const avg = rows.length ? (rows.reduce((s, r) => s + r.rating, 0) / rows.length).toFixed(2) : "—";
+
+  async function updateStatus(id: string, status: string) {
+    await supabase.from("user_reviews").update({ status }).eq("id", id);
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+  }
+  async function toggleImportant(id: string, val: boolean) {
+    await supabase.from("user_reviews").update({ is_important: val }).eq("id", id);
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, is_important: val } : r)));
+  }
+  async function del(id: string) {
+    if (!confirm("Delete this review?")) return;
+    await supabase.from("user_reviews").delete().eq("id", id);
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    setSelected(null);
+  }
+
+  function exportCsv() {
+    const headers = ["date", "name", "email", "roll", "rating", "category", "reaction", "text", "status"];
+    const csv = [
+      headers.join(","),
+      ...filtered.map((r) =>
+        [
+          new Date(r.created_at).toISOString(),
+          r.student_name || "",
+          r.student_email || "",
+          r.roll_number || "",
+          r.rating,
+          r.category || "",
+          r.quick_reaction || "",
+          (r.review_text || "").replace(/"/g, '""'),
+          r.status,
+        ]
+          .map((v) => `"${String(v).replace(/\n/g, " ")}"`)
+          .join(","),
+      ),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pykidda-reviews-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <section className="mt-6 space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Stat label="Total reviews" value={rows.length} />
+        <Stat label="Unread" value={unread} tone={unread > 0 ? "warn" : "default"} />
+        <Stat label="Average rating" value={avg} tone="good" />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search name, email, or text…"
+          className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+        />
+        <select
+          value={ratingFilter}
+          onChange={(e) => setRatingFilter(e.target.value)}
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+        >
+          <option value="all">All ratings</option>
+          {[5, 4, 3, 2, 1].map((n) => (
+            <option key={n} value={n}>
+              {n} ★
+            </option>
+          ))}
+        </select>
+        <select
+          value={catFilter}
+          onChange={(e) => setCatFilter(e.target.value)}
+          className="rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+        >
+          <option value="all">All categories</option>
+          {cats.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={exportCsv}
+          className="rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:bg-secondary"
+        >
+          Export CSV
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No reviews yet.</p>
+      ) : (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {filtered.map((r) => (
+            <button
+              key={r.id}
+              onClick={() => {
+                setSelected(r);
+                if (r.status === "unread") updateStatus(r.id, "read");
+              }}
+              className={`text-left rounded-xl border p-4 transition hover:border-accent ${
+                r.status === "unread" ? "border-accent/60 bg-accent/5" : "border-border bg-card"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-semibold">{r.student_name || "Student"}</div>
+                <div className="text-amber-500 text-sm">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</div>
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {r.student_email} · {r.category || "—"} · {fmtRelative(r.created_at)}
+              </div>
+              {r.review_text && (
+                <p className="mt-2 text-sm line-clamp-2 text-foreground/90">{r.review_text}</p>
+              )}
+              <div className="mt-2 flex gap-1.5 text-[11px]">
+                {r.quick_reaction && (
+                  <span className="rounded-full bg-secondary px-2 py-0.5">{r.quick_reaction}</span>
+                )}
+                {r.is_important && (
+                  <span className="rounded-full bg-amber-500/20 text-amber-700 px-2 py-0.5">Important</span>
+                )}
+                <span className="rounded-full bg-muted px-2 py-0.5">{r.status}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">{selected.student_name || "Student"}</h3>
+              <div className="text-amber-500">{"★".repeat(selected.rating)}{"☆".repeat(5 - selected.rating)}</div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {selected.student_email} · {selected.roll_number || "—"} · {fmtDate(selected.created_at)}
+            </p>
+            <div className="mt-3 text-sm space-y-1">
+              <div><span className="text-muted-foreground">Category:</span> {selected.category || "—"}</div>
+              {selected.quick_reaction && (
+                <div><span className="text-muted-foreground">Reaction:</span> {selected.quick_reaction}</div>
+              )}
+              {selected.page_url && (
+                <div><span className="text-muted-foreground">Page:</span> {selected.page_url}</div>
+              )}
+            </div>
+            {selected.review_text && (
+              <div className="mt-3 rounded-md border border-border bg-background p-3 text-sm whitespace-pre-wrap">
+                {selected.review_text}
+              </div>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => toggleImportant(selected.id, !selected.is_important)}
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-secondary"
+              >
+                {selected.is_important ? "Unmark important" : "Mark important"}
+              </button>
+              <button
+                onClick={() => updateStatus(selected.id, selected.status === "unread" ? "read" : "unread")}
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-secondary"
+              >
+                Mark {selected.status === "unread" ? "read" : "unread"}
+              </button>
+              <button
+                onClick={() => updateStatus(selected.id, "archived")}
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-secondary"
+              >
+                Archive
+              </button>
+              <button
+                onClick={() => del(selected.id)}
+                className="rounded-md border border-destructive bg-destructive/10 text-destructive px-3 py-1.5 text-sm hover:bg-destructive/20"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setSelected(null)}
+                className="ml-auto rounded-md px-3 py-1.5 text-sm hover:bg-secondary"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

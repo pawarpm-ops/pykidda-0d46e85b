@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { ReportProblem } from "@/components/ReportProblem";
+import { ReviewPopup } from "@/components/ReviewPopup";
 
 function NotFoundComponent() {
   return (
@@ -132,6 +133,7 @@ function RootComponent() {
         <Outlet />
         <OnboardingTutorial />
         <ReportProblem />
+        <ReviewPopup />
       </AuthGate>
     </QueryClientProvider>
   );
