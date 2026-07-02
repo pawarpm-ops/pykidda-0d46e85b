@@ -446,6 +446,8 @@ function AdminPage() {
 
         {tab === "reports" && <ReportsTab />}
 
+        {tab === "reviews" && <ReviewsTab />}
+
 
       </main>
     </div>
