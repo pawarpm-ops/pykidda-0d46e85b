@@ -53,6 +53,9 @@ function SolvePage() {
             onSubmit={(out) => {
               recordPracticeAttempt(userId, q.id, out.passedCount, out.totalCount);
               void syncMyScore();
+              if (out.passedCount === out.totalCount && out.totalCount > 0) {
+                void recordStreakActivity("practice_question_solved", q.id);
+              }
             }}
           />
         </div>
