@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchLeaderboard, syncMyScore, type LeaderboardRow } from "@/lib/leaderboard";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchStreakLeaderboard, getCurrentRank, type StreakLeaderRow } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
