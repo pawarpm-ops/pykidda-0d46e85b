@@ -19,6 +19,8 @@ function LeaderboardPage() {
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [me, setMe] = useState<string | null>(null);
+  const [tab, setTab] = useState<"score" | "streak">("score");
+  const [streakRows, setStreakRows] = useState<StreakLeaderRow[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +28,6 @@ function LeaderboardPage() {
       try {
         const { data } = await supabase.auth.getUser();
         if (!cancelled) setMe(data.user?.id ?? null);
-        // Push own score before reading, so first-time visitors appear immediately.
         await syncMyScore();
         const list = await fetchLeaderboard(100);
         if (!cancelled) setRows(list);
@@ -39,6 +40,15 @@ function LeaderboardPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tab !== "streak" || streakRows) return;
+    let cancelled = false;
+    fetchStreakLeaderboard(100).then((rows) => !cancelled && setStreakRows(rows));
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, streakRows]);
+
   const top3 = rows?.slice(0, 3) ?? [];
   const rest = rows?.slice(3) ?? [];
 
@@ -46,14 +56,35 @@ function LeaderboardPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-6 py-10">
-        <header className="mb-8 text-center">
+        <header className="mb-6 text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-accent">PY Kidda Hall of Fame</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">Leaderboard</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-            Earn points by solving practice questions and crushing mock tests. Top of the table is just one
-            more solve away.
-          </p>
         </header>
+
+        {/* Tabs */}
+        <div className="mb-8 flex justify-center">
+          <div className="inline-flex rounded-xl border border-border bg-card p-1">
+            {(["score", "streak"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                  tab === t
+                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t === "score" ? "🏆 Score" : "🔥 Streak"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tab === "streak" ? (
+          <StreakLeaderboard rows={streakRows} meId={me} />
+        ) : (
+        <>
+
 
         {error && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
