@@ -6,6 +6,7 @@ import { getQuestion } from "@/lib/questions";
 import { supabase } from "@/integrations/supabase/client";
 import { recordPracticeAttempt } from "@/lib/progress";
 import { syncMyScore } from "@/lib/leaderboard";
+import { recordStreakActivity } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/practice/$qid")({
   head: () => ({
