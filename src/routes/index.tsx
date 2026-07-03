@@ -168,6 +168,11 @@ function Index() {
           </div>
         </section>
 
+        {/* Streak card */}
+        <section className="mx-auto max-w-6xl px-6 pb-8">
+          <StreakCard />
+        </section>
+
         {/* Practice highlight card */}
         <section className="mx-auto max-w-6xl px-6 pb-12">
           <Link to="/practice" className="block group">
