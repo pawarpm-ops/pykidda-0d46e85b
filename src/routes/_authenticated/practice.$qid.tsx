@@ -6,6 +6,7 @@ import { getQuestion } from "@/lib/questions";
 import { supabase } from "@/integrations/supabase/client";
 import { recordPracticeAttempt } from "@/lib/progress";
 import { syncMyScore } from "@/lib/leaderboard";
+import { recordStreakActivity } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/practice/$qid")({
   head: () => ({
@@ -52,6 +53,9 @@ function SolvePage() {
             onSubmit={(out) => {
               recordPracticeAttempt(userId, q.id, out.passedCount, out.totalCount);
               void syncMyScore();
+              if (out.passedCount === out.totalCount && out.totalCount > 0) {
+                void recordStreakActivity("practice_question_solved", q.id);
+              }
             }}
           />
         </div>

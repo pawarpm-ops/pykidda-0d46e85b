@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchLeaderboard, syncMyScore, type LeaderboardRow } from "@/lib/leaderboard";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchStreakLeaderboard, getCurrentRank, type StreakLeaderRow } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
@@ -18,6 +19,8 @@ function LeaderboardPage() {
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [me, setMe] = useState<string | null>(null);
+  const [tab, setTab] = useState<"score" | "streak">("score");
+  const [streakRows, setStreakRows] = useState<StreakLeaderRow[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +28,6 @@ function LeaderboardPage() {
       try {
         const { data } = await supabase.auth.getUser();
         if (!cancelled) setMe(data.user?.id ?? null);
-        // Push own score before reading, so first-time visitors appear immediately.
         await syncMyScore();
         const list = await fetchLeaderboard(100);
         if (!cancelled) setRows(list);
@@ -38,6 +40,15 @@ function LeaderboardPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (tab !== "streak" || streakRows) return;
+    let cancelled = false;
+    fetchStreakLeaderboard(100).then((rows) => !cancelled && setStreakRows(rows));
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, streakRows]);
+
   const top3 = rows?.slice(0, 3) ?? [];
   const rest = rows?.slice(3) ?? [];
 
@@ -45,14 +56,35 @@ function LeaderboardPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-6 py-10">
-        <header className="mb-8 text-center">
+        <header className="mb-6 text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-accent">PY Kidda Hall of Fame</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">Leaderboard</h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-            Earn points by solving practice questions and crushing mock tests. Top of the table is just one
-            more solve away.
-          </p>
         </header>
+
+        {/* Tabs */}
+        <div className="mb-8 flex justify-center">
+          <div className="inline-flex rounded-xl border border-border bg-card p-1">
+            {(["score", "streak"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                  tab === t
+                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t === "score" ? "🏆 Score" : "🔥 Streak"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tab === "streak" ? (
+          <StreakLeaderboard rows={streakRows} meId={me} />
+        ) : (
+        <>
+
 
         {error && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
@@ -117,10 +149,96 @@ function LeaderboardPage() {
             </table>
           </div>
         )}
+        </>
+        )}
       </main>
     </div>
   );
 }
+
+function StreakLeaderboard({ rows, meId }: { rows: StreakLeaderRow[] | null; meId: string | null }) {
+  if (!rows) return <div className="py-16 text-center text-muted-foreground">Loading streak leaders…</div>;
+  if (rows.length === 0)
+    return (
+      <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
+        No streaks yet — solve a question today to start yours!
+      </div>
+    );
+  const today = new Date().toISOString().slice(0, 10);
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <table className="w-full text-sm">
+        <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
+          <tr>
+            <th className="px-4 py-3 text-left">Rank</th>
+            <th className="px-4 py-3 text-left">Student</th>
+            <th className="px-4 py-3 text-left">Title</th>
+            <th className="px-4 py-3 text-right">🔥 Current</th>
+            <th className="px-4 py-3 text-right">🏆 Longest</th>
+            <th className="px-4 py-3 text-center">Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const rank = i + 1;
+            const isMe = r.user_id === meId;
+            const alive = r.last_activity_date === today;
+            const title = getCurrentRank(r.current_streak);
+            const medal = rank === 1 ? "👑" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+            const label =
+              r.current_streak >= 90
+                ? "UNSTOPPABLE"
+                : r.current_streak >= 30
+                  ? "LEGEND"
+                  : r.current_streak >= 7
+                    ? "HOT"
+                    : null;
+            return (
+              <tr
+                key={r.user_id}
+                className={`border-t border-border/60 ${isMe ? "bg-accent/10" : ""} ${rank === 1 ? "bg-gradient-to-r from-amber-500/10 to-transparent" : ""}`}
+              >
+                <td className="px-4 py-3 font-bold text-lg">{medal}</td>
+                <td className="px-4 py-3">
+                  <span className="font-medium">
+                    {r.display_name || "Anonymous"}
+                    {isMe && (
+                      <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                        you
+                      </span>
+                    )}
+                    {label && (
+                      <span className="ml-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                        {label}
+                      </span>
+                    )}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-xs">
+                  <span className="inline-flex items-center gap-1">
+                    <span>{title.icon}</span>
+                    <span className="text-muted-foreground">{title.name}</span>
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right font-bold text-orange-500 tabular-nums">
+                  {r.current_streak}
+                </td>
+                <td className="px-4 py-3 text-right text-yellow-500 tabular-nums">{r.longest_streak}</td>
+                <td className="px-4 py-3 text-center">
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full ${alive ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"}`}
+                    title={alive ? "Streak alive today" : "Not active today"}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 
 function Podium({ top3, meId }: { top3: LeaderboardRow[]; meId: string | null }) {
   // Render order: 2nd, 1st, 3rd for podium look. Fall back gracefully when fewer than 3 exist.

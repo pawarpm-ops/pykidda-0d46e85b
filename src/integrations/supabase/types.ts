@@ -328,6 +328,78 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_activity_logs: {
+        Row: {
+          activity_date: string
+          activity_reference_id: string | null
+          activity_type: string
+          created_at: string
+          id: string
+          points_earned: number
+          streak_count_after_activity: number
+          user_id: string
+        }
+        Insert: {
+          activity_date: string
+          activity_reference_id?: string | null
+          activity_type: string
+          created_at?: string
+          id?: string
+          points_earned?: number
+          streak_count_after_activity?: number
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          activity_reference_id?: string | null
+          activity_type?: string
+          created_at?: string
+          id?: string
+          points_earned?: number
+          streak_count_after_activity?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      student_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          longest_streak: number
+          streak_freezes_available: number
+          streak_freezes_used: number
+          today_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_freezes_available?: number
+          streak_freezes_used?: number
+          today_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_freezes_available?: number
+          streak_freezes_used?: number
+          today_completed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_reviews: {
         Row: {
           category: string | null
@@ -414,6 +486,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      record_streak_activity: {
+        Args: { _activity_type: string; _reference_id?: string }
+        Returns: {
+          current_streak: number
+          is_new_day: boolean
+          longest_streak: number
+          today_completed: boolean
+        }[]
       }
     }
     Enums: {

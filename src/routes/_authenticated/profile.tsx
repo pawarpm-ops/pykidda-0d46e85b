@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { StreakCard } from "@/components/StreakCard";
 import { supabase } from "@/integrations/supabase/client";
 import { restartTutorial } from "@/components/OnboardingTutorial";
 import { z } from "zod";
@@ -105,6 +106,10 @@ function ProfilePage() {
         <p className="mt-1 text-muted-foreground">
           Customize how you appear across PY Kidda.
         </p>
+
+        <div className="mt-6">
+          <StreakCard />
+        </div>
 
         {loading ? (
           <p className="mt-10 text-muted-foreground">Loading…</p>

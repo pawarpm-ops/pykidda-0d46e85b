@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { ReportProblem } from "@/components/ReportProblem";
 import { ReviewPopup } from "@/components/ReviewPopup";
+import { StreakUnlockModal } from "@/components/StreakUnlockModal";
+import { InactivityLogout } from "@/components/InactivityLogout";
 
 function NotFoundComponent() {
   return (
@@ -134,6 +136,8 @@ function RootComponent() {
         <OnboardingTutorial />
         <ReportProblem />
         <ReviewPopup />
+        <StreakUnlockModal />
+        <InactivityLogout />
       </AuthGate>
     </QueryClientProvider>
   );

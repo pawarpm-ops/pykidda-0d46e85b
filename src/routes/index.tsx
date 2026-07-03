@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MOCK_TESTS, UNITS, QUESTIONS } from "@/lib/questions";
 import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
+import { StreakCard } from "@/components/StreakCard";
 import {
   Dialog,
   DialogContent,
@@ -166,6 +167,11 @@ function Index() {
               <Badge>📊 Smart Analytics</Badge>
             </div>
           </div>
+        </section>
+
+        {/* Streak card */}
+        <section className="mx-auto max-w-6xl px-6 pb-8">
+          <StreakCard />
         </section>
 
         {/* Practice highlight card */}
