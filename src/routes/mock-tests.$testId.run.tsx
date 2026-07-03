@@ -15,6 +15,7 @@ import {
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 import { recordMockResult } from "@/lib/progress";
 import { syncMyScore } from "@/lib/leaderboard";
+import { recordStreakActivity } from "@/lib/streaks";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
