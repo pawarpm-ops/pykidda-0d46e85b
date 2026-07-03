@@ -180,6 +180,7 @@ function RunTest() {
         recordMockResult(null, result);
       }
       void syncMyScore();
+      void recordStreakActivity("mock_test_attempted", testId);
       clearTestStarted(testId);
       navigate({ to: "/mock-tests/$testId/result", params: { testId } });
     },
