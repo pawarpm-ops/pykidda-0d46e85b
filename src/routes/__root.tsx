@@ -136,6 +136,8 @@ function RootComponent() {
         <OnboardingTutorial />
         <ReportProblem />
         <ReviewPopup />
+        <StreakUnlockModal />
+        <InactivityLogout />
       </AuthGate>
     </QueryClientProvider>
   );
