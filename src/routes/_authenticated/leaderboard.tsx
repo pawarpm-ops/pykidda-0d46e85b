@@ -149,10 +149,96 @@ function LeaderboardPage() {
             </table>
           </div>
         )}
+        </>
+        )}
       </main>
     </div>
   );
 }
+
+function StreakLeaderboard({ rows, meId }: { rows: StreakLeaderRow[] | null; meId: string | null }) {
+  if (!rows) return <div className="py-16 text-center text-muted-foreground">Loading streak leaders…</div>;
+  if (rows.length === 0)
+    return (
+      <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
+        No streaks yet — solve a question today to start yours!
+      </div>
+    );
+  const today = new Date().toISOString().slice(0, 10);
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <table className="w-full text-sm">
+        <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
+          <tr>
+            <th className="px-4 py-3 text-left">Rank</th>
+            <th className="px-4 py-3 text-left">Student</th>
+            <th className="px-4 py-3 text-left">Title</th>
+            <th className="px-4 py-3 text-right">🔥 Current</th>
+            <th className="px-4 py-3 text-right">🏆 Longest</th>
+            <th className="px-4 py-3 text-center">Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const rank = i + 1;
+            const isMe = r.user_id === meId;
+            const alive = r.last_activity_date === today;
+            const title = getCurrentRank(r.current_streak);
+            const medal = rank === 1 ? "👑" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+            const label =
+              r.current_streak >= 90
+                ? "UNSTOPPABLE"
+                : r.current_streak >= 30
+                  ? "LEGEND"
+                  : r.current_streak >= 7
+                    ? "HOT"
+                    : null;
+            return (
+              <tr
+                key={r.user_id}
+                className={`border-t border-border/60 ${isMe ? "bg-accent/10" : ""} ${rank === 1 ? "bg-gradient-to-r from-amber-500/10 to-transparent" : ""}`}
+              >
+                <td className="px-4 py-3 font-bold text-lg">{medal}</td>
+                <td className="px-4 py-3">
+                  <span className="font-medium">
+                    {r.display_name || "Anonymous"}
+                    {isMe && (
+                      <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                        you
+                      </span>
+                    )}
+                    {label && (
+                      <span className="ml-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                        {label}
+                      </span>
+                    )}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-xs">
+                  <span className="inline-flex items-center gap-1">
+                    <span>{title.icon}</span>
+                    <span className="text-muted-foreground">{title.name}</span>
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right font-bold text-orange-500 tabular-nums">
+                  {r.current_streak}
+                </td>
+                <td className="px-4 py-3 text-right text-yellow-500 tabular-nums">{r.longest_streak}</td>
+                <td className="px-4 py-3 text-center">
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full ${alive ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"}`}
+                    title={alive ? "Streak alive today" : "Not active today"}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 
 function Podium({ top3, meId }: { top3: LeaderboardRow[]; meId: string | null }) {
   // Render order: 2nd, 1st, 3rd for podium look. Fall back gracefully when fewer than 3 exist.
