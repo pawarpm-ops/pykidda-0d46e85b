@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { isAdminEmail } from "@/lib/admin-emails";
 
 type Step = {
   title: string;
@@ -80,7 +81,6 @@ const STEPS: Step[] = [
   },
 ];
 
-import { isAdminEmail } from "@/lib/admin-emails";
 const LOCAL_KEY = "pykidda:tutorial-status";
 
 type Status = "not_started" | "completed" | "skipped";
