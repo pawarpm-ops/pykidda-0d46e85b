@@ -47,6 +47,15 @@ type StudentRow = {
   practiceAttempts: number;
   practiceSolved: number;
   violations: number;
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate: string | null;
+};
+
+type StreakInfo = {
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null;
 };
 
 type MockRow = {
