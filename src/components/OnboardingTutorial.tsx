@@ -80,7 +80,7 @@ const STEPS: Step[] = [
   },
 ];
 
-const ADMIN_EMAIL = "siddhustudyhard@gmail.com";
+import { isAdminEmail } from "@/lib/admin-emails";
 const LOCAL_KEY = "pykidda:tutorial-status";
 
 type Status = "not_started" | "completed" | "skipped";
@@ -112,7 +112,7 @@ export function OnboardingTutorial() {
       const { data } = await supabase.auth.getUser();
       const user = data.user;
       if (!user) return;
-      if (user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) return; // admin opt-out
+      if (isAdminEmail(user.email)) return; // admin opt-out
       if (cancelled) return;
       setUserId(user.id);
 
