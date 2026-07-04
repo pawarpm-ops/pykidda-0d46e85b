@@ -19,6 +19,8 @@ import { ReportProblem } from "@/components/ReportProblem";
 import { ReviewPopup } from "@/components/ReviewPopup";
 import { StreakUnlockModal } from "@/components/StreakUnlockModal";
 import { InactivityLogout } from "@/components/InactivityLogout";
+import { recordStreakActivity } from "@/lib/streaks";
+import { isAdminEmail } from "@/lib/admin-emails";
 
 function NotFoundComponent() {
   return (
@@ -157,7 +159,7 @@ function AuthGate({ children }: { children: ReactNode }) {
     let mounted = true;
 
     async function loadOnboarded(userId: string, email: string | null) {
-      if (email === "siddhustudyhard@gmail.com") {
+      if (isAdminEmail(email)) {
         if (!mounted) return;
         setOnboarded(true);
         setOnboardChecked(true);
