@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type StreakActivityType =
+  | "login"
   | "practice_question_solved"
   | "practice_set_completed"
   | "mock_test_attempted"
