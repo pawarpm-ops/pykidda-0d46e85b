@@ -139,6 +139,7 @@ function AdminPage() {
   const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
   const [studentIds, setStudentIds] = useState<string[]>([]);
   const [authInfo, setAuthInfo] = useState<StudentAuthInfo[]>([]);
+  const [streaks, setStreaks] = useState<Record<string, StreakInfo>>({});
   const [loading, setLoading] = useState(true);
   const [authorId, setAuthorId] = useState<string | null>(null);
   const fetchAuthInfo = useServerFn(listStudentAuthInfo);
@@ -151,12 +152,13 @@ function AdminPage() {
       const { data: u } = await supabase.auth.getUser();
       setAuthorId(u.user?.id ?? null);
 
-      const [m, p, pr, sr, ai] = await Promise.all([
+      const [m, p, pr, sr, ai, st] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
         supabase.from("practice_attempts").select("*").order("attempted_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id, display_name, full_name, contact_number, college_name, age, gender, birth_date, onboarded"),
         supabase.from("user_roles").select("user_id").eq("role", "student"),
         fetchAuthInfo().catch((e) => { console.error("auth info", e); return [] as StudentAuthInfo[]; }),
+        supabase.from("student_streaks").select("user_id, current_streak, longest_streak, last_activity_date"),
       ]);
       setMocks((m.data ?? []) as MockRow[]);
       setPractice((p.data ?? []) as PracticeRow[]);
@@ -176,6 +178,15 @@ function AdminPage() {
       setProfiles(pmap);
       setStudentIds(((sr.data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
       setAuthInfo(ai);
+      const smap: Record<string, StreakInfo> = {};
+      for (const row of (st.data ?? []) as Array<StreakInfo & { user_id: string }>) {
+        smap[row.user_id] = {
+          current_streak: row.current_streak,
+          longest_streak: row.longest_streak,
+          last_activity_date: row.last_activity_date,
+        };
+      }
+      setStreaks(smap);
       setLoading(false);
     })();
   }, [isAdmin, fetchAuthInfo]);
@@ -183,29 +194,24 @@ function AdminPage() {
 
   const students = useMemo<StudentRow[]>(() => {
     const map = new Map<string, StudentRow>();
+    const blankRow = (uid: string, name: string): StudentRow => ({
+      user_id: uid,
+      name,
+      mocks: 0,
+      bestPct: 0,
+      avgPct: 0,
+      practiceAttempts: 0,
+      practiceSolved: 0,
+      violations: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      lastActivityDate: null,
+    });
     for (const uid of studentIds) {
-      map.set(uid, {
-        user_id: uid,
-        name: profiles[uid]?.display_name || uid.slice(0, 8),
-        mocks: 0,
-        bestPct: 0,
-        avgPct: 0,
-        practiceAttempts: 0,
-        practiceSolved: 0,
-        violations: 0,
-      });
+      map.set(uid, blankRow(uid, profiles[uid]?.display_name || uid.slice(0, 8)));
     }
     for (const m of mocks) {
-      const cur = map.get(m.user_id) ?? {
-        user_id: m.user_id,
-        name: m.student_name || profiles[m.user_id]?.display_name || m.user_id.slice(0, 8),
-        mocks: 0,
-        bestPct: 0,
-        avgPct: 0,
-        practiceAttempts: 0,
-        practiceSolved: 0,
-        violations: 0,
-      };
+      const cur = map.get(m.user_id) ?? blankRow(m.user_id, m.student_name || profiles[m.user_id]?.display_name || m.user_id.slice(0, 8));
       cur.mocks += 1;
       cur.bestPct = Math.max(cur.bestPct, m.percentage);
       cur.avgPct = cur.avgPct + m.percentage;
@@ -217,18 +223,7 @@ function AdminPage() {
     }
     const solvedSet = new Map<string, Set<string>>();
     for (const p of practice) {
-      const cur =
-        map.get(p.user_id) ??
-        {
-          user_id: p.user_id,
-          name: profiles[p.user_id]?.display_name || p.user_id.slice(0, 8),
-          mocks: 0,
-          bestPct: 0,
-          avgPct: 0,
-          practiceAttempts: 0,
-          practiceSolved: 0,
-          violations: 0,
-        };
+      const cur = map.get(p.user_id) ?? blankRow(p.user_id, profiles[p.user_id]?.display_name || p.user_id.slice(0, 8));
       cur.practiceAttempts += 1;
       if (p.solved) {
         if (!solvedSet.has(p.user_id)) solvedSet.set(p.user_id, new Set());
@@ -240,8 +235,16 @@ function AdminPage() {
       const cur = map.get(uid);
       if (cur) cur.practiceSolved = set.size;
     }
+    for (const [uid, s] of Object.entries(streaks)) {
+      const cur = map.get(uid) ?? blankRow(uid, profiles[uid]?.display_name || uid.slice(0, 8));
+      cur.currentStreak = s.current_streak;
+      cur.longestStreak = s.longest_streak;
+      cur.lastActivityDate = s.last_activity_date;
+      map.set(uid, cur);
+    }
     return Array.from(map.values()).sort((a, b) => b.avgPct - a.avgPct);
-  }, [mocks, practice, profiles, studentIds]);
+  }, [mocks, practice, profiles, studentIds, streaks]);
+
 
   if (isAdmin === null || loading) {
     return (
