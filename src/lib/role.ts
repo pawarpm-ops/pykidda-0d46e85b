@@ -2,8 +2,7 @@
 // Client-side check used only to gate UI; real enforcement is RLS in the DB.
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-const ADMIN_EMAIL = "siddhustudyhard@gmail.com";
+import { isAdminEmail } from "@/lib/admin-emails";
 
 export function useIsAdmin() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -15,8 +14,8 @@ export function useIsAdmin() {
         if (!cancelled) setIsAdmin(false);
         return;
       }
-      // Fast client-side fallback for the hardcoded admin email
-      if (u.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      // Fast client-side fallback for hardcoded admin emails
+      if (isAdminEmail(u.user.email)) {
         if (!cancelled) setIsAdmin(true);
         return;
       }

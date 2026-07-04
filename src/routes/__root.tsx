@@ -19,6 +19,8 @@ import { ReportProblem } from "@/components/ReportProblem";
 import { ReviewPopup } from "@/components/ReviewPopup";
 import { StreakUnlockModal } from "@/components/StreakUnlockModal";
 import { InactivityLogout } from "@/components/InactivityLogout";
+import { recordStreakActivity } from "@/lib/streaks";
+import { isAdminEmail } from "@/lib/admin-emails";
 
 function NotFoundComponent() {
   return (
@@ -157,7 +159,7 @@ function AuthGate({ children }: { children: ReactNode }) {
     let mounted = true;
 
     async function loadOnboarded(userId: string, email: string | null) {
-      if (email === "siddhustudyhard@gmail.com") {
+      if (isAdminEmail(email)) {
         if (!mounted) return;
         setOnboarded(true);
         setOnboardChecked(true);
@@ -173,6 +175,21 @@ function AuthGate({ children }: { children: ReactNode }) {
       setOnboardChecked(true);
     }
 
+    // Fires the daily-login streak activity at most once per calendar day per user (client-side dedupe).
+    // The DB function is also idempotent for the day, so this is defense-in-depth to avoid extra RPC calls.
+    async function fireLoginStreak(userId: string) {
+      if (typeof window === "undefined") return;
+      const today = new Date().toISOString().slice(0, 10);
+      const key = `pykidda:login-streak:${userId}`;
+      if (window.sessionStorage.getItem(key) === today) return;
+      window.sessionStorage.setItem(key, today);
+      try {
+        await recordStreakActivity("login");
+      } catch {
+        /* non-fatal */
+      }
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
       const session = data.session;
@@ -180,16 +197,18 @@ function AuthGate({ children }: { children: ReactNode }) {
       setChecked(true);
       if (session?.user) {
         loadOnboarded(session.user.id, session.user.email ?? null);
+        fireLoginStreak(session.user.id);
       } else {
         setOnboardChecked(true);
       }
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       setAuthed(!!session);
       setChecked(true);
       if (session?.user) {
         setOnboardChecked(false);
         loadOnboarded(session.user.id, session.user.email ?? null);
+        if (event === "SIGNED_IN") fireLoginStreak(session.user.id);
       } else {
         setOnboarded(true);
         setOnboardChecked(true);

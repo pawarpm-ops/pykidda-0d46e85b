@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { isAdminEmail } from "@/lib/admin-emails";
 
 type Step = {
   title: string;
@@ -80,7 +81,6 @@ const STEPS: Step[] = [
   },
 ];
 
-const ADMIN_EMAIL = "siddhustudyhard@gmail.com";
 const LOCAL_KEY = "pykidda:tutorial-status";
 
 type Status = "not_started" | "completed" | "skipped";
@@ -112,7 +112,7 @@ export function OnboardingTutorial() {
       const { data } = await supabase.auth.getUser();
       const user = data.user;
       if (!user) return;
-      if (user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) return; // admin opt-out
+      if (isAdminEmail(user.email)) return; // admin opt-out
       if (cancelled) return;
       setUserId(user.id);
 
