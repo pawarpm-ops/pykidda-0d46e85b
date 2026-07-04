@@ -553,7 +553,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                 <h2 className="text-xl font-bold">{selStudent.name}</h2>
                 <p className="text-xs text-muted-foreground">User ID {selStudent.user_id}</p>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
                 <div className="rounded-md bg-secondary px-3 py-2">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Avg</p>
                   <p className="font-bold">{selStudent.avgPct}%</p>
@@ -565,6 +565,14 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                 <div className="rounded-md bg-secondary px-3 py-2">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Viol.</p>
                   <p className="font-bold">{selStudent.violations}</p>
+                </div>
+                <div className="rounded-md bg-gradient-to-br from-orange-500/15 to-red-500/15 border border-orange-500/30 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">🔥 Streak</p>
+                  <p className="font-bold">{selStudent.currentStreak}d</p>
+                </div>
+                <div className="rounded-md bg-secondary px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Longest</p>
+                  <p className="font-bold">{selStudent.longestStreak}d</p>
                 </div>
               </div>
             </div>
