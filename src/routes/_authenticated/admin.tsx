@@ -532,6 +532,10 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                   <p className="text-xs text-muted-foreground">
                     {s.mocks} mocks · {s.practiceSolved} solved · {s.violations} viol.
                   </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    🔥 {s.currentStreak}d streak · best {s.longestStreak}d
+                    {s.lastActivityDate ? ` · last ${s.lastActivityDate}` : ""}
+                  </p>
                 </button>
               </li>
             ))}
