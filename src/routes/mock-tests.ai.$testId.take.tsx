@@ -108,7 +108,7 @@ function TakeAiMock() {
             answers: graded,
           },
         });
-        void recordStreakActivity("ai_mock_attempted", testId);
+        void recordStreakActivity("mock_test_attempted", testId);
         sessionStorage.setItem(`pykidda:ai-mock-result:${res.attempt_id}`, JSON.stringify(res));
         navigate({ to: "/mock-tests/ai/$testId/result", params: { testId }, search: { attempt: res.attempt_id } });
       } catch (e) {
