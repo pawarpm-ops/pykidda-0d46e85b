@@ -171,7 +171,7 @@ export const saveAiMockTest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SaveInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
 
     const totalMarks = data.questions.reduce((a, q) => a + q.marks, 0);
     const questionCount = data.questions.length;
@@ -179,7 +179,7 @@ export const saveAiMockTest = createServerFn({ method: "POST" })
     let testId = data.id;
     if (testId) {
       const { error: uErr } = await supabaseAdmin
-        .from("ai_mock_tests" as never)
+        .from("ai_mock_tests")
         .update({
           title: data.title,
           description: data.description,
@@ -190,10 +190,10 @@ export const saveAiMockTest = createServerFn({ method: "POST" })
         })
         .eq("id", testId);
       if (uErr) throw new Error(uErr.message);
-      await supabaseAdmin.from("ai_mock_questions" as never).delete().eq("test_id", testId);
+      await supabaseAdmin.from("ai_mock_questions").delete().eq("test_id", testId);
     } else {
       const { data: inserted, error: iErr } = await supabaseAdmin
-        .from("ai_mock_tests" as never)
+        .from("ai_mock_tests")
         .insert({
           admin_id: context.userId,
           title: data.title,
@@ -222,7 +222,7 @@ export const saveAiMockTest = createServerFn({ method: "POST" })
       marks: q.marks,
       explanation: q.explanation,
     }));
-    const { error: qErr } = await supabaseAdmin.from("ai_mock_questions" as never).insert(rows);
+    const { error: qErr } = await supabaseAdmin.from("ai_mock_questions").insert(rows);
     if (qErr) throw new Error(qErr.message);
 
     return { id: testId, total_marks: totalMarks, question_count: questionCount };
@@ -235,11 +235,11 @@ export const publishAiMockTest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), publish: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const patch: Record<string, unknown> = data.publish
       ? { status: "published", published_at: new Date().toISOString() }
       : { status: "draft" };
-    const { error } = await supabaseAdmin.from("ai_mock_tests" as never).update(patch).eq("id", data.id);
+    const { error } = await supabaseAdmin.from("ai_mock_tests").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -249,8 +249,8 @@ export const deleteAiMockTest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("ai_mock_tests" as never).delete().eq("id", data.id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
+    const { error } = await supabaseAdmin.from("ai_mock_tests").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -262,15 +262,15 @@ export const getAdminAiTest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: test, error: tErr } = await supabaseAdmin
-      .from("ai_mock_tests" as never)
+      .from("ai_mock_tests")
       .select("*")
       .eq("id", data.id)
       .single();
     if (tErr) throw new Error(tErr.message);
     const { data: qs, error: qErr } = await supabaseAdmin
-      .from("ai_mock_questions" as never)
+      .from("ai_mock_questions")
       .select("*")
       .eq("test_id", data.id)
       .order("order_index");
@@ -284,9 +284,9 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: test, error: tErr } = await supabaseAdmin
-      .from("ai_mock_tests" as never)
+      .from("ai_mock_tests")
       .select("id,title,description,duration_sec,status,total_marks,question_count")
       .eq("id", data.id)
       .single();
@@ -295,7 +295,7 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
     if (t.status !== "published") throw new Error("Test not available");
 
     const { data: qs, error: qErr } = await supabaseAdmin
-      .from("ai_mock_questions" as never)
+      .from("ai_mock_questions")
       .select("id,order_index,type,prompt,options,starter_code,code_tests,marks")
       .eq("test_id", data.id)
       .order("order_index");
@@ -337,9 +337,9 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => SubmitInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: qs, error: qErr } = await supabaseAdmin
-      .from("ai_mock_questions" as never)
+      .from("ai_mock_questions")
       .select("*")
       .eq("test_id", data.test_id)
       .order("order_index");
@@ -401,7 +401,7 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
     const grade = gradeFor(percentage);
 
     const { data: inserted, error: iErr } = await supabaseAdmin
-      .from("ai_mock_attempts" as never)
+      .from("ai_mock_attempts")
       .insert({
         user_id: context.userId,
         test_id: data.test_id,
@@ -435,18 +435,18 @@ export const listAiMockTests = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ adminScope: z.boolean().default(false) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     if (data.adminScope) {
       await assertAdmin(context);
       const { data: rows, error } = await supabaseAdmin
-        .from("ai_mock_tests" as never)
+        .from("ai_mock_tests")
         .select("id,title,description,status,duration_sec,total_marks,question_count,created_at,published_at")
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return rows ?? [];
     }
     const { data: rows, error } = await supabaseAdmin
-      .from("ai_mock_tests" as never)
+      .from("ai_mock_tests")
       .select("id,title,description,status,duration_sec,total_marks,question_count,published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false });
