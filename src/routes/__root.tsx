@@ -135,11 +135,6 @@ function RootComponent() {
       <AuthGate>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
-        <OnboardingTutorial />
-        <ReportProblem />
-        <ReviewPopup />
-        <StreakUnlockModal />
-        <InactivityLogout />
       </AuthGate>
     </QueryClientProvider>
   );
@@ -214,14 +209,26 @@ function AuthGate({ children }: { children: ReactNode }) {
         setOnboardChecked(true);
       }
     });
+    // Listen for onboarding-completed signal from /onboarding to avoid a redirect loop
+    // where AuthGate still holds stale onboarded=false right after profile upsert.
+    function onOnboarded() {
+      setOnboarded(true);
+      setOnboardChecked(true);
+    }
+    window.addEventListener("pykidda:onboarding-completed", onOnboarded);
+
     return () => {
       mounted = false;
       sub.subscription.unsubscribe();
+      window.removeEventListener("pykidda:onboarding-completed", onOnboarded);
     };
   }, []);
 
   const isAuthRoute = pathname === "/auth" || pathname.startsWith("/auth/");
   const isOnboardingRoute = pathname === "/onboarding";
+  const isSecureRoute =
+    pathname.includes("/mock-tests/") &&
+    (pathname.endsWith("/run") || pathname.endsWith("/warning"));
 
   useEffect(() => {
     if (!checked) return;
@@ -250,5 +257,22 @@ function AuthGate({ children }: { children: ReactNode }) {
   if (authed && onboardChecked && !onboarded && !isOnboardingRoute) {
     return null;
   }
-  return <>{children}</>;
+
+  // Only mount global popups on safe routes (never on /auth, /onboarding, or during a live mock test).
+  const showGlobals = authed && onboardChecked && onboarded && !isAuthRoute && !isOnboardingRoute;
+
+  return (
+    <>
+      {children}
+      {showGlobals && (
+        <>
+          <OnboardingTutorial />
+          <ReportProblem />
+          <ReviewPopup />
+          <StreakUnlockModal />
+          {!isSecureRoute && <InactivityLogout />}
+        </>
+      )}
+    </>
+  );
 }

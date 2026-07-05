@@ -23,23 +23,29 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/practice" });
+      if (data.session) navigate({ to: "/", replace: true });
     });
   }, [navigate]);
 
   async function signInGoogle() {
     setError(null);
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setError(result.error instanceof Error ? result.error.message : String(result.error));
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin + "/auth",
+      });
+      if (result.error) {
+        setError(result.error instanceof Error ? result.error.message : "Google login failed. Please try again.");
+        setBusy(false);
+        return;
+      }
+      if (result.redirected) return;
+      // Session already set by wrapper — AuthGate routes based on onboarding/role.
+      navigate({ to: "/", replace: true });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Google login failed. Please try again.");
       setBusy(false);
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/practice" });
   }
 
   return (

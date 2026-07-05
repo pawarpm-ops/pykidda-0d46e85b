@@ -110,6 +110,10 @@ function OnboardingPage() {
       setErr(error.message);
       return;
     }
+    // Signal AuthGate immediately so it doesn't bounce us back with a stale onboarded=false.
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("pykidda:onboarding-completed"));
+    }
     navigate({ to: "/", replace: true });
   }
 
