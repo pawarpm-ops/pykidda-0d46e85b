@@ -135,11 +135,6 @@ function RootComponent() {
       <AuthGate>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
-        <OnboardingTutorial />
-        <ReportProblem />
-        <ReviewPopup />
-        <StreakUnlockModal />
-        <InactivityLogout />
       </AuthGate>
     </QueryClientProvider>
   );
