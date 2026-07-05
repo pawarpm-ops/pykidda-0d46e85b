@@ -14,6 +14,160 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_mock_attempts: {
+        Row: {
+          answers: Json
+          grade: string
+          id: string
+          marks_obtained: number
+          percentage: number
+          started_at: string
+          submission_type: string
+          submitted_at: string | null
+          test_id: string
+          time_taken_sec: number
+          total_marks: number
+          user_id: string
+          violation_reason: string | null
+        }
+        Insert: {
+          answers?: Json
+          grade?: string
+          id?: string
+          marks_obtained?: number
+          percentage?: number
+          started_at?: string
+          submission_type?: string
+          submitted_at?: string | null
+          test_id: string
+          time_taken_sec?: number
+          total_marks?: number
+          user_id: string
+          violation_reason?: string | null
+        }
+        Update: {
+          answers?: Json
+          grade?: string
+          id?: string
+          marks_obtained?: number
+          percentage?: number
+          started_at?: string
+          submission_type?: string
+          submitted_at?: string | null
+          test_id?: string
+          time_taken_sec?: number
+          total_marks?: number
+          user_id?: string
+          violation_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_mock_attempts_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "ai_mock_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_mock_questions: {
+        Row: {
+          code_tests: Json
+          correct_answer: string
+          created_at: string
+          explanation: string
+          id: string
+          marks: number
+          options: Json
+          order_index: number
+          prompt: string
+          starter_code: string
+          test_id: string
+          type: string
+        }
+        Insert: {
+          code_tests?: Json
+          correct_answer?: string
+          created_at?: string
+          explanation?: string
+          id?: string
+          marks?: number
+          options?: Json
+          order_index?: number
+          prompt: string
+          starter_code?: string
+          test_id: string
+          type: string
+        }
+        Update: {
+          code_tests?: Json
+          correct_answer?: string
+          created_at?: string
+          explanation?: string
+          id?: string
+          marks?: number
+          options?: Json
+          order_index?: number
+          prompt?: string
+          starter_code?: string
+          test_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_mock_questions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "ai_mock_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_mock_tests: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          description: string
+          duration_sec: number
+          id: string
+          published_at: string | null
+          question_count: number
+          status: string
+          syllabus_snippet: string
+          title: string
+          total_marks: number
+          updated_at: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          description?: string
+          duration_sec?: number
+          id?: string
+          published_at?: string | null
+          question_count?: number
+          status?: string
+          syllabus_snippet?: string
+          title: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          description?: string
+          duration_sec?: number
+          id?: string
+          published_at?: string | null
+          question_count?: number
+          status?: string
+          syllabus_snippet?: string
+          title?: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       announcement_reads: {
         Row: {
           announcement_id: string
