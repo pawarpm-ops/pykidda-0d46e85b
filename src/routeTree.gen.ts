@@ -25,6 +25,8 @@ import { Route as MockTestsTestIdRunRouteImport } from './routes/mock-tests.$tes
 import { Route as MockTestsTestIdResultRouteImport } from './routes/mock-tests.$testId.result'
 import { Route as AuthenticatedPracticeQidRouteImport } from './routes/_authenticated/practice.$qid'
 import { Route as AuthenticatedAdminAiMockRouteImport } from './routes/_authenticated/admin.ai-mock'
+import { Route as MockTestsAiTestIdTakeRouteImport } from './routes/mock-tests.ai.$testId.take'
+import { Route as MockTestsAiTestIdResultRouteImport } from './routes/mock-tests.ai.$testId.result'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -110,6 +112,16 @@ const AuthenticatedAdminAiMockRoute =
     path: '/ai-mock',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const MockTestsAiTestIdTakeRoute = MockTestsAiTestIdTakeRouteImport.update({
+  id: '/mock-tests/ai/$testId/take',
+  path: '/mock-tests/ai/$testId/take',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MockTestsAiTestIdResultRoute = MockTestsAiTestIdResultRouteImport.update({
+  id: '/mock-tests/ai/$testId/result',
+  path: '/mock-tests/ai/$testId/result',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -127,6 +139,8 @@ export interface FileRoutesByFullPath {
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
+  '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -144,6 +158,8 @@ export interface FileRoutesByTo {
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
+  '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
+  '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -163,6 +179,8 @@ export interface FileRoutesById {
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
+  '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -182,6 +200,8 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
     | '/practice/'
+    | '/mock-tests/ai/$testId/result'
+    | '/mock-tests/ai/$testId/take'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -199,6 +219,8 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
     | '/practice'
+    | '/mock-tests/ai/$testId/result'
+    | '/mock-tests/ai/$testId/take'
   id:
     | '__root__'
     | '/'
@@ -217,6 +239,8 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
     | '/_authenticated/practice/'
+    | '/mock-tests/ai/$testId/result'
+    | '/mock-tests/ai/$testId/take'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -228,6 +252,8 @@ export interface RootRouteChildren {
   MockTestsTestIdResultRoute: typeof MockTestsTestIdResultRoute
   MockTestsTestIdRunRoute: typeof MockTestsTestIdRunRoute
   MockTestsTestIdWarningRoute: typeof MockTestsTestIdWarningRoute
+  MockTestsAiTestIdResultRoute: typeof MockTestsAiTestIdResultRoute
+  MockTestsAiTestIdTakeRoute: typeof MockTestsAiTestIdTakeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -344,6 +370,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAiMockRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/mock-tests/ai/$testId/take': {
+      id: '/mock-tests/ai/$testId/take'
+      path: '/mock-tests/ai/$testId/take'
+      fullPath: '/mock-tests/ai/$testId/take'
+      preLoaderRoute: typeof MockTestsAiTestIdTakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mock-tests/ai/$testId/result': {
+      id: '/mock-tests/ai/$testId/result'
+      path: '/mock-tests/ai/$testId/result'
+      fullPath: '/mock-tests/ai/$testId/result'
+      preLoaderRoute: typeof MockTestsAiTestIdResultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -390,6 +430,8 @@ const rootRouteChildren: RootRouteChildren = {
   MockTestsTestIdResultRoute: MockTestsTestIdResultRoute,
   MockTestsTestIdRunRoute: MockTestsTestIdRunRoute,
   MockTestsTestIdWarningRoute: MockTestsTestIdWarningRoute,
+  MockTestsAiTestIdResultRoute: MockTestsAiTestIdResultRoute,
+  MockTestsAiTestIdTakeRoute: MockTestsAiTestIdTakeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
