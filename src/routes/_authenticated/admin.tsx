@@ -324,7 +324,6 @@ function AdminPage() {
             <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin</p>
             <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">Teacher dashboard</h1>
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
-            <Link to="/admin/ai-mock" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">🧪 Open AI Mock Test Creator →</Link>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
             {(["overview", "students", "activity", "announce", "reports", "reviews"] as const).map((t) => (
@@ -341,6 +340,35 @@ function AdminPage() {
           </div>
 
         </div>
+
+        {/* Dedicated AI Mock Test Creator space */}
+        <section className="mt-6">
+          <Link
+            to="/admin/ai-mock"
+            className="group relative block overflow-hidden rounded-2xl border border-accent/40 p-6 shadow-[var(--shadow-warm)] transition hover:shadow-lg"
+            style={{ backgroundImage: "var(--gradient-sunrise)" }}
+          >
+            <div className="absolute -right-8 -top-8 text-[160px] opacity-15 select-none pointer-events-none">🧪</div>
+            <div className="relative flex flex-wrap items-center justify-between gap-4">
+              <div className="max-w-2xl text-primary-foreground">
+                <p className="text-xs uppercase tracking-widest font-semibold opacity-90">New · AI-powered</p>
+                <h2 className="mt-1 text-2xl md:text-3xl font-bold">AI Mock Test Creator</h2>
+                <p className="mt-2 text-sm md:text-base opacity-95">
+                  Upload a syllabus PDF, let AI draft a full mock test (MCQ, True/False, Fill-ups, Short answer & Coding with hidden test cases), then review, edit and publish it for students in minutes.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  <span className="rounded-full bg-white/20 px-3 py-1 font-semibold backdrop-blur">📄 PDF → Test</span>
+                  <span className="rounded-full bg-white/20 px-3 py-1 font-semibold backdrop-blur">✏️ Review & edit</span>
+                  <span className="rounded-full bg-white/20 px-3 py-1 font-semibold backdrop-blur">🐍 Coding + hidden tests</span>
+                  <span className="rounded-full bg-white/20 px-3 py-1 font-semibold backdrop-blur">🚀 One-click publish</span>
+                </div>
+              </div>
+              <span className="rounded-md bg-background/95 px-5 py-2.5 font-bold text-foreground shadow group-hover:translate-x-1 transition">
+                Open creator →
+              </span>
+            </div>
+          </Link>
+        </section>
 
         {tab === "overview" && (
           <>

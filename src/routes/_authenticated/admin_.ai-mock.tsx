@@ -15,7 +15,7 @@ import {
   listAiMockTests,
 } from "@/lib/ai-mock.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/ai-mock")({
+export const Route = createFileRoute("/_authenticated/admin_/ai-mock")({
   head: () => ({ meta: [{ title: "AI Mock Test Creator · PY Kidda" }, { name: "robots", content: "noindex" }] }),
   component: AiMockAdmin,
   ssr: false,
