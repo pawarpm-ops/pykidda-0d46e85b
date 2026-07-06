@@ -73,7 +73,7 @@ async function extractPdfText(file: File): Promise<string> {
 
 function AiMockAdmin() {
   const isAdmin = useIsAdmin();
-  console.log("[aimock] isAdmin=", isAdmin); if (isAdmin === false) { console.log("[aimock] REDIRECTING"); return <Navigate to="/" />; }
+  if (isAdmin === false) return <Navigate to="/" />;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
