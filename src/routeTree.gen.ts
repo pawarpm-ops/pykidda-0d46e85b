@@ -24,7 +24,7 @@ import { Route as MockTestsTestIdWarningRouteImport } from './routes/mock-tests.
 import { Route as MockTestsTestIdRunRouteImport } from './routes/mock-tests.$testId.run'
 import { Route as MockTestsTestIdResultRouteImport } from './routes/mock-tests.$testId.result'
 import { Route as AuthenticatedPracticeQidRouteImport } from './routes/_authenticated/practice.$qid'
-import { Route as AuthenticatedAdminAiMockRouteImport } from './routes/_authenticated/admin.ai-mock'
+import { Route as AuthenticatedAdminAiMockRouteImport } from './routes/_authenticated/admin_.ai-mock'
 import { Route as MockTestsAiTestIdTakeRouteImport } from './routes/mock-tests.ai.$testId.take'
 import { Route as MockTestsAiTestIdResultRouteImport } from './routes/mock-tests.ai.$testId.result'
 
@@ -108,9 +108,9 @@ const AuthenticatedPracticeQidRoute =
   } as any)
 const AuthenticatedAdminAiMockRoute =
   AuthenticatedAdminAiMockRouteImport.update({
-    id: '/ai-mock',
-    path: '/ai-mock',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    id: '/admin_/ai-mock',
+    path: '/admin/ai-mock',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const MockTestsAiTestIdTakeRoute = MockTestsAiTestIdTakeRouteImport.update({
   id: '/mock-tests/ai/$testId/take',
@@ -127,7 +127,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -146,7 +146,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -167,13 +167,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/mock-tests/': typeof MockTestsIndexRoute
-  '/_authenticated/admin/ai-mock': typeof AuthenticatedAdminAiMockRoute
+  '/_authenticated/admin_/ai-mock': typeof AuthenticatedAdminAiMockRoute
   '/_authenticated/practice/$qid': typeof AuthenticatedPracticeQidRoute
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
@@ -233,7 +233,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
     | '/mock-tests/'
-    | '/_authenticated/admin/ai-mock'
+    | '/_authenticated/admin_/ai-mock'
     | '/_authenticated/practice/$qid'
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
@@ -363,12 +363,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPracticeQidRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/ai-mock': {
-      id: '/_authenticated/admin/ai-mock'
-      path: '/ai-mock'
+    '/_authenticated/admin_/ai-mock': {
+      id: '/_authenticated/admin_/ai-mock'
+      path: '/admin/ai-mock'
       fullPath: '/admin/ai-mock'
       preLoaderRoute: typeof AuthenticatedAdminAiMockRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/mock-tests/ai/$testId/take': {
       id: '/mock-tests/ai/$testId/take'
@@ -387,33 +387,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminAiMockRoute: typeof AuthenticatedAdminAiMockRoute
-}
-
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminAiMockRoute: AuthenticatedAdminAiMockRoute,
-}
-
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedAdminAiMockRoute: typeof AuthenticatedAdminAiMockRoute
   AuthenticatedPracticeQidRoute: typeof AuthenticatedPracticeQidRoute
   AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedAdminAiMockRoute: AuthenticatedAdminAiMockRoute,
   AuthenticatedPracticeQidRoute: AuthenticatedPracticeQidRoute,
   AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
 }
@@ -436,13 +427,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
