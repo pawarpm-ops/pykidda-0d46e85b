@@ -462,7 +462,7 @@ function Editor() {
               className="rounded-md px-4 py-2 font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
               style={{ backgroundImage: "var(--gradient-sunrise)" }}
             >
-              🐍 Generate with AI
+              🧠 Generate with GPT-5
             </button>
             {editingId && <button onClick={resetForm} className="text-sm text-muted-foreground hover:underline">New test</button>}
           </div>
