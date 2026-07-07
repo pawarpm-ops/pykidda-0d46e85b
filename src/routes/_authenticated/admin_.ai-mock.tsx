@@ -433,7 +433,7 @@ function Editor() {
 
 
         <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold flex items-center gap-2"><span>⚙️</span> 2. Test settings</h2>
+          <h2 className="text-lg font-semibold flex items-center gap-2"><span>⚙️</span> 3. Test settings</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Title">
               <input value={title} onChange={(e) => setTitle(e.target.value)} className="input" placeholder="Unit 3 OOP mock test" />
