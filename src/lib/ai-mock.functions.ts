@@ -38,7 +38,8 @@ async function assertAdmin(context: { supabase: import("@supabase/supabase-js").
 const GenerateInput = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(1000).default(""),
-  syllabusText: z.string().min(20).max(60000),
+  syllabusText: z.string().max(60000).default(""),
+  customInstructions: z.string().max(4000).default(""),
   durationMinutes: z.number().int().min(5).max(240).default(30),
   counts: z.object({
     mcq: z.number().int().min(0).max(30).default(5),
@@ -48,6 +49,7 @@ const GenerateInput = z.object({
     code: z.number().int().min(0).max(10).default(2),
   }),
 });
+
 
 export const generateAiMockTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
