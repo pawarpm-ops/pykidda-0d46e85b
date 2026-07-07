@@ -38,7 +38,8 @@ async function assertAdmin(context: { supabase: import("@supabase/supabase-js").
 const GenerateInput = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(1000).default(""),
-  syllabusText: z.string().min(20).max(60000),
+  syllabusText: z.string().max(60000).default(""),
+  customInstructions: z.string().max(4000).default(""),
   durationMinutes: z.number().int().min(5).max(240).default(30),
   counts: z.object({
     mcq: z.number().int().min(0).max(30).default(5),
@@ -48,6 +49,7 @@ const GenerateInput = z.object({
     code: z.number().int().min(0).max(10).default(2),
   }),
 });
+
 
 export const generateAiMockTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -59,8 +61,11 @@ export const generateAiMockTest = createServerFn({ method: "POST" })
 
     const totalRequested = data.counts.mcq + data.counts.tf + data.counts.fill + data.counts.short + data.counts.code;
     if (totalRequested === 0) throw new Error("Ask for at least 1 question");
+    if (data.syllabusText.trim().length < 20 && data.customInstructions.trim().length < 20) {
+      throw new Error("Provide a syllabus PDF or write custom instructions (min ~20 chars).");
+    }
 
-    const sys = `You are an expert Python examiner creating a mock test from a college syllabus PDF (text extracted).
+    const sys = `You are an expert Python examiner creating a mock test for college students.
 Return ONLY a JSON object with this exact shape:
 {
   "questions": [
@@ -86,22 +91,21 @@ Rules:
 - code: options empty; correct_answer empty; starter_code provided; 2-4 deterministic hidden test cases with exact expected stdout (no trailing newline).
 - All Python code must run on plain CPython (Pyodide). No file I/O, no plotting, no tkinter, no pandas, no seaborn, no matplotlib, no external files.
 - Marks: mcq/tf/fill=1, short=2, code=5 (adjust up to 10 for harder code).
-- Questions must be answerable from the given syllabus content.
+- If a syllabus is provided, questions must be answerable from that syllabus content.
+- Strictly follow any teacher instructions given below (difficulty, topics, style, tone, real-world context, etc.).
 - No markdown fences. No prose. Just JSON.`;
 
     const user = `Test title: ${data.title}
 Description: ${data.description}
 
-Syllabus text (extracted from PDF):
-"""
-${data.syllabusText.slice(0, 55000)}
-"""`;
+${data.customInstructions.trim() ? `Teacher's custom instructions (highest priority — follow exactly):\n"""\n${data.customInstructions.slice(0, 4000)}\n"""\n` : ""}
+${data.syllabusText.trim() ? `Syllabus text (extracted from PDF):\n"""\n${data.syllabusText.slice(0, 55000)}\n"""` : "No syllabus PDF provided — build the test purely from the teacher's instructions above."}`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "content-type": "application/json", "Lovable-API-Key": key },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5",
         messages: [
           { role: "system", content: sys },
           { role: "user", content: user },
@@ -109,6 +113,7 @@ ${data.syllabusText.slice(0, 55000)}
         response_format: { type: "json_object" },
       }),
     });
+
     if (res.status === 429) throw new Error("AI rate limit reached — try again in a moment.");
     if (res.status === 402) throw new Error("AI credits exhausted. Please top up in Settings → Plans & credits.");
     if (!res.ok) {
@@ -453,3 +458,94 @@ export const listAiMockTests = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
+
+// ----------- Refine existing draft with AI chat instruction -----------
+
+const RefineInput = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(1000).default(""),
+  instruction: z.string().min(3).max(4000),
+  syllabusText: z.string().max(60000).default(""),
+  questions: z.array(QuestionSchema).min(1),
+});
+
+export const refineAiMockTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => RefineInput.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+
+    const sys = `You are an expert Python examiner refining an existing mock test based on a teacher's instruction.
+Return ONLY a JSON object of the form: { "questions": [...] } using the SAME question schema as before:
+{ type: "mcq"|"tf"|"fill"|"short"|"code", prompt, options[], correct_answer, starter_code, code_tests[{stdin,expected}], marks, explanation }.
+
+Rules:
+- Apply the teacher's instruction faithfully (add / remove / rewrite / change difficulty / swap topics / fix answers / etc.).
+- Preserve unrelated questions unchanged.
+- Keep answer keys consistent with prompts. Never expose answers inside prompts.
+- Code questions: runnable on Pyodide (no file I/O, no matplotlib, no pandas). Deterministic hidden test cases with exact expected stdout.
+- Return the FULL updated question list, not just the diff. No markdown fences. No prose.`;
+
+    const user = `Test title: ${data.title}
+Description: ${data.description}
+
+Teacher's refinement instruction:
+"""
+${data.instruction}
+"""
+
+${data.syllabusText.trim() ? `Reference syllabus (for grounding):\n"""\n${data.syllabusText.slice(0, 40000)}\n"""\n` : ""}
+Current questions (JSON):
+${JSON.stringify(data.questions, null, 2).slice(0, 60000)}`;
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify({
+        model: "openai/gpt-5",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (res.status === 429) throw new Error("AI rate limit reached — try again in a moment.");
+    if (res.status === 402) throw new Error("AI credits exhausted. Please top up in Settings → Plans & credits.");
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(`AI request failed (${res.status}): ${t.slice(0, 200)}`);
+    }
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = json.choices?.[0]?.message?.content ?? "";
+    let parsed: { questions: unknown[] };
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      const m = content.match(/\{[\s\S]*\}/);
+      if (!m) throw new Error("AI returned unparseable response.");
+      parsed = JSON.parse(m[0]);
+    }
+    const rawQs = Array.isArray(parsed.questions) ? parsed.questions : [];
+    const questions = rawQs.map((q, i) => {
+      const parsedQ = QuestionSchema.safeParse({ ...(q as object), order_index: i });
+      if (!parsedQ.success) {
+        return {
+          order_index: i,
+          type: "short" as const,
+          prompt: (q as { prompt?: string })?.prompt ?? "Question",
+          options: [],
+          correct_answer: "",
+          starter_code: "",
+          code_tests: [],
+          marks: 1,
+          explanation: "",
+        };
+      }
+      return parsedQ.data;
+    });
+    return { questions };
+  });
+

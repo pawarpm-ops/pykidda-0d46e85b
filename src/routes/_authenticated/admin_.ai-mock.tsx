@@ -13,7 +13,9 @@ import {
   deleteAiMockTest,
   getAdminAiTest,
   listAiMockTests,
+  refineAiMockTest,
 } from "@/lib/ai-mock.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin_/ai-mock")({
   head: () => ({ meta: [{ title: "AI Mock Test Creator · PY Kidda" }, { name: "robots", content: "noindex" }] }),
@@ -107,6 +109,7 @@ function Editor() {
   const deleteFn = useServerFn(deleteAiMockTest);
   const getFn = useServerFn(getAdminAiTest);
   const listFn = useServerFn(listAiMockTests);
+  const refineFn = useServerFn(refineAiMockTest);
 
   const [tests, setTests] = useState<TestRow[]>([]);
   const [loadingTests, setLoadingTests] = useState(true);
@@ -128,10 +131,14 @@ function Editor() {
   const [questions, setQuestions] = useState<EditableQ[]>([]);
   const [syllabusText, setSyllabusText] = useState("");
   const [syllabusFileName, setSyllabusFileName] = useState("");
+  const [customInstructions, setCustomInstructions] = useState("");
+  const [refineChat, setRefineChat] = useState<{ role: "user" | "ai"; text: string }[]>([]);
+  const [refineDraft, setRefineDraft] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [counts, setCounts] = useState({ mcq: 5, tf: 3, fill: 2, short: 1, code: 2 });
   const fileRef = useRef<HTMLInputElement | null>(null);
+
 
   const totalMarks = useMemo(() => questions.reduce((a, q) => a + (q.marks || 0), 0), [questions]);
 
@@ -143,6 +150,9 @@ function Editor() {
     setQuestions([]);
     setSyllabusText("");
     setSyllabusFileName("");
+    setCustomInstructions("");
+    setRefineChat([]);
+    setRefineDraft("");
     setError(null);
   };
 
@@ -170,14 +180,18 @@ function Editor() {
   const onGenerate = async () => {
     setError(null);
     if (!title.trim()) { setError("Give the test a title."); return; }
-    if (syllabusText.trim().length < 20) { setError("Upload a syllabus PDF first."); return; }
-    setBusy("🐍 AI is drafting your test — this can take 20-40 seconds…");
+    if (syllabusText.trim().length < 20 && customInstructions.trim().length < 20) {
+      setError("Upload a syllabus PDF or write custom instructions (~20+ chars) telling the AI how to build the test.");
+      return;
+    }
+    setBusy("🧠 GPT-5 is drafting your test — this can take 20-60 seconds…");
     try {
       const draft = await generateFn({
         data: {
           title: title.trim(),
           description: description.trim(),
           syllabusText,
+          customInstructions: customInstructions.trim(),
           durationMinutes,
           counts,
         },
@@ -194,12 +208,65 @@ function Editor() {
           explanation: q.explanation ?? "",
         })),
       );
+      setRefineChat([]);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(null);
     }
   };
+
+  const onRefine = async () => {
+    setError(null);
+    const instruction = refineDraft.trim();
+    if (!instruction) return;
+    if (questions.length === 0) { setError("Generate a test first, then refine it."); return; }
+    setRefineChat((c) => [...c, { role: "user", text: instruction }]);
+    setRefineDraft("");
+    setBusy("🧠 GPT-5 is revising the test…");
+    try {
+      const res = await refineFn({
+        data: {
+          title: title.trim() || "Untitled",
+          description: description.trim(),
+          instruction,
+          syllabusText,
+          questions: questions.map((q, i) => ({
+            id: q.id,
+            order_index: i,
+            type: q.type,
+            prompt: q.prompt,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            starter_code: q.starter_code,
+            code_tests: q.code_tests,
+            marks: q.marks,
+            explanation: q.explanation,
+          })),
+        },
+      });
+      setQuestions(
+        res.questions.map((q) => ({
+          type: q.type,
+          prompt: q.prompt,
+          options: q.options ?? [],
+          correct_answer: q.correct_answer ?? "",
+          starter_code: q.starter_code ?? "",
+          code_tests: q.code_tests ?? [],
+          marks: q.marks ?? 1,
+          explanation: q.explanation ?? "",
+        })),
+      );
+      setRefineChat((c) => [...c, { role: "ai", text: `Updated test — now ${res.questions.length} questions. Review the changes below.` }]);
+    } catch (e) {
+      setError((e as Error).message);
+      setRefineChat((c) => [...c, { role: "ai", text: `⚠️ ${(e as Error).message}` }]);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+
 
   const onSaveDraft = async () => {
     setError(null);
@@ -329,9 +396,9 @@ function Editor() {
       <div className="space-y-6">
         <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <span>📄</span> 1. Syllabus PDF
+            <span>📄</span> 1. Syllabus PDF <span className="text-xs font-normal text-muted-foreground">(optional)</span>
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">Text-based PDFs work best (not scanned images).</p>
+          <p className="text-sm text-muted-foreground mt-1">Text-based PDFs work best (not scanned images). Skip this if you'd rather just tell the AI what to build below.</p>
           <div className="mt-4 flex items-center gap-3 flex-wrap">
             <input
               ref={fileRef}
@@ -348,8 +415,25 @@ function Editor() {
           </div>
         </section>
 
+        <section className="rounded-2xl border-2 border-dashed border-accent/50 bg-accent/5 p-6">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <span>✨</span> 2. Custom instructions to the AI <span className="text-xs font-normal text-muted-foreground">(optional but powerful)</span>
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Write in plain English exactly how you want this test built — topics to cover, difficulty, style, focus areas, question wording, examples, marks weighting, anything. GPT-5 will follow this precisely.
+          </p>
+          <textarea
+            value={customInstructions}
+            onChange={(e) => setCustomInstructions(e.target.value)}
+            rows={5}
+            className="input mt-3"
+            placeholder={`Example:\nBuild a Python OOP mock test for 2nd year students. Focus on classes, inheritance, and dunder methods. Keep MCQs conceptual, coding questions must involve a real-world example (bank account, library, etc.). Make one coding question tricky. Explanations should be beginner-friendly.`}
+          />
+        </section>
+
+
         <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="text-lg font-semibold flex items-center gap-2"><span>⚙️</span> 2. Test settings</h2>
+          <h2 className="text-lg font-semibold flex items-center gap-2"><span>⚙️</span> 3. Test settings</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Title">
               <input value={title} onChange={(e) => setTitle(e.target.value)} className="input" placeholder="Unit 3 OOP mock test" />
@@ -378,7 +462,7 @@ function Editor() {
               className="rounded-md px-4 py-2 font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
               style={{ backgroundImage: "var(--gradient-sunrise)" }}
             >
-              🐍 Generate with AI
+              🧠 Generate with GPT-5
             </button>
             {editingId && <button onClick={resetForm} className="text-sm text-muted-foreground hover:underline">New test</button>}
           </div>
@@ -390,7 +474,7 @@ function Editor() {
         {questions.length > 0 && (
           <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="text-lg font-semibold flex items-center gap-2"><span>📝</span> 3. Review & edit ({questions.length} Qs · {totalMarks} marks)</h2>
+              <h2 className="text-lg font-semibold flex items-center gap-2"><span>📝</span> 4. Review & edit ({questions.length} Qs · {totalMarks} marks)</h2>
               <div className="flex gap-2 flex-wrap">
                 {(Object.keys(TYPE_LABEL) as QType[]).map((t) => (
                   <button key={t} onClick={() => addBlankQ(t)} className="text-xs rounded border border-border px-2 py-1 hover:bg-secondary">+ {TYPE_LABEL[t]}</button>
@@ -405,12 +489,57 @@ function Editor() {
             <div className="mt-6 flex flex-wrap gap-3">
               <button onClick={onSaveDraft} disabled={!!busy} className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground disabled:opacity-50">💾 Save draft</button>
               {editingId && (
-                <button onClick={() => onPublish(true)} disabled={!!busy} className="rounded-md bg-[oklch(0.65_0.16_145)] px-4 py-2 font-semibold text-white disabled:opacity-50">🚀 Publish to students</button>
+                <>
+                  <button onClick={() => onPublish(true)} disabled={!!busy} className="rounded-md bg-[oklch(0.65_0.16_145)] px-4 py-2 font-semibold text-white disabled:opacity-50">🚀 Publish to students</button>
+                  <button onClick={() => onPublish(false)} disabled={!!busy} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-secondary">Unpublish</button>
+                  <button onClick={() => onDelete(editingId)} disabled={!!busy} className="rounded-md border border-destructive/50 text-destructive px-4 py-2 text-sm hover:bg-destructive/10">Delete test</button>
+                </>
               )}
             </div>
           </section>
         )}
+
+        {questions.length > 0 && (
+          <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold flex items-center gap-2"><span>💬</span> 5. Chat with the AI to refine this test</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ask GPT-5 to change anything — "make Q3 harder", "add 2 more coding questions on recursion", "rewrite all MCQs in simpler English", "fix the answer to Q5", etc. It rewrites the test based on your instruction.
+            </p>
+            {refineChat.length > 0 && (
+              <div className="mt-4 space-y-2 max-h-72 overflow-auto rounded-md border border-border bg-background p-3">
+                {refineChat.map((m, i) => (
+                  <div key={i} className={`text-sm rounded-md px-3 py-2 ${m.role === "user" ? "bg-primary/10 text-foreground ml-8" : "bg-accent/10 text-foreground mr-8"}`}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 mr-2">{m.role === "user" ? "You" : "GPT-5"}</span>
+                    {m.text}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-3 flex gap-2">
+              <textarea
+                value={refineDraft}
+                onChange={(e) => setRefineDraft(e.target.value)}
+                rows={2}
+                className="input flex-1"
+                placeholder="e.g. Make the coding questions easier and add one more True/False on loops."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void onRefine(); }
+                }}
+              />
+              <button
+                onClick={onRefine}
+                disabled={!!busy || !refineDraft.trim()}
+                className="rounded-md px-4 py-2 font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50 self-end"
+                style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              >
+                Send
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Tip: press ⌘/Ctrl + Enter to send. Save the draft after refining to keep changes.</p>
+          </section>
+        )}
       </div>
+
 
       <aside className="lg:sticky lg:top-4 self-start rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h3 className="font-semibold flex items-center gap-2"><span>📚</span> My tests</h3>
