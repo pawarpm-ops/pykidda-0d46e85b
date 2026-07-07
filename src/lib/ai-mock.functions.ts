@@ -61,8 +61,11 @@ export const generateAiMockTest = createServerFn({ method: "POST" })
 
     const totalRequested = data.counts.mcq + data.counts.tf + data.counts.fill + data.counts.short + data.counts.code;
     if (totalRequested === 0) throw new Error("Ask for at least 1 question");
+    if (data.syllabusText.trim().length < 20 && data.customInstructions.trim().length < 20) {
+      throw new Error("Provide a syllabus PDF or write custom instructions (min ~20 chars).");
+    }
 
-    const sys = `You are an expert Python examiner creating a mock test from a college syllabus PDF (text extracted).
+    const sys = `You are an expert Python examiner creating a mock test for college students.
 Return ONLY a JSON object with this exact shape:
 {
   "questions": [
@@ -88,22 +91,21 @@ Rules:
 - code: options empty; correct_answer empty; starter_code provided; 2-4 deterministic hidden test cases with exact expected stdout (no trailing newline).
 - All Python code must run on plain CPython (Pyodide). No file I/O, no plotting, no tkinter, no pandas, no seaborn, no matplotlib, no external files.
 - Marks: mcq/tf/fill=1, short=2, code=5 (adjust up to 10 for harder code).
-- Questions must be answerable from the given syllabus content.
+- If a syllabus is provided, questions must be answerable from that syllabus content.
+- Strictly follow any teacher instructions given below (difficulty, topics, style, tone, real-world context, etc.).
 - No markdown fences. No prose. Just JSON.`;
 
     const user = `Test title: ${data.title}
 Description: ${data.description}
 
-Syllabus text (extracted from PDF):
-"""
-${data.syllabusText.slice(0, 55000)}
-"""`;
+${data.customInstructions.trim() ? `Teacher's custom instructions (highest priority — follow exactly):\n"""\n${data.customInstructions.slice(0, 4000)}\n"""\n` : ""}
+${data.syllabusText.trim() ? `Syllabus text (extracted from PDF):\n"""\n${data.syllabusText.slice(0, 55000)}\n"""` : "No syllabus PDF provided — build the test purely from the teacher's instructions above."}`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "content-type": "application/json", "Lovable-API-Key": key },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5",
         messages: [
           { role: "system", content: sys },
           { role: "user", content: user },
@@ -111,6 +113,7 @@ ${data.syllabusText.slice(0, 55000)}
         response_format: { type: "json_object" },
       }),
     });
+
     if (res.status === 429) throw new Error("AI rate limit reached — try again in a moment.");
     if (res.status === 402) throw new Error("AI credits exhausted. Please top up in Settings → Plans & credits.");
     if (!res.ok) {
