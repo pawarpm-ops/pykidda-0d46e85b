@@ -133,6 +133,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function AdminPage() {
   const isAdmin = useIsAdmin();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
@@ -143,6 +144,7 @@ function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [authorId, setAuthorId] = useState<string | null>(null);
   const fetchAuthInfo = useServerFn(listStudentAuthInfo);
+
 
   useEffect(() => {
     if (isAdmin === null) return;
