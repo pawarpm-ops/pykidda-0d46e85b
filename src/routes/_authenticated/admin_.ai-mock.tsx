@@ -109,6 +109,7 @@ function Editor() {
   const deleteFn = useServerFn(deleteAiMockTest);
   const getFn = useServerFn(getAdminAiTest);
   const listFn = useServerFn(listAiMockTests);
+  const refineFn = useServerFn(refineAiMockTest);
 
   const [tests, setTests] = useState<TestRow[]>([]);
   const [loadingTests, setLoadingTests] = useState(true);
@@ -130,10 +131,14 @@ function Editor() {
   const [questions, setQuestions] = useState<EditableQ[]>([]);
   const [syllabusText, setSyllabusText] = useState("");
   const [syllabusFileName, setSyllabusFileName] = useState("");
+  const [customInstructions, setCustomInstructions] = useState("");
+  const [refineChat, setRefineChat] = useState<{ role: "user" | "ai"; text: string }[]>([]);
+  const [refineDraft, setRefineDraft] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [counts, setCounts] = useState({ mcq: 5, tf: 3, fill: 2, short: 1, code: 2 });
   const fileRef = useRef<HTMLInputElement | null>(null);
+
 
   const totalMarks = useMemo(() => questions.reduce((a, q) => a + (q.marks || 0), 0), [questions]);
 
