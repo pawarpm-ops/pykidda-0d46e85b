@@ -474,7 +474,7 @@ function Editor() {
         {questions.length > 0 && (
           <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="text-lg font-semibold flex items-center gap-2"><span>📝</span> 3. Review & edit ({questions.length} Qs · {totalMarks} marks)</h2>
+              <h2 className="text-lg font-semibold flex items-center gap-2"><span>📝</span> 4. Review & edit ({questions.length} Qs · {totalMarks} marks)</h2>
               <div className="flex gap-2 flex-wrap">
                 {(Object.keys(TYPE_LABEL) as QType[]).map((t) => (
                   <button key={t} onClick={() => addBlankQ(t)} className="text-xs rounded border border-border px-2 py-1 hover:bg-secondary">+ {TYPE_LABEL[t]}</button>
@@ -489,12 +489,57 @@ function Editor() {
             <div className="mt-6 flex flex-wrap gap-3">
               <button onClick={onSaveDraft} disabled={!!busy} className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground disabled:opacity-50">💾 Save draft</button>
               {editingId && (
-                <button onClick={() => onPublish(true)} disabled={!!busy} className="rounded-md bg-[oklch(0.65_0.16_145)] px-4 py-2 font-semibold text-white disabled:opacity-50">🚀 Publish to students</button>
+                <>
+                  <button onClick={() => onPublish(true)} disabled={!!busy} className="rounded-md bg-[oklch(0.65_0.16_145)] px-4 py-2 font-semibold text-white disabled:opacity-50">🚀 Publish to students</button>
+                  <button onClick={() => onPublish(false)} disabled={!!busy} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-secondary">Unpublish</button>
+                  <button onClick={() => onDelete(editingId)} disabled={!!busy} className="rounded-md border border-destructive/50 text-destructive px-4 py-2 text-sm hover:bg-destructive/10">Delete test</button>
+                </>
               )}
             </div>
           </section>
         )}
+
+        {questions.length > 0 && (
+          <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold flex items-center gap-2"><span>💬</span> 5. Chat with the AI to refine this test</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Ask GPT-5 to change anything — "make Q3 harder", "add 2 more coding questions on recursion", "rewrite all MCQs in simpler English", "fix the answer to Q5", etc. It rewrites the test based on your instruction.
+            </p>
+            {refineChat.length > 0 && (
+              <div className="mt-4 space-y-2 max-h-72 overflow-auto rounded-md border border-border bg-background p-3">
+                {refineChat.map((m, i) => (
+                  <div key={i} className={`text-sm rounded-md px-3 py-2 ${m.role === "user" ? "bg-primary/10 text-foreground ml-8" : "bg-accent/10 text-foreground mr-8"}`}>
+                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-60 mr-2">{m.role === "user" ? "You" : "GPT-5"}</span>
+                    {m.text}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-3 flex gap-2">
+              <textarea
+                value={refineDraft}
+                onChange={(e) => setRefineDraft(e.target.value)}
+                rows={2}
+                className="input flex-1"
+                placeholder="e.g. Make the coding questions easier and add one more True/False on loops."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void onRefine(); }
+                }}
+              />
+              <button
+                onClick={onRefine}
+                disabled={!!busy || !refineDraft.trim()}
+                className="rounded-md px-4 py-2 font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50 self-end"
+                style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              >
+                Send
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">Tip: press ⌘/Ctrl + Enter to send. Save the draft after refining to keep changes.</p>
+          </section>
+        )}
       </div>
+
 
       <aside className="lg:sticky lg:top-4 self-start rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h3 className="font-semibold flex items-center gap-2"><span>📚</span> My tests</h3>
