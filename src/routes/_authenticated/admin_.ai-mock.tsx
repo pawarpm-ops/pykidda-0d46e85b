@@ -150,6 +150,9 @@ function Editor() {
     setQuestions([]);
     setSyllabusText("");
     setSyllabusFileName("");
+    setCustomInstructions("");
+    setRefineChat([]);
+    setRefineDraft("");
     setError(null);
   };
 
@@ -177,14 +180,18 @@ function Editor() {
   const onGenerate = async () => {
     setError(null);
     if (!title.trim()) { setError("Give the test a title."); return; }
-    if (syllabusText.trim().length < 20) { setError("Upload a syllabus PDF first."); return; }
-    setBusy("🐍 AI is drafting your test — this can take 20-40 seconds…");
+    if (syllabusText.trim().length < 20 && customInstructions.trim().length < 20) {
+      setError("Upload a syllabus PDF or write custom instructions (~20+ chars) telling the AI how to build the test.");
+      return;
+    }
+    setBusy("🧠 GPT-5 is drafting your test — this can take 20-60 seconds…");
     try {
       const draft = await generateFn({
         data: {
           title: title.trim(),
           description: description.trim(),
           syllabusText,
+          customInstructions: customInstructions.trim(),
           durationMinutes,
           counts,
         },
@@ -201,12 +208,65 @@ function Editor() {
           explanation: q.explanation ?? "",
         })),
       );
+      setRefineChat([]);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(null);
     }
   };
+
+  const onRefine = async () => {
+    setError(null);
+    const instruction = refineDraft.trim();
+    if (!instruction) return;
+    if (questions.length === 0) { setError("Generate a test first, then refine it."); return; }
+    setRefineChat((c) => [...c, { role: "user", text: instruction }]);
+    setRefineDraft("");
+    setBusy("🧠 GPT-5 is revising the test…");
+    try {
+      const res = await refineFn({
+        data: {
+          title: title.trim() || "Untitled",
+          description: description.trim(),
+          instruction,
+          syllabusText,
+          questions: questions.map((q, i) => ({
+            id: q.id,
+            order_index: i,
+            type: q.type,
+            prompt: q.prompt,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            starter_code: q.starter_code,
+            code_tests: q.code_tests,
+            marks: q.marks,
+            explanation: q.explanation,
+          })),
+        },
+      });
+      setQuestions(
+        res.questions.map((q) => ({
+          type: q.type,
+          prompt: q.prompt,
+          options: q.options ?? [],
+          correct_answer: q.correct_answer ?? "",
+          starter_code: q.starter_code ?? "",
+          code_tests: q.code_tests ?? [],
+          marks: q.marks ?? 1,
+          explanation: q.explanation ?? "",
+        })),
+      );
+      setRefineChat((c) => [...c, { role: "ai", text: `Updated test — now ${res.questions.length} questions. Review the changes below.` }]);
+    } catch (e) {
+      setError((e as Error).message);
+      setRefineChat((c) => [...c, { role: "ai", text: `⚠️ ${(e as Error).message}` }]);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+
 
   const onSaveDraft = async () => {
     setError(null);
