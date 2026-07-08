@@ -436,12 +436,18 @@ function RunTest() {
         return;
       }
 
-      // Submit-confirm modal: Ctrl+Enter to confirm
+      // Submit-confirm modal: Ctrl+Enter to confirm, Alt+B to go back and resume
       if (showSubmitConfirmRef.current && e.ctrlKey && e.key === "Enter") {
         e.preventDefault();
         setShowSubmitConfirm(false);
         showSubmitConfirmRef.current = false;
         void submit("normal");
+        return;
+      }
+      if (showSubmitConfirmRef.current && e.altKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setShowSubmitConfirm(false);
+        showSubmitConfirmRef.current = false;
         return;
       }
 
@@ -833,7 +839,7 @@ function RunTest() {
           <div className="rounded-xl border-2 border-accent/50 bg-card px-8 py-6 text-center shadow-[var(--shadow-warm)] max-w-md">
             <p className="text-lg font-bold">Are you sure you want to submit?</p>
             <p className="mt-2 text-sm text-muted-foreground">Press <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> to confirm final submission.</p>
-            <p className="mt-4 text-xs text-muted-foreground">Press <Kbd>Alt</Kbd>+<Kbd>S</Kbd> again or any other shortcut to dismiss is not available — only Ctrl+Enter submits.</p>
+            <p className="mt-3 text-sm">Changed your mind? Press <Kbd>Alt</Kbd>+<Kbd>B</Kbd> to go back and resume the test.</p>
           </div>
         </div>
       )}

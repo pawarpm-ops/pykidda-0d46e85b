@@ -348,6 +348,12 @@ function TakeAiMock() {
         void submit("normal");
         return;
       }
+      if (showSubmitConfirmRef.current && e.altKey && lower === "b") {
+        e.preventDefault();
+        setShowSubmitConfirm(false);
+        showSubmitConfirmRef.current = false;
+        return;
+      }
       if (e.ctrlKey && e.key === "Enter") {
         e.preventDefault();
         void submit("normal");
@@ -615,7 +621,10 @@ function TakeAiMock() {
               Once submitted you cannot change your answers.
             </p>
             <p className="mt-4 text-sm">
-              Press <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> to confirm, or <Kbd>Alt</Kbd>+<Kbd>S</Kbd> again to cancel.
+              Press <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> to confirm submit.
+            </p>
+            <p className="mt-2 text-sm">
+              Changed your mind? Press <Kbd>Alt</Kbd>+<Kbd>B</Kbd> to go back and resume the test.
             </p>
           </div>
         </div>
