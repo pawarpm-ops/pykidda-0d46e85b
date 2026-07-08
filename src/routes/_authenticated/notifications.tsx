@@ -28,13 +28,15 @@ function NotificationsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [items, setItems] = useState<Announcement[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   async function load(uid: string) {
     setLoading(true);
-    const [a, r] = await Promise.all([listAnnouncements(), listReadIds(uid)]);
+    const [a, r, d] = await Promise.all([listAnnouncements(), listReadIds(uid), listDismissedIds(uid)]);
     setItems(a);
     setReadIds(r);
+    setDismissedIds(d);
     setLoading(false);
   }
 
@@ -46,9 +48,11 @@ function NotificationsPage() {
     });
   }, []);
 
+  const visibleItems = items.filter((i) => !dismissedIds.has(i.id));
+
   async function handleMarkAllRead() {
     if (!userId) return;
-    const unreadIds = items.filter((i) => !readIds.has(i.id)).map((i) => i.id);
+    const unreadIds = visibleItems.filter((i) => !readIds.has(i.id)).map((i) => i.id);
     await markAllRead(userId, unreadIds);
     setReadIds(new Set([...readIds, ...unreadIds]));
   }
@@ -59,7 +63,35 @@ function NotificationsPage() {
     setReadIds(new Set([...readIds, id]));
   }
 
-  const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
+  async function handleDeleteOne(id: string) {
+    if (!userId) return;
+    setDismissedIds((prev) => new Set([...prev, id]));
+    try {
+      await dismissAnnouncement(userId, id);
+    } catch {
+      // rollback on failure
+      setDismissedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }
+
+  async function handleDeleteAll() {
+    if (!userId || visibleItems.length === 0) return;
+    if (!window.confirm("Delete all notifications? This will clear them from your inbox only.")) return;
+    const ids = visibleItems.map((i) => i.id);
+    const prev = dismissedIds;
+    setDismissedIds(new Set([...prev, ...ids]));
+    try {
+      await dismissAllAnnouncements(userId, ids);
+    } catch {
+      setDismissedIds(prev);
+    }
+  }
+
+  const unreadCount = visibleItems.filter((i) => !readIds.has(i.id)).length;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
