@@ -202,20 +202,41 @@ function ProfilePage() {
               <span className="text-xs text-muted-foreground">{bio.length}/280</span>
             </label>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Avatar URL</span>
-              <input
-                type="url"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                maxLength={500}
-                placeholder="https://…/photo.png"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-              />
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium">Avatar image</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <label
+                  className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted ${
+                    uploading ? "pointer-events-none opacity-60" : ""
+                  }`}
+                >
+                  {uploading ? "Uploading…" : avatarUrl ? "Change photo" : "Choose photo"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) void handleAvatarFile(f);
+                    }}
+                  />
+                </label>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setAvatarUrl("")}
+                    className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground">
-                Paste a link to an image. Leave empty for the gradient avatar.
+                PNG, JPEG, WebP, or GIF. Max 3 MB. Leave empty for the gradient avatar.
               </span>
-            </label>
+            </div>
 
             {msg && (
               <div
