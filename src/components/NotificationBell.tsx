@@ -1,18 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { listAnnouncements, listReadIds, markAllRead, type Announcement } from "@/lib/notifications";
+import { listAnnouncements, listDismissedIds, listReadIds, markAllRead, type Announcement } from "@/lib/notifications";
 
 export function NotificationBell() {
   const [userId, setUserId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Announcement[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
   async function refresh(uid: string) {
-    const [a, r] = await Promise.all([listAnnouncements(), listReadIds(uid)]);
+    const [a, r, d] = await Promise.all([listAnnouncements(), listReadIds(uid), listDismissedIds(uid)]);
     setItems(a);
     setReadIds(r);
+    setDismissedIds(d);
   }
 
   useEffect(() => {
