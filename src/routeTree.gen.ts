@@ -21,6 +21,7 @@ import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
+import { Route as AuthenticatedAssignmentsIndexRouteImport } from './routes/_authenticated/assignments.index'
 import { Route as MockTestsTestIdWarningRouteImport } from './routes/mock-tests.$testId.warning'
 import { Route as MockTestsTestIdRunRouteImport } from './routes/mock-tests.$testId.run'
 import { Route as MockTestsTestIdResultRouteImport } from './routes/mock-tests.$testId.result'
@@ -92,6 +93,12 @@ const AuthenticatedPracticeIndexRoute =
     path: '/practice/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAssignmentsIndexRoute =
+  AuthenticatedAssignmentsIndexRouteImport.update({
+    id: '/assignments/',
+    path: '/assignments/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const MockTestsTestIdWarningRoute = MockTestsTestIdWarningRouteImport.update({
   id: '/mock-tests/$testId/warning',
   path: '/mock-tests/$testId/warning',
@@ -152,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/assignments/': typeof AuthenticatedAssignmentsIndexRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
@@ -173,6 +181,7 @@ export interface FileRoutesByTo {
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/assignments': typeof AuthenticatedAssignmentsIndexRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
@@ -196,6 +205,7 @@ export interface FileRoutesById {
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/_authenticated/assignments/': typeof AuthenticatedAssignmentsIndexRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/assignments/'
     | '/practice/'
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/assignments'
     | '/practice'
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
@@ -262,6 +274,7 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/_authenticated/assignments/'
     | '/_authenticated/practice/'
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
@@ -369,6 +382,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPracticeIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assignments/': {
+      id: '/_authenticated/assignments/'
+      path: '/assignments'
+      fullPath: '/assignments/'
+      preLoaderRoute: typeof AuthenticatedAssignmentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/mock-tests/$testId/warning': {
       id: '/mock-tests/$testId/warning'
       path: '/mock-tests/$testId/warning'
@@ -436,6 +456,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedAdminAiMockRoute: typeof AuthenticatedAdminAiMockRoute
   AuthenticatedPracticeQidRoute: typeof AuthenticatedPracticeQidRoute
+  AuthenticatedAssignmentsIndexRoute: typeof AuthenticatedAssignmentsIndexRoute
   AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
 }
 
@@ -447,6 +468,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedAdminAiMockRoute: AuthenticatedAdminAiMockRoute,
   AuthenticatedPracticeQidRoute: AuthenticatedPracticeQidRoute,
+  AuthenticatedAssignmentsIndexRoute: AuthenticatedAssignmentsIndexRoute,
   AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
 }
 

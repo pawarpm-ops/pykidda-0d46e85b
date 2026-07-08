@@ -43,6 +43,11 @@ export function SiteHeader() {
           <Link to="/mock-tests" data-tour="nav-mock" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Mock Tests
           </Link>
+          {email && (
+            <Link to="/assignments" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
+              Homework
+            </Link>
+          )}
           <Link to="/leaderboard" data-tour="nav-leaderboard" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Leaderboard
           </Link>
