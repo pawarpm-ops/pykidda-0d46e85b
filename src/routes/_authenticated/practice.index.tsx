@@ -39,9 +39,71 @@ function PracticeHome() {
           {QUESTIONS.length} Python problems straight from the SY MDM AI&amp;DS assignment syllabus. Solve them in any order — write code, run against tests, submit.
         </p>
 
-        <p className="mt-4 text-sm text-muted-foreground">
-          Solved <span className="font-bold text-foreground tabular-nums">{solved.size}</span> of {QUESTIONS.length}
-        </p>
+        {(() => {
+          const total = QUESTIONS.length;
+          const done = solved.size;
+          const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+          const complete = done === total && total > 0;
+          return (
+            <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-warm)]">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+                    Your progress
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Solved{" "}
+                    <span className="font-bold text-foreground tabular-nums">{done}</span> of{" "}
+                    <span className="tabular-nums">{total}</span> questions
+                    {complete && <span className="ml-2">🎉</span>}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span
+                    className="block text-3xl font-black tabular-nums leading-none bg-clip-text text-transparent"
+                    style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                  >
+                    {pct}%
+                  </span>
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    complete
+                  </span>
+                </div>
+              </div>
+
+              <div
+                className="mt-4 relative h-4 w-full overflow-hidden rounded-full bg-muted/60 ring-1 ring-inset ring-border"
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Practice completion"
+              >
+                <div
+                  className="h-full rounded-full transition-[width] duration-700 ease-out relative overflow-hidden"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundImage: "var(--gradient-sunrise)",
+                    boxShadow: "0 0 18px -2px color-mix(in oklab, var(--accent) 60%, transparent)",
+                  }}
+                >
+                  <span
+                    className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 opacity-60 animate-[shimmer_2.4s_linear_infinite]"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent)",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                <span>{done === 0 ? "Let's begin →" : "Keep going"}</span>
+                <span className="tabular-nums">{total - done} left</span>
+              </div>
+            </div>
+          );
+        })()}
 
         <ul className="mt-6 divide-y divide-border rounded-xl border border-border bg-card">
           {QUESTIONS.map((q, i) => {
