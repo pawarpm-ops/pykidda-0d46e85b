@@ -98,6 +98,38 @@ function ProfilePage() {
     }
   }
 
+  async function handleAvatarFile(file: File) {
+    if (!userId) return;
+    setMsg(null);
+    if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+      setMsg({ kind: "err", text: "Please choose a PNG, JPEG, WebP, or GIF image." });
+      return;
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      setMsg({ kind: "err", text: "Image is too large. Max 3 MB." });
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+      const path = `${userId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("avatars")
+        .createSignedUrl(path, AVATAR_SIGNED_URL_TTL);
+      if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Failed to create link");
+      setAvatarUrl(signed.signedUrl);
+      setMsg({ kind: "ok", text: "Avatar uploaded. Click Save profile to keep it." });
+    } catch (err) {
+      setMsg({ kind: "err", text: (err as Error).message || "Upload failed" });
+    } finally {
+      setUploading(false);
+    }
+  }
+
   const initial = (displayName || email || "?").trim().charAt(0).toUpperCase();
 
   return (
