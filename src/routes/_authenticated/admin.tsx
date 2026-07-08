@@ -511,7 +511,9 @@ function AdminPage() {
                 </ChartCard>
               </section>
             )}
+            </div>
           </>
+
         )}
 
         {tab === "students" && (
