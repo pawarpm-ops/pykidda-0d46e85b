@@ -1136,16 +1136,43 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
               </select>
             </label>
           </div>
+          <div className="rounded-md border border-border bg-background/40 p-3">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={scheduleEnabled}
+                onChange={(e) => setScheduleEnabled(e.target.checked)}
+                className="h-4 w-4"
+              />
+              ⏰ Schedule for later
+            </label>
+            {scheduleEnabled && (
+              <div className="mt-2">
+                <input
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  required
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Students will only see this announcement once the scheduled time arrives ({Intl.DateTimeFormat().resolvedOptions().timeZone}).
+                </p>
+              </div>
+            )}
+          </div>
           <button
             type="submit"
             disabled={busy}
             className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             style={{ backgroundImage: "var(--gradient-sunrise)" }}
           >
-            {busy ? "Sending…" : "Send announcement"}
+            {busy ? "Sending…" : scheduleEnabled ? "Schedule announcement" : "Send announcement"}
           </button>
         </form>
       </div>
+
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-base font-semibold">Recent announcements</h2>
