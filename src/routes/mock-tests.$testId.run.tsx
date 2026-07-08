@@ -436,12 +436,18 @@ function RunTest() {
         return;
       }
 
-      // Submit-confirm modal: Ctrl+Enter to confirm
+      // Submit-confirm modal: Ctrl+Enter to confirm, Alt+B to go back and resume
       if (showSubmitConfirmRef.current && e.ctrlKey && e.key === "Enter") {
         e.preventDefault();
         setShowSubmitConfirm(false);
         showSubmitConfirmRef.current = false;
         void submit("normal");
+        return;
+      }
+      if (showSubmitConfirmRef.current && e.altKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setShowSubmitConfirm(false);
+        showSubmitConfirmRef.current = false;
         return;
       }
 
