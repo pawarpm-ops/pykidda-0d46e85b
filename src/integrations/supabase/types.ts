@@ -451,6 +451,11 @@ export type Database = {
           gender: string | null
           id: string
           onboarded: boolean
+          public_profile_id: string | null
+          public_profile_settings: Json
+          qr_created_at: string | null
+          qr_enabled: boolean
+          qr_updated_at: string | null
           tutorial_status: string
           updated_at: string
         }
@@ -467,6 +472,11 @@ export type Database = {
           gender?: string | null
           id: string
           onboarded?: boolean
+          public_profile_id?: string | null
+          public_profile_settings?: Json
+          qr_created_at?: string | null
+          qr_enabled?: boolean
+          qr_updated_at?: string | null
           tutorial_status?: string
           updated_at?: string
         }
@@ -483,6 +493,11 @@ export type Database = {
           gender?: string | null
           id?: string
           onboarded?: boolean
+          public_profile_id?: string | null
+          public_profile_settings?: Json
+          qr_created_at?: string | null
+          qr_enabled?: boolean
+          qr_updated_at?: string | null
           tutorial_status?: string
           updated_at?: string
         }
@@ -640,6 +655,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_public_profile_id: { Args: never; Returns: string }
+      get_public_student_profile: {
+        Args: { _public_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -2,8 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StreakCard } from "@/components/StreakCard";
+import { ProfileQrCard } from "@/components/ProfileQrCard";
+import { DEFAULT_PUBLIC_SETTINGS, type PublicProfileSettings } from "@/lib/publicProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { restartTutorial } from "@/components/OnboardingTutorial";
+import { toast } from "sonner";
 import { z } from "zod";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -45,6 +48,11 @@ function ProfilePage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
+  const [publicId, setPublicId] = useState<string | null>(null);
+  const [qrEnabled, setQrEnabled] = useState<boolean>(true);
+  const [publicSettings, setPublicSettings] = useState<PublicProfileSettings>(DEFAULT_PUBLIC_SETTINGS);
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
@@ -53,7 +61,7 @@ function ProfilePage() {
       setUserId(u.user.id);
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name, bio, avatar_url")
+        .select("display_name, bio, avatar_url, public_profile_id, qr_enabled, public_profile_settings")
         .eq("id", u.user.id)
         .maybeSingle();
       if (error) {
@@ -62,10 +70,43 @@ function ProfilePage() {
         setDisplayName(data.display_name ?? "");
         setBio(data.bio ?? "");
         setAvatarUrl(data.avatar_url ?? "");
+        setPublicId(data.public_profile_id ?? null);
+        setQrEnabled(data.qr_enabled ?? true);
+        setPublicSettings({
+          ...DEFAULT_PUBLIC_SETTINGS,
+          ...((data.public_profile_settings as Partial<PublicProfileSettings>) ?? {}),
+        });
       }
       setLoading(false);
     })();
   }, []);
+
+  async function savePrivacy(nextEnabled: boolean, nextSettings: PublicProfileSettings) {
+    if (!userId) return;
+    setSavingPrivacy(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ qr_enabled: nextEnabled, public_profile_settings: nextSettings })
+      .eq("id", userId);
+    setSavingPrivacy(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Public profile settings updated");
+    }
+  }
+
+  function toggleSetting(key: keyof PublicProfileSettings) {
+    const next = { ...publicSettings, [key]: !publicSettings[key] };
+    setPublicSettings(next);
+    void savePrivacy(qrEnabled, next);
+  }
+
+  function toggleQrEnabled() {
+    const next = !qrEnabled;
+    setQrEnabled(next);
+    void savePrivacy(next, publicSettings);
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -266,6 +307,64 @@ function ProfilePage() {
         <div className="mt-8">
           <StreakCard />
         </div>
+
+        {publicId && (
+          <div className="mt-8">
+            <ProfileQrCard publicId={publicId} displayName={displayName} enabled={qrEnabled} />
+          </div>
+        )}
+
+        <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold">Public QR profile settings</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Control exactly what people see when they scan your QR code. Personal info
+                (email, phone, birth date) is never shared — even if all switches are on.
+              </p>
+            </div>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={qrEnabled}
+                onChange={toggleQrEnabled}
+                disabled={savingPrivacy}
+                className="h-4 w-4"
+              />
+              {qrEnabled ? "QR profile is ON" : "QR profile is OFF"}
+            </label>
+          </div>
+
+          <div className={`mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 ${qrEnabled ? "" : "opacity-50 pointer-events-none"}`}>
+            {(
+              [
+                ["showAvatar", "Show avatar"],
+                ["showClass", "Show class / college"],
+                ["showStreak", "Show streak 🔥"],
+                ["showBadges", "Show badges 🏅"],
+                ["showCertificates", "Show certificates"],
+                ["showLeaderboardRank", "Show leaderboard rank"],
+                ["showCompletedUnits", "Show completed units & progress"],
+              ] as [keyof PublicProfileSettings, string][]
+            ).map(([key, label]) => (
+              <label
+                key={key}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm"
+              >
+                <span>{label}</span>
+                <input
+                  type="checkbox"
+                  checked={publicSettings[key]}
+                  onChange={() => toggleSetting(key)}
+                  disabled={savingPrivacy}
+                  className="h-4 w-4"
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+
+
 
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
