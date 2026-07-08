@@ -70,7 +70,7 @@ export async function recordStreakActivity(
 ): Promise<{ current_streak: number; longest_streak: number; is_new_day: boolean; unlocked_rank: StreakRank | null } | null> {
   const { data, error } = await supabase.rpc("record_streak_activity", {
     _activity_type: activity,
-    _reference_id: referenceId ?? null,
+    _reference_id: referenceId ?? undefined,
   });
   if (error) {
     console.error("[streak] record_streak_activity failed:", error.message, error);
