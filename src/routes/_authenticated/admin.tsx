@@ -1017,6 +1017,8 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
   const [body, setBody] = useState("");
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
   const [target, setTarget] = useState<string>("");
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -1029,6 +1031,23 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !body.trim()) return;
+    let iso: string | null = null;
+    if (scheduleEnabled) {
+      if (!scheduledAt) {
+        alert("Please pick a date & time to schedule this announcement.");
+        return;
+      }
+      const dt = new Date(scheduledAt);
+      if (Number.isNaN(dt.getTime())) {
+        alert("Invalid scheduled date.");
+        return;
+      }
+      if (dt.getTime() <= Date.now()) {
+        alert("Scheduled time must be in the future.");
+        return;
+      }
+      iso = dt.toISOString();
+    }
     setBusy(true);
     try {
       await createAnnouncement({
@@ -1037,11 +1056,14 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
         body: body.trim(),
         priority,
         targetUserId: target || null,
+        scheduledAt: iso,
       });
       setTitle("");
       setBody("");
       setPriority("normal");
       setTarget("");
+      setScheduleEnabled(false);
+      setScheduledAt("");
       await load();
     } catch (err) {
       alert("Failed to send: " + (err as Error).message);
@@ -1049,6 +1071,7 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
       setBusy(false);
     }
   }
+
 
   async function remove(id: string) {
     if (!confirm("Delete this announcement?")) return;
