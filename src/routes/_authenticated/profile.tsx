@@ -48,6 +48,11 @@ function ProfilePage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
+  const [publicId, setPublicId] = useState<string | null>(null);
+  const [qrEnabled, setQrEnabled] = useState<boolean>(true);
+  const [publicSettings, setPublicSettings] = useState<PublicProfileSettings>(DEFAULT_PUBLIC_SETTINGS);
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
@@ -56,7 +61,7 @@ function ProfilePage() {
       setUserId(u.user.id);
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name, bio, avatar_url")
+        .select("display_name, bio, avatar_url, public_profile_id, qr_enabled, public_profile_settings")
         .eq("id", u.user.id)
         .maybeSingle();
       if (error) {
@@ -65,10 +70,43 @@ function ProfilePage() {
         setDisplayName(data.display_name ?? "");
         setBio(data.bio ?? "");
         setAvatarUrl(data.avatar_url ?? "");
+        setPublicId(data.public_profile_id ?? null);
+        setQrEnabled(data.qr_enabled ?? true);
+        setPublicSettings({
+          ...DEFAULT_PUBLIC_SETTINGS,
+          ...((data.public_profile_settings as Partial<PublicProfileSettings>) ?? {}),
+        });
       }
       setLoading(false);
     })();
   }, []);
+
+  async function savePrivacy(nextEnabled: boolean, nextSettings: PublicProfileSettings) {
+    if (!userId) return;
+    setSavingPrivacy(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ qr_enabled: nextEnabled, public_profile_settings: nextSettings })
+      .eq("id", userId);
+    setSavingPrivacy(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Public profile settings updated");
+    }
+  }
+
+  function toggleSetting(key: keyof PublicProfileSettings) {
+    const next = { ...publicSettings, [key]: !publicSettings[key] };
+    setPublicSettings(next);
+    void savePrivacy(qrEnabled, next);
+  }
+
+  function toggleQrEnabled() {
+    const next = !qrEnabled;
+    setQrEnabled(next);
+    void savePrivacy(next, publicSettings);
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
