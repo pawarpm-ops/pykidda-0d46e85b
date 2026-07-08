@@ -1018,7 +1018,8 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
   const [target, setTarget] = useState<string>("");
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState<string>("");
+  const [scheduledDate, setScheduledDate] = useState<string>("");
+  const [scheduledTime, setScheduledTime] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
   async function load() {
