@@ -23,17 +23,22 @@ const profileSchema = z.object({
   avatar_url: z
     .string()
     .trim()
-    .max(500, "Max 500 characters")
+    .max(2000, "Avatar URL too long")
     .url("Must be a valid URL")
     .optional()
     .or(z.literal("")),
 });
+
+const AVATAR_MAX_BYTES = 3 * 1024 * 1024; // 3MB
+const AVATAR_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const AVATAR_SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10; // ~10 years
 
 function ProfilePage() {
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const [displayName, setDisplayName] = useState("");
@@ -90,6 +95,38 @@ function ProfilePage() {
       setMsg({ kind: "err", text: error.message });
     } else {
       setMsg({ kind: "ok", text: "Profile saved." });
+    }
+  }
+
+  async function handleAvatarFile(file: File) {
+    if (!userId) return;
+    setMsg(null);
+    if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+      setMsg({ kind: "err", text: "Please choose a PNG, JPEG, WebP, or GIF image." });
+      return;
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      setMsg({ kind: "err", text: "Image is too large. Max 3 MB." });
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+      const path = `${userId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { cacheControl: "3600", upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("avatars")
+        .createSignedUrl(path, AVATAR_SIGNED_URL_TTL);
+      if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Failed to create link");
+      setAvatarUrl(signed.signedUrl);
+      setMsg({ kind: "ok", text: "Avatar uploaded. Click Save profile to keep it." });
+    } catch (err) {
+      setMsg({ kind: "err", text: (err as Error).message || "Upload failed" });
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -165,20 +202,41 @@ function ProfilePage() {
               <span className="text-xs text-muted-foreground">{bio.length}/280</span>
             </label>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Avatar URL</span>
-              <input
-                type="url"
-                value={avatarUrl}
-                onChange={(e) => setAvatarUrl(e.target.value)}
-                maxLength={500}
-                placeholder="https://…/photo.png"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-              />
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium">Avatar image</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <label
+                  className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted ${
+                    uploading ? "pointer-events-none opacity-60" : ""
+                  }`}
+                >
+                  {uploading ? "Uploading…" : avatarUrl ? "Change photo" : "Choose photo"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) void handleAvatarFile(f);
+                    }}
+                  />
+                </label>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setAvatarUrl("")}
+                    className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground">
-                Paste a link to an image. Leave empty for the gradient avatar.
+                PNG, JPEG, WebP, or GIF. Max 3 MB. Leave empty for the gradient avatar.
               </span>
-            </label>
+            </div>
 
             {msg && (
               <div
