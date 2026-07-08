@@ -510,6 +510,7 @@ function InfoCell({ label, value }: { label: string; value: string | null }) {
 
 function StudentsTab({ students, mocks, practice, authInfo, profiles }: { students: StudentRow[]; mocks: MockRow[]; practice: PracticeRow[]; authInfo: StudentAuthInfo[]; profiles: Record<string, ProfileInfo> }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const selStudent = students.find((s) => s.user_id === selected);
   const selMocks = mocks.filter((m) => m.user_id === selected);
   const selPractice = practice.filter((p) => p.user_id === selected);
@@ -520,16 +521,39 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
   }, [authInfo]);
   const selAuth = selected ? authMap.get(selected) : undefined;
 
+  const filteredStudents = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return students;
+    return students.filter((s) => {
+      const email = authMap.get(s.user_id)?.email?.toLowerCase() ?? "";
+      const displayName = profiles[s.user_id]?.display_name?.toLowerCase() ?? "";
+      return (
+        s.name.toLowerCase().includes(q) ||
+        email.includes(q) ||
+        displayName.includes(q) ||
+        s.user_id.toLowerCase().includes(q)
+      );
+    });
+  }, [query, students, authMap, profiles]);
 
   return (
     <section className="mt-6 grid gap-6 lg:grid-cols-[360px_1fr]">
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
         <p className="text-sm font-semibold mb-2">All students ({students.length})</p>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by name, email, or ID…"
+          className="w-full mb-3 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent"
+        />
         {students.length === 0 ? (
           <p className="text-sm text-muted-foreground">No student activity yet.</p>
+        ) : filteredStudents.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No students match “{query}”.</p>
         ) : (
           <ul className="divide-y divide-border max-h-[600px] overflow-auto">
-            {students.map((s) => (
+            {filteredStudents.map((s) => (
               <li key={s.user_id}>
                 <button
                   onClick={() => setSelected(s.user_id)}
@@ -554,6 +578,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
           </ul>
         )}
       </div>
+
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         {!selStudent ? (
