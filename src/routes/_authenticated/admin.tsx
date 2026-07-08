@@ -1488,8 +1488,10 @@ function ReportsTab() {
                 <li key={r.id}>
                   <button
                     onClick={() => setSelected(r)}
-                    className={`w-full text-left px-4 py-3 transition ${
-                      selected?.id === r.id ? "bg-accent/10" : "hover:bg-secondary"
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${
+                      selected?.id === r.id
+                        ? "bg-accent/15 ring-1 ring-accent/40 shadow-[0_0_18px_-6px_hsl(var(--accent)/0.55)]"
+                        : "hover:bg-accent/10 hover:ring-1 hover:ring-accent/30 hover:shadow-[0_0_16px_-6px_hsl(var(--accent)/0.5)]"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
