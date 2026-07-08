@@ -1184,12 +1184,23 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
               <li key={n.id} className="py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-semibold truncate">{n.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold truncate">{n.title}</p>
+                      {n.scheduled_at && new Date(n.scheduled_at).getTime() > Date.now() && (
+                        <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-accent">
+                          ⏰ Scheduled
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(n.created_at).toLocaleString()} ·{" "}
+                      {n.scheduled_at && new Date(n.scheduled_at).getTime() > Date.now()
+                        ? `Goes live ${new Date(n.scheduled_at).toLocaleString()}`
+                        : new Date(n.scheduled_at ?? n.created_at).toLocaleString()}
+                      {" · "}
                       {n.target_user_id ? "direct" : "broadcast"} · {n.priority}
                     </p>
                   </div>
+
                   {n.author_id === authorId && (
                     <button
                       onClick={() => remove(n.id)}
