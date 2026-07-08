@@ -107,16 +107,12 @@ function ProfilePage() {
           Customize how you appear across PY Kidda.
         </p>
 
-        <div className="mt-6">
-          <StreakCard />
-        </div>
-
         {loading ? (
           <p className="mt-10 text-muted-foreground">Loading…</p>
         ) : (
           <form
             onSubmit={save}
-            className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)] flex flex-col gap-5"
+            className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)] flex flex-col gap-5"
           >
             <div className="flex items-center gap-4">
               {avatarUrl ? (
@@ -208,6 +204,11 @@ function ProfilePage() {
             </div>
           </form>
         )}
+
+        <div className="mt-8">
+          <StreakCard />
+        </div>
+
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
           <h2 className="text-lg font-bold">Website tutorial</h2>
