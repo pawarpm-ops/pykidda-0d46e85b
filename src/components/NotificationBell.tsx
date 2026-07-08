@@ -86,7 +86,7 @@ export function NotificationBell() {
             <Link
               to="/notifications"
               onClick={() => setOpen(false)}
-              className="text-xs text-accent underline"
+              className="text-xs font-semibold px-2 py-1 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
             >
               View all
             </Link>

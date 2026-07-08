@@ -35,7 +35,7 @@ export function SiteHeader() {
           {email && isAdmin && (
             <Link
               to="/admin"
-              className="px-2 py-1 rounded hover:bg-secondary transition-colors text-accent font-semibold"
+              className="px-3 py-1 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
             >
               Admin
             </Link>
