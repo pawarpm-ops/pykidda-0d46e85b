@@ -1,17 +1,36 @@
-// AI mock test — take page. Loads sanitized questions, enforces fullscreen + visibility
-// anti-cheat, grades code questions client-side with Pyodide, submits to server.
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+// AI mock test — take page. Loads sanitized questions, enforces the same secure
+// keyboard-only, mouse-disabled, anti-cheat runtime as built-in mock tests.
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest, submitAiMockAttempt } from "@/lib/ai-mock.functions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 import { recordStreakActivity } from "@/lib/streaks";
+import {
+  clearTestStarted,
+  getTestStartedAt,
+  isTestStarted,
+  markTestStarted,
+} from "@/lib/test-session";
 
 export const Route = createFileRoute("/mock-tests/ai/$testId/take")({
   head: () => ({ meta: [{ title: "AI Mock Test" }, { name: "robots", content: "noindex" }] }),
   component: TakeAiMock,
   ssr: false,
 });
+
+const SECURE_CSS = `
+.secure-keyboard-test, .secure-keyboard-test * { cursor: none !important; }
+.secure-keyboard-test { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.secure-keyboard-test button,
+.secure-keyboard-test label,
+.secure-keyboard-test .question-nav,
+.secure-keyboard-test .submit-button,
+.secure-keyboard-test .reset-button { pointer-events: none !important; }
+.secure-keyboard-test .answer-editor { pointer-events: none !important; }
+.secure-keyboard-test .answer-editor textarea { pointer-events: none !important; user-select: text; -webkit-user-select: text; }
+@media print { body.secure-test-printing-blocked * { display: none !important; visibility: hidden !important; } }
+`;
 
 type QType = "mcq" | "tf" | "fill" | "short" | "code";
 type Q = {
@@ -24,12 +43,27 @@ type Q = {
   code_tests: { stdin: string; expected: string }[];
   marks: number;
 };
-type Test = { id: string; title: string; description: string; duration_sec: number; total_marks: number; question_count: number };
+type Test = {
+  id: string;
+  title: string;
+  description: string;
+  duration_sec: number;
+  total_marks: number;
+  question_count: number;
+};
 
 function fmt(sec: number) {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="inline-flex items-center justify-center rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-[10px] font-bold">
+      {children}
+    </kbd>
+  );
 }
 
 function TakeAiMock() {
@@ -38,51 +72,72 @@ function TakeAiMock() {
   const getFn = useServerFn(getStudentAiTest);
   const submitFn = useServerFn(submitAiMockAttempt);
 
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  useEffect(() => {
+    setAllowed(isTestStarted(testId));
+    loadPyodideOnce().catch(() => {});
+  }, [testId]);
+
   const [test, setTest] = useState<Test | null>(null);
   const [questions, setQuestions] = useState<Q[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [started, setStarted] = useState(false);
   const [current, setCurrent] = useState(0);
+  const currentRef = useRef(0);
+  currentRef.current = current;
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const answersRef = useRef<Record<string, string>>({});
   answersRef.current = answers;
+  const startedAtRef = useRef<number>(Date.now());
   const [remaining, setRemaining] = useState(0);
-  const startedAtRef = useRef(0);
   const submittedRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
-  const [runOutput, setRunOutput] = useState<string>("");
+  const [gradeMsg, setGradeMsg] = useState("Submitting…");
+  const [showHelp, setShowHelp] = useState(true);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const showSubmitConfirmRef = useRef(false);
+  showSubmitConfirmRef.current = showSubmitConfirm;
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const questionsRef = useRef<Q[]>([]);
   questionsRef.current = questions;
 
   useEffect(() => {
+    if (allowed !== true) return;
     (async () => {
       try {
         const { test, questions: qs } = await getFn({ data: { id: testId } });
         setTest(test as Test);
         setQuestions(qs as Q[]);
-        setRemaining((test as Test).duration_sec);
         const seed: Record<string, string> = {};
         for (const q of qs as Q[]) seed[q.id] = q.type === "code" ? q.starter_code : "";
         setAnswers(seed);
-        loadPyodideOnce().catch(() => {});
+
+        const existing = getTestStartedAt(testId);
+        const persisted = existing ?? Date.now();
+        if (!existing) markTestStarted(testId, persisted);
+        startedAtRef.current = persisted;
+        const elapsed = Math.max(0, Math.floor((Date.now() - persisted) / 1000));
+        setRemaining(Math.max(0, (test as Test).duration_sec - elapsed));
       } catch (e) {
         setLoadError((e as Error).message);
       }
     })();
-  }, [getFn, testId]);
+  }, [getFn, testId, allowed]);
 
   const submit = useCallback(
     async (submission_type: "normal" | "auto-violation" = "normal", violation_reason?: string) => {
-      if (submittedRef.current) return;
+      if (submittedRef.current || !test) return;
       submittedRef.current = true;
       setSubmitting(true);
+      setGradeMsg(submission_type === "auto-violation" ? "Auto-submitting & grading…" : "Grading your test…");
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
 
-      // Grade code questions in the browser
       const graded: Array<{ question_id: string; response: string; code_passed?: number; code_total?: number }> = [];
       const currentAnswers = answersRef.current;
-      for (const q of questionsRef.current) {
+      const qs = questionsRef.current;
+      for (let i = 0; i < qs.length; i++) {
+        const q = qs[i];
         const response = currentAnswers[q.id] ?? "";
+        setGradeMsg(`Grading Q${i + 1} of ${qs.length}…`);
         if (q.type === "code") {
           let passed = 0;
           const total = q.code_tests.length;
@@ -96,7 +151,6 @@ function TakeAiMock() {
           graded.push({ question_id: q.id, response });
         }
       }
-
       const timeTaken = Math.max(0, Math.floor((Date.now() - startedAtRef.current) / 1000));
       try {
         const res = await submitFn({
@@ -110,6 +164,7 @@ function TakeAiMock() {
         });
         void recordStreakActivity("mock_test_attempted", testId);
         sessionStorage.setItem(`pykidda:ai-mock-result:${res.attempt_id}`, JSON.stringify(res));
+        clearTestStarted(testId);
         navigate({ to: "/mock-tests/ai/$testId/result", params: { testId }, search: { attempt: res.attempt_id } });
       } catch (e) {
         alert("Submit failed: " + (e as Error).message);
@@ -117,127 +172,321 @@ function TakeAiMock() {
         setSubmitting(false);
       }
     },
-    [navigate, submitFn, testId],
+    [navigate, submitFn, testId, test],
   );
 
   // Timer
   useEffect(() => {
-    if (!started || !test) return;
-    const iv = window.setInterval(() => {
-      const el = Math.max(0, Math.floor((Date.now() - startedAtRef.current) / 1000));
-      const rem = Math.max(0, test.duration_sec - el);
+    if (!test || allowed !== true) return;
+    let timeoutId: number | undefined;
+    const tick = () => {
+      const elapsed = Math.max(0, Math.floor((Date.now() - startedAtRef.current) / 1000));
+      const rem = Math.max(0, test.duration_sec - elapsed);
       setRemaining(rem);
-      if (rem <= 0) void submit("normal");
-    }, 1000);
-    return () => window.clearInterval(iv);
-  }, [started, test, submit]);
-
-  // Anti-cheat
-  useEffect(() => {
-    if (!started) return;
-    const auto = (r: string) => { if (!submittedRef.current) void submit("auto-violation", r); };
-    const onFs = () => { if (!document.fullscreenElement) auto("Exited fullscreen"); };
-    const onVis = () => { if (document.visibilityState === "hidden") auto("Tab switched or minimized"); };
-    const onBlur = () => auto("Window lost focus");
-    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
-    document.addEventListener("fullscreenchange", onFs);
-    document.addEventListener("visibilitychange", onVis);
-    window.addEventListener("blur", onBlur);
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => {
-      document.removeEventListener("fullscreenchange", onFs);
-      document.removeEventListener("visibilitychange", onVis);
-      window.removeEventListener("blur", onBlur);
-      window.removeEventListener("beforeunload", onBeforeUnload);
+      if (rem <= 0) {
+        void submit("normal");
+        return;
+      }
+      const msUntilNext = 1000 - ((Date.now() - startedAtRef.current) % 1000);
+      timeoutId = window.setTimeout(tick, Math.max(100, msUntilNext));
     };
-  }, [started, submit]);
+    tick();
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    };
+  }, [test, allowed, submit]);
 
-  const beginTest = async () => {
-    try {
-      await document.documentElement.requestFullscreen();
-    } catch {
-      alert("Please allow fullscreen to start.");
-      return;
-    }
-    startedAtRef.current = Date.now();
-    setStarted(true);
-  };
+  const focusEditor = useCallback(() => {
+    requestAnimationFrame(() => editorRef.current?.focus());
+  }, []);
 
-  const runCurrentCode = async () => {
-    const q = questions[current];
-    if (!q || q.type !== "code") return;
-    const code = answers[q.id] ?? q.starter_code;
-    setRunOutput("Running…");
-    const results: string[] = [];
-    for (const tc of q.code_tests) {
-      // eslint-disable-next-line no-await-in-loop
-      const r = await runPython(code, tc.stdin ?? "");
-      const ok = r.ok && outputsMatch(r.stdout, tc.expected);
-      results.push(`${ok ? "✓" : "✗"} stdin=${JSON.stringify(tc.stdin)} → ${ok ? "pass" : `expected ${JSON.stringify(tc.expected)}, got ${JSON.stringify(r.stdout)}${r.stderr ? " · err: " + r.stderr.slice(0, 200) : ""}`}`);
-    }
-    setRunOutput(results.join("\n"));
-  };
+  useEffect(() => {
+    if (allowed === true) focusEditor();
+  }, [current, allowed, focusEditor]);
 
-  if (loadError) return <div className="p-10 text-center"><p className="text-destructive">{loadError}</p></div>;
-  if (!test) return <div className="p-10 text-center">Loading test…</div>;
+  // Anti-cheat + keyboard-only
+  const testActiveRef = useRef(false);
+  useEffect(() => {
+    if (!test || allowed !== true) return;
+    testActiveRef.current = true;
 
-  if (!started) {
+    const autoSubmit = (reason: string) => {
+      if (!testActiveRef.current || submittedRef.current) return;
+      void submit("auto-violation", reason);
+    };
+
+    const onFsChange = () => {
+      const fsEl =
+        document.fullscreenElement ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (document as any).webkitFullscreenElement ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (document as any).mozFullScreenElement ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (document as any).msFullscreenElement;
+      if (!fsEl) autoSubmit("Exited fullscreen mode / Esc pressed");
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") autoSubmit("Tab switched or browser minimized");
+    };
+    const onBlur = () => autoSubmit("Window lost focus");
+    const onPageHide = () => autoSubmit("Page hidden or closed");
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    const goPrev = () => {
+      setCurrent((i) => Math.max(0, i - 1));
+    };
+    const goNext = () => {
+      setCurrent((i) => Math.min(questionsRef.current.length - 1, i + 1));
+    };
+    const resetCurrent = () => {
+      const q = questionsRef.current[currentRef.current];
+      if (!q) return;
+      setAnswers((a) => ({ ...a, [q.id]: q.type === "code" ? q.starter_code : "" }));
+      focusEditor();
+    };
+    const pickOption = (idx: number) => {
+      const q = questionsRef.current[currentRef.current];
+      if (!q) return;
+      if (q.type === "mcq" && q.options[idx]) {
+        setAnswers((a) => ({ ...a, [q.id]: q.options[idx] }));
+      } else if (q.type === "tf") {
+        const v = idx === 0 ? "True" : idx === 1 ? "False" : null;
+        if (v) setAnswers((a) => ({ ...a, [q.id]: v }));
+      }
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (!testActiveRef.current || submittedRef.current) return;
+      const lower = e.key.toLowerCase();
+
+      // Screenshot / snip combos
+      if (e.key === "PrintScreen" || e.code === "PrintScreen") {
+        e.preventDefault();
+        e.stopPropagation();
+        try { navigator.clipboard?.writeText(""); } catch { /* ignore */ }
+        const mods = [e.ctrlKey && "Ctrl", e.altKey && "Alt", e.shiftKey && "Shift", e.metaKey && "Win/Cmd"].filter(Boolean).join("+");
+        autoSubmit(`Auto-submitted: screenshot attempt (${mods ? mods + "+" : ""}PrintScreen key)`);
+        return;
+      }
+      if (e.shiftKey && (e.metaKey || e.getModifierState?.("Meta")) && lower === "s") {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit("Auto-submitted: screenshot attempt (Windows Snipping Tool — Win+Shift+S)");
+        return;
+      }
+      if ((e.metaKey || e.getModifierState?.("Meta")) && lower === "g") {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit("Auto-submitted: screenshot attempt (Windows Game Bar — Win+G)");
+        return;
+      }
+      if (e.metaKey && e.shiftKey && ["3", "4", "5", "6"].includes(e.key)) {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit(`Auto-submitted: screenshot attempt (macOS Cmd+Shift+${e.key})`);
+        return;
+      }
+      if (e.metaKey && e.ctrlKey && e.shiftKey && ["3", "4"].includes(e.key)) {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit(`Auto-submitted: screenshot attempt (macOS Cmd+Ctrl+Shift+${e.key})`);
+        return;
+      }
+      if (e.ctrlKey && (e.key === "F5" || (e.shiftKey && e.key === "F5"))) {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit("Auto-submitted: screenshot attempt (ChromeOS Ctrl+Show-Windows)");
+        return;
+      }
+      if (e.key === "Meta" || e.key === "OS" || e.code === "MetaLeft" || e.code === "MetaRight") {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit("Auto-submitted: Windows/Command key pressed");
+        return;
+      }
+      if ((e.shiftKey && e.key === "F10") || e.key === "ContextMenu" || e.code === "ContextMenu") {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit("Auto-submitted: context-menu key combination");
+        return;
+      }
+      if (e.key === "F5" || ((e.ctrlKey || e.metaKey) && lower === "r") || ((e.ctrlKey || e.metaKey) && e.key === "F5")) {
+        e.preventDefault(); e.stopPropagation();
+        try { sessionStorage.setItem(`pykidda:violation:${testId}`, "reload-attempt"); } catch { /* ignore */ }
+        autoSubmit("Auto-submitted: page reload attempt");
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (["t", "n", "w"].includes(lower) || (e.shiftKey && lower === "t") || e.key === "Tab" || e.key === "PageUp" || e.key === "PageDown")) {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit(`Auto-submitted: browser tab/window shortcut (${e.key})`);
+        return;
+      }
+      if (e.altKey && (e.key === "F4" || e.key === " " || e.code === "Space")) {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit("Auto-submitted: window-close shortcut");
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "u"].includes(lower)) {
+        e.preventDefault(); e.stopPropagation();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && lower === "s" && !e.shiftKey && !e.altKey) {
+        e.preventDefault(); e.stopPropagation();
+        return;
+      }
+      if (e.key === "F12" || ((e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c", "k"].includes(lower))) {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit("Auto-submitted: developer tools shortcut detected");
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault(); e.stopPropagation();
+        autoSubmit("Auto-submitted: Escape key pressed");
+        return;
+      }
+      if (showSubmitConfirmRef.current && e.ctrlKey && e.key === "Enter") {
+        e.preventDefault();
+        setShowSubmitConfirm(false);
+        showSubmitConfirmRef.current = false;
+        void submit("normal");
+        return;
+      }
+      if (e.ctrlKey && e.key === "Enter") {
+        e.preventDefault();
+        void submit("normal");
+        return;
+      }
+      if (e.altKey) {
+        const k = lower;
+        if (k === "p") { e.preventDefault(); goPrev(); return; }
+        if (k === "n") { e.preventDefault(); goNext(); return; }
+        if (k === "r") { e.preventDefault(); resetCurrent(); return; }
+        if (k === "s") { e.preventDefault(); setShowSubmitConfirm(true); showSubmitConfirmRef.current = true; return; }
+        if (k === "e") { e.preventDefault(); focusEditor(); return; }
+        if (k === "h") { e.preventDefault(); setShowHelp((v) => !v); return; }
+        if (k === "1") { e.preventDefault(); pickOption(0); return; }
+        if (k === "2") { e.preventDefault(); pickOption(1); return; }
+        if (k === "3") { e.preventDefault(); pickOption(2); return; }
+        if (k === "4") { e.preventDefault(); pickOption(3); return; }
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (!testActiveRef.current || submittedRef.current) return;
+      if (e.key === "PrintScreen" || e.code === "PrintScreen") {
+        e.preventDefault(); e.stopPropagation();
+        try { navigator.clipboard?.writeText(""); } catch { /* ignore */ }
+        autoSubmit("Auto-submitted: PrintScreen key (captured on release)");
+      }
+    };
+
+    const onContextMenu = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+    const onDrop = (e: Event) => { e.preventDefault(); e.stopPropagation(); };
+
+    const blockedMouse = [
+      "click", "dblclick", "mousedown", "mouseup", "mousemove",
+      "pointerdown", "pointerup", "pointermove", "contextmenu",
+      "dragstart", "dragover", "dragend", "drop", "selectstart",
+      "auxclick", "touchstart", "touchend", "touchmove",
+      "gesturestart", "gesturechange", "gestureend",
+    ];
+    const blockMouse = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t === editorRef.current) return;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange as EventListener);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    document.addEventListener("contextmenu", onContextMenu, true);
+    document.addEventListener("drop", onDrop, true);
+    for (const ev of blockedMouse) document.addEventListener(ev, blockMouse, true);
+    document.body.classList.add("secure-test-printing-blocked");
+    document.body.classList.add("secure-keyboard-test");
+
+    return () => {
+      testActiveRef.current = false;
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange", onFsChange as EventListener);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+      document.removeEventListener("contextmenu", onContextMenu, true);
+      document.removeEventListener("drop", onDrop, true);
+      for (const ev of blockedMouse) document.removeEventListener(ev, blockMouse, true);
+      document.body.classList.remove("secure-test-printing-blocked");
+      document.body.classList.remove("secure-keyboard-test");
+    };
+  }, [test, allowed, submit, focusEditor, testId]);
+
+  const q = useMemo(() => questions[current], [questions, current]);
+
+  if (allowed === false) {
+    return <Navigate to="/mock-tests/ai/$testId/warning" params={{ testId }} />;
+  }
+  if (allowed === null) {
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+  }
+  if (loadError) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
-        <div className="max-w-lg rounded-2xl border border-border bg-card p-8 shadow-lg text-center">
-          <div className="text-5xl">🐍</div>
-          <h1 className="mt-3 text-2xl font-bold">{test.title}</h1>
-          <p className="mt-2 text-muted-foreground text-sm">{test.description}</p>
-          <ul className="mt-5 text-left text-sm space-y-2 text-muted-foreground">
-            <li>⏱️ Duration: <b className="text-foreground">{Math.round(test.duration_sec / 60)} minutes</b></li>
-            <li>📝 Questions: <b className="text-foreground">{test.question_count}</b> · Total marks: <b className="text-foreground">{test.total_marks}</b></li>
-            <li>🖥️ Runs in fullscreen. Exiting, switching tabs or reloading <b className="text-destructive">auto-submits</b>.</li>
-          </ul>
-          <button
-            onClick={beginTest}
-            className="mt-6 w-full rounded-md py-3 font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-            style={{ backgroundImage: "var(--gradient-sunrise)" }}
-          >
-            🚀 Start test in fullscreen
-          </button>
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-lg rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-center">
+          <p className="text-sm text-destructive">{loadError}</p>
         </div>
       </div>
     );
   }
-
-  const q = questions[current];
-  if (!q) return null;
+  if (!test || !q) {
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading test…</div>;
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground select-none">
+    <div className="secure-keyboard-test min-h-screen bg-background text-foreground">
+      <style dangerouslySetInnerHTML={{ __html: SECURE_CSS }} />
+
       <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-widest">{test.title}</p>
-          <p className="text-sm font-semibold">Q{current + 1} of {questions.length} · {q.marks} marks</p>
+          <p className="text-sm font-semibold">
+            Q{current + 1} of {questions.length} · {q.marks} marks · Keyboard-only mode
+          </p>
         </div>
-        <div className={`font-mono text-xl font-bold tabular-nums ${remaining < 60 ? "text-destructive" : ""}`}>⏱ {fmt(remaining)}</div>
+        <div className={`font-mono text-xl font-bold tabular-nums ${remaining < 60 ? "text-destructive" : ""}`}>
+          ⏱ {fmt(remaining)}
+        </div>
         <button
-          onClick={() => { if (confirm("Submit test now?")) void submit("normal"); }}
-          disabled={submitting}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          className="submit-button rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground opacity-60"
+          title="Use Alt+S then Ctrl+Enter"
         >
-          Submit
+          Submit (Alt+S)
         </button>
       </header>
 
       <div className="mx-auto max-w-5xl px-4 py-5">
-        <div className="flex flex-wrap gap-1 mb-4">
+        <div className="question-nav flex flex-wrap gap-1 mb-4">
           {questions.map((qq, i) => {
             const ans = answers[qq.id];
             const filled = qq.type === "code" ? ans && ans.trim() !== qq.starter_code.trim() : !!ans;
             return (
-              <button
+              <span
                 key={qq.id}
-                onClick={() => setCurrent(i)}
-                className={`w-9 h-9 rounded text-xs font-semibold ${i === current ? "bg-accent text-accent-foreground" : filled ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"}`}
+                className={`w-9 h-9 flex items-center justify-center rounded text-xs font-semibold ${
+                  i === current
+                    ? "bg-accent text-accent-foreground"
+                    : filled
+                      ? "bg-primary/20 text-primary"
+                      : "bg-secondary text-muted-foreground"
+                }`}
               >
                 {i + 1}
-              </button>
+              </span>
             );
           })}
         </div>
@@ -250,64 +499,133 @@ function TakeAiMock() {
 
           {q.type === "mcq" && (
             <div className="mt-4 space-y-2">
-              {q.options.map((opt, oi) => (
-                <label key={oi} className="flex items-start gap-3 rounded-md border border-border p-3 hover:bg-secondary cursor-pointer">
-                  <input type="radio" name={`q-${q.id}`} checked={answers[q.id] === opt} onChange={() => setAnswers((a) => ({ ...a, [q.id]: opt }))} />
-                  <span>{opt}</span>
-                </label>
-              ))}
+              {q.options.map((opt, oi) => {
+                const selected = answers[q.id] === opt;
+                return (
+                  <div
+                    key={oi}
+                    className={`flex items-start gap-3 rounded-md border p-3 ${
+                      selected ? "border-accent bg-accent/10" : "border-border"
+                    }`}
+                  >
+                    <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-border text-[10px] font-bold">
+                      {String.fromCharCode(65 + oi)}
+                    </span>
+                    <span className="flex-1">{opt}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">Alt+{oi + 1}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
+
           {q.type === "tf" && (
             <div className="mt-4 flex gap-3">
-              {(["True", "False"] as const).map((v) => (
-                <label key={v} className="flex-1 rounded-md border border-border p-4 text-center font-semibold hover:bg-secondary cursor-pointer">
-                  <input type="radio" className="mr-2" name={`q-${q.id}`} checked={answers[q.id] === v} onChange={() => setAnswers((a) => ({ ...a, [q.id]: v }))} />
-                  {v}
-                </label>
-              ))}
+              {(["True", "False"] as const).map((v, oi) => {
+                const selected = answers[q.id] === v;
+                return (
+                  <div
+                    key={v}
+                    className={`flex-1 rounded-md border p-4 text-center font-semibold ${
+                      selected ? "border-accent bg-accent/10" : "border-border"
+                    }`}
+                  >
+                    {v}
+                    <span className="ml-2 text-[10px] font-mono text-muted-foreground">Alt+{oi + 1}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
-          {(q.type === "fill" || q.type === "short") && (
-            <textarea
-              value={answers[q.id] ?? ""}
-              onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
-              rows={q.type === "short" ? 5 : 2}
-              className="mt-4 w-full rounded-md border border-border bg-background p-3 text-sm"
-              placeholder="Type your answer…"
-            />
-          )}
-          {q.type === "code" && (
-            <div className="mt-4">
+
+          {(q.type === "fill" || q.type === "short" || q.type === "code") && (
+            <div className="answer-editor mt-4">
               <textarea
-                value={answers[q.id] ?? q.starter_code}
+                ref={editorRef}
+                value={answers[q.id] ?? (q.type === "code" ? q.starter_code : "")}
                 onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
-                rows={14}
+                rows={q.type === "code" ? 14 : q.type === "short" ? 5 : 2}
                 spellCheck={false}
-                className="w-full rounded-md border border-border bg-[oklch(0.15_0.02_250)] text-[oklch(0.95_0.02_150)] font-mono text-sm p-3"
+                className={
+                  q.type === "code"
+                    ? "w-full rounded-md border border-border bg-[oklch(0.15_0.02_250)] text-[oklch(0.95_0.02_150)] font-mono text-sm p-3"
+                    : "w-full rounded-md border border-border bg-background p-3 text-sm"
+                }
+                placeholder={q.type === "code" ? "" : "Type your answer…"}
+                onKeyDown={(e) => {
+                  if (q.type !== "code") return;
+                  if (e.key === "Tab") {
+                    e.preventDefault();
+                    const el = e.currentTarget;
+                    const start = el.selectionStart;
+                    const end = el.selectionEnd;
+                    const val = el.value;
+                    if (e.shiftKey) {
+                      const before = val.slice(0, start);
+                      const lineStart = before.lastIndexOf("\n") + 1;
+                      if (val.slice(lineStart, lineStart + 4) === "    ") {
+                        const newVal = val.slice(0, lineStart) + val.slice(lineStart + 4);
+                        setAnswers((a) => ({ ...a, [q.id]: newVal }));
+                        requestAnimationFrame(() => {
+                          el.selectionStart = Math.max(lineStart, start - 4);
+                          el.selectionEnd = Math.max(lineStart, end - 4);
+                        });
+                      }
+                    } else {
+                      const newVal = val.slice(0, start) + "    " + val.slice(end);
+                      setAnswers((a) => ({ ...a, [q.id]: newVal }));
+                      requestAnimationFrame(() => {
+                        el.selectionStart = el.selectionEnd = start + 4;
+                      });
+                    }
+                  }
+                }}
               />
-              <div className="mt-2 flex gap-2">
-                <button onClick={runCurrentCode} className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground">▶ Run against sample tests</button>
-                <button onClick={() => setAnswers((a) => ({ ...a, [q.id]: q.starter_code }))} className="rounded-md border border-border px-3 py-1.5 text-sm">Reset</button>
-              </div>
-              {runOutput && (
-                <pre className="mt-3 whitespace-pre-wrap rounded-md bg-secondary p-3 text-xs">{runOutput}</pre>
-              )}
             </div>
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <button onClick={() => { setCurrent((c) => Math.max(0, c - 1)); setRunOutput(""); }} disabled={current === 0} className="rounded-md border border-border px-4 py-2 text-sm disabled:opacity-30">← Previous</button>
-          <button onClick={() => { setCurrent((c) => Math.min(questions.length - 1, c + 1)); setRunOutput(""); }} disabled={current === questions.length - 1} className="rounded-md border border-border px-4 py-2 text-sm disabled:opacity-30">Next →</button>
+        <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            <Kbd>Alt</Kbd>+<Kbd>P</Kbd> Prev · <Kbd>Alt</Kbd>+<Kbd>N</Kbd> Next · <Kbd>Alt</Kbd>+<Kbd>E</Kbd> Focus answer
+          </span>
+          <span>
+            <Kbd>Alt</Kbd>+<Kbd>S</Kbd> then <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> to submit
+          </span>
         </div>
+
+        {showHelp && (
+          <div className="mt-4 rounded-xl border border-accent/40 bg-accent/5 p-4 text-xs text-foreground/80">
+            <p className="font-semibold text-accent uppercase tracking-widest">Reminders</p>
+            <ul className="mt-2 list-disc pl-5 space-y-1">
+              <li>Mouse is disabled — only keyboard works.</li>
+              <li>Exiting fullscreen, switching tabs, or reloading auto-submits your test.</li>
+              <li>Press <Kbd>Alt</Kbd>+<Kbd>H</Kbd> to hide/show this panel.</li>
+            </ul>
+          </div>
+        )}
       </div>
+
+      {showSubmitConfirm && (
+        <div className="fixed inset-0 z-40 bg-background/85 flex items-center justify-center px-4">
+          <div className="max-w-md rounded-2xl border border-border bg-card p-6 text-center shadow-xl">
+            <p className="text-xs uppercase tracking-widest text-accent font-bold">Confirm submit</p>
+            <h2 className="mt-2 text-xl font-bold">Submit test now?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Once submitted you cannot change your answers.
+            </p>
+            <p className="mt-4 text-sm">
+              Press <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> to confirm, or <Kbd>Alt</Kbd>+<Kbd>S</Kbd> again to cancel.
+            </p>
+          </div>
+        </div>
+      )}
 
       {submitting && (
         <div className="fixed inset-0 z-50 bg-background/90 flex items-center justify-center">
           <div className="text-center">
             <div className="text-4xl animate-pulse">🐍</div>
-            <p className="mt-3 font-semibold">Grading your test…</p>
+            <p className="mt-3 font-semibold">{gradeMsg}</p>
           </div>
         </div>
       )}
