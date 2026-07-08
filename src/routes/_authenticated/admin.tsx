@@ -25,6 +25,7 @@ import {
 } from "@/lib/notifications";
 import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
 import { getScreenshotSignedUrl } from "@/components/ReportProblem";
+import { HomeworkAdminTab } from "./admin.assignments";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -134,7 +135,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework">("overview");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
@@ -374,7 +375,7 @@ function AdminPage() {
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "announce", "reports", "reviews"] as const).map((t) => (
+            {(["overview", "students", "activity", "announce", "reports", "reviews", "homework"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -382,7 +383,7 @@ function AdminPage() {
                   tab === t ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-secondary"
                 }`}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : "Reviews"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : "📚 Homework"}
               </button>
             ))}
             <button
@@ -531,6 +532,12 @@ function AdminPage() {
         {tab === "reports" && <ReportsTab />}
 
         {tab === "reviews" && <ReviewsTab />}
+
+        {tab === "homework" && (
+          <section className="mt-6">
+            <HomeworkAdminTab />
+          </section>
+        )}
 
 
       </main>
