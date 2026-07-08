@@ -143,6 +143,52 @@ function AdminPage() {
   const [streaks, setStreaks] = useState<Record<string, StreakInfo>>({});
   const [loading, setLoading] = useState(true);
   const [authorId, setAuthorId] = useState<string | null>(null);
+  const overviewRef = useRef<HTMLDivElement>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleDownloadOverviewPdf = async () => {
+    if (!overviewRef.current) return;
+    setDownloadingPdf(true);
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const bgColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
+      const canvas = await html2canvas(overviewRef.current, {
+        backgroundColor: bgColor,
+        scale: 2,
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW - 40;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      let y = 20;
+      let remaining = imgH;
+      if (imgH <= pageH - 40) {
+        pdf.addImage(imgData, "PNG", 20, y, imgW, imgH);
+      } else {
+        // multi-page: draw same image shifted per page
+        let offset = 0;
+        while (remaining > 0) {
+          pdf.addImage(imgData, "PNG", 20, y - offset, imgW, imgH);
+          remaining -= pageH - 40;
+          if (remaining > 0) {
+            pdf.addPage();
+            offset += pageH - 40;
+            y = 20;
+          }
+        }
+      }
+      pdf.save(`overview-analytics-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   const fetchAuthInfo = useServerFn(listStudentAuthInfo);
 
 
