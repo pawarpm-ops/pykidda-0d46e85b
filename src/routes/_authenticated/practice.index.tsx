@@ -105,11 +105,11 @@ function PracticeHome() {
           );
         })()}
 
-        <ul className="mt-6 divide-y divide-border rounded-xl border border-border bg-card">
+        <ul className="mt-6 grid gap-3">
           {QUESTIONS.map((q, i) => {
             const done = solved.has(q.id);
             return (
-              <li key={q.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <li key={q.id} className="card-glow flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-5 py-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs uppercase tracking-widest text-accent font-semibold">Unit {q.unit}</span>
