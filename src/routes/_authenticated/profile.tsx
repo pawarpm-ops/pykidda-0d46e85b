@@ -23,17 +23,22 @@ const profileSchema = z.object({
   avatar_url: z
     .string()
     .trim()
-    .max(500, "Max 500 characters")
+    .max(2000, "Avatar URL too long")
     .url("Must be a valid URL")
     .optional()
     .or(z.literal("")),
 });
+
+const AVATAR_MAX_BYTES = 3 * 1024 * 1024; // 3MB
+const AVATAR_ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const AVATAR_SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10; // ~10 years
 
 function ProfilePage() {
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
   const [displayName, setDisplayName] = useState("");
