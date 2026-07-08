@@ -533,6 +533,12 @@ function AdminPage() {
 
         {tab === "reviews" && <ReviewsTab />}
 
+        {tab === "homework" && (
+          <section className="mt-6">
+            <HomeworkAdminTab />
+          </section>
+        )}
+
 
       </main>
     </div>
