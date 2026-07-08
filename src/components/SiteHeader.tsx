@@ -33,16 +33,29 @@ export function SiteHeader() {
             Practice
           </Link>
           {email && isAdmin && (
-            <Link
-              to="/admin"
-              className="px-3 py-1 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
-            >
-              Admin
-            </Link>
+            <>
+              <Link
+                to="/admin"
+                className="px-3 py-1 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+              >
+                Admin
+              </Link>
+              <Link
+                to="/admin/assignments"
+                className="px-2 py-1 rounded hover:bg-secondary transition-colors"
+              >
+                Homework Admin
+              </Link>
+            </>
           )}
           <Link to="/mock-tests" data-tour="nav-mock" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Mock Tests
           </Link>
+          {email && (
+            <Link to="/assignments" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
+              Homework
+            </Link>
+          )}
           <Link to="/leaderboard" data-tour="nav-leaderboard" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
             Leaderboard
           </Link>

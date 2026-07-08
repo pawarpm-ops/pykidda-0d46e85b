@@ -233,6 +233,131 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_submissions: {
+        Row: {
+          answer_text: string | null
+          assignment_id: string
+          code_answer: string | null
+          code_output: string | null
+          created_at: string
+          id: string
+          is_late: boolean
+          marks_obtained: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          student_id: string
+          submitted_at: string | null
+          teacher_feedback: string | null
+          updated_at: string
+        }
+        Insert: {
+          answer_text?: string | null
+          assignment_id: string
+          code_answer?: string | null
+          code_output?: string | null
+          created_at?: string
+          id?: string
+          is_late?: boolean
+          marks_obtained?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id: string
+          submitted_at?: string | null
+          teacher_feedback?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answer_text?: string | null
+          assignment_id?: string
+          code_answer?: string | null
+          code_output?: string | null
+          created_at?: string
+          id?: string
+          is_late?: boolean
+          marks_obtained?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string
+          submitted_at?: string | null
+          teacher_feedback?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_submissions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignments: {
+        Row: {
+          allow_late_submission: boolean
+          assignment_type: string
+          created_at: string
+          created_by: string
+          description: string
+          difficulty: string
+          due_at: string
+          expected_output: string | null
+          id: string
+          sample_input: string | null
+          sample_output: string | null
+          starter_code: string | null
+          status: string
+          title: string
+          topic: string | null
+          total_marks: number
+          unit: number | null
+          updated_at: string
+        }
+        Insert: {
+          allow_late_submission?: boolean
+          assignment_type?: string
+          created_at?: string
+          created_by: string
+          description?: string
+          difficulty?: string
+          due_at: string
+          expected_output?: string | null
+          id?: string
+          sample_input?: string | null
+          sample_output?: string | null
+          starter_code?: string | null
+          status?: string
+          title: string
+          topic?: string | null
+          total_marks?: number
+          unit?: number | null
+          updated_at?: string
+        }
+        Update: {
+          allow_late_submission?: boolean
+          assignment_type?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          difficulty?: string
+          due_at?: string
+          expected_output?: string | null
+          id?: string
+          sample_input?: string | null
+          sample_output?: string | null
+          starter_code?: string | null
+          status?: string
+          title?: string
+          topic?: string | null
+          total_marks?: number
+          unit?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leaderboard_scores: {
         Row: {
           avatar_url: string | null

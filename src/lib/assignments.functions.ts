@@ -1,0 +1,369 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+async function assertAdmin(context: { supabase: any; userId: string }) {
+  const { data, error } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "admin",
+  });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Forbidden: admin only");
+}
+
+// ---------- Student ----------
+
+export const listStudentAssignments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: assignments, error } = await supabase
+      .from("assignments")
+      .select(
+        "id, title, description, unit, topic, difficulty, assignment_type, total_marks, due_at, allow_late_submission, status, sample_input, sample_output, starter_code, created_at",
+      )
+      .in("status", ["published", "closed"])
+      .order("due_at", { ascending: true });
+    if (error) throw new Error(error.message);
+
+    const { data: subs, error: subErr } = await supabase
+      .from("assignment_submissions")
+      .select(
+        "id, assignment_id, status, submitted_at, is_late, marks_obtained, teacher_feedback, reviewed_at",
+      )
+      .eq("student_id", userId);
+    if (subErr) throw new Error(subErr.message);
+
+    const byAssignment = new Map((subs ?? []).map((s: any) => [s.assignment_id, s]));
+    return (assignments ?? []).map((a: any) => ({
+      ...a,
+      submission: byAssignment.get(a.id) ?? null,
+    }));
+  });
+
+export const getStudentAssignment = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: a, error } = await supabase
+      .from("assignments")
+      .select(
+        "id, title, description, unit, topic, difficulty, assignment_type, total_marks, due_at, allow_late_submission, status, sample_input, sample_output, starter_code",
+      )
+      .eq("id", data.id)
+      .in("status", ["published", "closed"])
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!a) throw new Error("Assignment not found");
+
+    const { data: sub, error: subErr } = await supabase
+      .from("assignment_submissions")
+      .select(
+        "id, answer_text, code_answer, code_output, status, submitted_at, is_late, marks_obtained, teacher_feedback, reviewed_at",
+      )
+      .eq("assignment_id", data.id)
+      .eq("student_id", userId)
+      .maybeSingle();
+    if (subErr) throw new Error(subErr.message);
+    return { assignment: a, submission: sub ?? null };
+  });
+
+const DraftSchema = z.object({
+  assignment_id: z.string().uuid(),
+  answer_text: z.string().max(20000).optional().nullable(),
+  code_answer: z.string().max(50000).optional().nullable(),
+  code_output: z.string().max(20000).optional().nullable(),
+});
+
+export const saveDraftSubmission = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => DraftSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: existing } = await supabase
+      .from("assignment_submissions")
+      .select("id, status")
+      .eq("assignment_id", data.assignment_id)
+      .eq("student_id", userId)
+      .maybeSingle();
+
+    if (existing && existing.status === "reviewed") {
+      throw new Error("Submission already reviewed, cannot edit");
+    }
+
+    if (existing) {
+      const { error } = await supabase
+        .from("assignment_submissions")
+        .update({
+          answer_text: data.answer_text ?? null,
+          code_answer: data.code_answer ?? null,
+          code_output: data.code_output ?? null,
+        })
+        .eq("id", existing.id);
+      if (error) throw new Error(error.message);
+      return { id: existing.id };
+    }
+    const { data: inserted, error } = await supabase
+      .from("assignment_submissions")
+      .insert({
+        assignment_id: data.assignment_id,
+        student_id: userId,
+        answer_text: data.answer_text ?? null,
+        code_answer: data.code_answer ?? null,
+        code_output: data.code_output ?? null,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: inserted.id };
+  });
+
+export const submitAssignment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => DraftSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: a, error: aErr } = await supabase
+      .from("assignments")
+      .select("id, due_at, allow_late_submission, status")
+      .eq("id", data.assignment_id)
+      .in("status", ["published", "closed"])
+      .maybeSingle();
+    if (aErr) throw new Error(aErr.message);
+    if (!a) throw new Error("Assignment not found");
+
+    const now = new Date();
+    const due = new Date(a.due_at);
+    const isLate = now > due;
+    if (isLate && !a.allow_late_submission) {
+      throw new Error("Deadline passed — late submissions not allowed");
+    }
+
+    const payload = {
+      answer_text: data.answer_text ?? null,
+      code_answer: data.code_answer ?? null,
+      code_output: data.code_output ?? null,
+      status: isLate ? "late" : "submitted",
+      submitted_at: now.toISOString(),
+      is_late: isLate,
+    };
+
+    const { data: existing } = await supabase
+      .from("assignment_submissions")
+      .select("id, status")
+      .eq("assignment_id", data.assignment_id)
+      .eq("student_id", userId)
+      .maybeSingle();
+
+    if (existing && existing.status === "reviewed") {
+      throw new Error("Submission already reviewed");
+    }
+
+    if (existing) {
+      const { error } = await supabase
+        .from("assignment_submissions")
+        .update(payload)
+        .eq("id", existing.id);
+      if (error) throw new Error(error.message);
+      return { id: existing.id, is_late: isLate };
+    }
+    const { data: inserted, error } = await supabase
+      .from("assignment_submissions")
+      .insert({
+        assignment_id: data.assignment_id,
+        student_id: userId,
+        ...payload,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: inserted.id, is_late: isLate };
+  });
+
+// ---------- Admin ----------
+
+const AssignmentInputSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  description: z.string().max(10000).default(""),
+  unit: z.number().int().min(0).max(1000).nullable().optional(),
+  topic: z.string().max(200).nullable().optional(),
+  difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
+  assignment_type: z.enum(["coding", "written", "mixed"]).default("coding"),
+  total_marks: z.number().int().min(1).max(1000).default(10),
+  due_at: z.string().min(1),
+  allow_late_submission: z.boolean().default(false),
+  status: z.enum(["draft", "published", "closed"]).default("draft"),
+  sample_input: z.string().max(5000).nullable().optional(),
+  sample_output: z.string().max(5000).nullable().optional(),
+  expected_output: z.string().max(5000).nullable().optional(),
+  starter_code: z.string().max(20000).nullable().optional(),
+});
+
+export const adminListAssignments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("assignments")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const ids = (data ?? []).map((a: any) => a.id);
+    let counts: Record<string, { total: number; submitted: number; reviewed: number }> = {};
+    if (ids.length > 0) {
+      const { data: subs } = await supabase
+        .from("assignment_submissions")
+        .select("assignment_id, status")
+        .in("assignment_id", ids);
+      for (const id of ids) counts[id] = { total: 0, submitted: 0, reviewed: 0 };
+      for (const s of subs ?? []) {
+        const c = counts[s.assignment_id];
+        c.total++;
+        if (s.status === "submitted" || s.status === "late" || s.status === "reviewed") c.submitted++;
+        if (s.status === "reviewed") c.reviewed++;
+      }
+    }
+    return (data ?? []).map((a: any) => ({ ...a, counts: counts[a.id] ?? { total: 0, submitted: 0, reviewed: 0 } }));
+  });
+
+export const adminCreateAssignment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => AssignmentInputSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabase, userId } = context;
+    const { data: inserted, error } = await supabase
+      .from("assignments")
+      .insert({ ...data, created_by: userId })
+      .select("id, status, title")
+      .single();
+    if (error) throw new Error(error.message);
+    if (inserted.status === "published") {
+      await supabase.from("announcements").insert({
+        author_id: userId,
+        title: "New assignment assigned",
+        body: `📝 New Python assignment: ${inserted.title}. Open "Homework" to get started.`,
+        priority: "normal",
+      });
+    }
+    return { id: inserted.id };
+  });
+
+const UpdateAssignmentSchema = AssignmentInputSchema.partial().extend({
+  id: z.string().uuid(),
+});
+
+export const adminUpdateAssignment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => UpdateAssignmentSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabase, userId } = context;
+    const { id, ...updates } = data;
+
+    const { data: before } = await supabase
+      .from("assignments")
+      .select("status, title")
+      .eq("id", id)
+      .maybeSingle();
+
+    const { error } = await supabase.from("assignments").update(updates).eq("id", id);
+    if (error) throw new Error(error.message);
+
+    if (before && before.status !== "published" && updates.status === "published") {
+      await supabase.from("announcements").insert({
+        author_id: userId,
+        title: "New assignment assigned",
+        body: `📝 New Python assignment: ${updates.title ?? before.title}. Open "Homework" to get started.`,
+        priority: "normal",
+      });
+    }
+    return { ok: true };
+  });
+
+export const adminDeleteAssignment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("assignments").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminListSubmissions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ assignment_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabase } = context;
+    const { data: subs, error } = await supabase
+      .from("assignment_submissions")
+      .select("*")
+      .eq("assignment_id", data.assignment_id)
+      .order("submitted_at", { ascending: false, nullsFirst: false });
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((subs ?? []).map((s: any) => s.student_id)));
+    let profilesById: Record<string, { display_name: string | null; full_name: string | null; college_name: string | null }> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name, full_name, college_name")
+        .in("id", ids);
+      for (const p of profs ?? []) profilesById[p.id] = p;
+    }
+    return (subs ?? []).map((s: any) => ({ ...s, profile: profilesById[s.student_id] ?? null }));
+  });
+
+const ReviewSchema = z.object({
+  submission_id: z.string().uuid(),
+  marks_obtained: z.number().min(0).max(1000),
+  teacher_feedback: z.string().max(5000).optional().nullable(),
+});
+
+export const adminReviewSubmission = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ReviewSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabase, userId } = context;
+    const { data: sub, error: sErr } = await supabase
+      .from("assignment_submissions")
+      .select("id, student_id, assignment_id")
+      .eq("id", data.submission_id)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!sub) throw new Error("Submission not found");
+
+    const { data: a } = await supabase
+      .from("assignments")
+      .select("title")
+      .eq("id", sub.assignment_id)
+      .maybeSingle();
+
+    const { error } = await supabase
+      .from("assignment_submissions")
+      .update({
+        marks_obtained: data.marks_obtained,
+        teacher_feedback: data.teacher_feedback ?? null,
+        status: "reviewed",
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: userId,
+      })
+      .eq("id", data.submission_id);
+    if (error) throw new Error(error.message);
+
+    await supabase.from("announcements").insert({
+      author_id: userId,
+      title: "Assignment reviewed",
+      body: `Your assignment "${a?.title ?? ""}" has been reviewed. Marks: ${data.marks_obtained}.`,
+      priority: "normal",
+      target_user_id: sub.student_id,
+    });
+
+    return { ok: true };
+  });
