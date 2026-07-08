@@ -348,6 +348,12 @@ function TakeAiMock() {
         void submit("normal");
         return;
       }
+      if (showSubmitConfirmRef.current && e.altKey && lower === "b") {
+        e.preventDefault();
+        setShowSubmitConfirm(false);
+        showSubmitConfirmRef.current = false;
+        return;
+      }
       if (e.ctrlKey && e.key === "Enter") {
         e.preventDefault();
         void submit("normal");
