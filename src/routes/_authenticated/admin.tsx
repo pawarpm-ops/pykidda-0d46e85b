@@ -580,6 +580,50 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
     return m;
   }, [authInfo]);
   const selAuth = selected ? authMap.get(selected) : undefined;
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleDownloadStudentPdf = async () => {
+    if (!reportRef.current || !selStudent) return;
+    setDownloadingPdf(true);
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+      const bgColor = getComputedStyle(document.body).backgroundColor || "#ffffff";
+      const canvas = await html2canvas(reportRef.current, {
+        backgroundColor: bgColor,
+        scale: 2,
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW - 40;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      if (imgH <= pageH - 40) {
+        pdf.addImage(imgData, "PNG", 20, 20, imgW, imgH);
+      } else {
+        let offset = 0;
+        let remaining = imgH;
+        while (remaining > 0) {
+          pdf.addImage(imgData, "PNG", 20, 20 - offset, imgW, imgH);
+          remaining -= pageH - 40;
+          if (remaining > 0) {
+            pdf.addPage();
+            offset += pageH - 40;
+          }
+        }
+      }
+      const safeName = selStudent.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      pdf.save(`student-${safeName}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
 
   const filteredStudents = useMemo(() => {
     const q = query.trim().toLowerCase();
