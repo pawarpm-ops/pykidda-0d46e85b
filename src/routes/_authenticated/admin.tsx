@@ -859,7 +859,9 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                 ))}
               </ul>
             )}
+            </div>
           </>
+
         )}
       </div>
     </section>
