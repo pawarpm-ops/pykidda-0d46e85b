@@ -368,12 +368,13 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
       let awarded = 0;
       let correct = false;
       if (q.type === "code") {
-        const passed = a?.code_passed ?? 0;
-        const total = a?.code_total ?? 0;
-        if (total > 0 && passed === total) {
-          awarded = q.marks;
-          correct = true;
-        }
+        // Code questions cannot be safely auto-graded here: the Worker
+        // runtime has no Python sandbox, and client-reported code_passed/
+        // code_total counters are untrusted (a user can call this RPC
+        // directly with forged values). Store the submitted code but award
+        // 0 marks automatically — admin can review and adjust manually.
+        awarded = 0;
+        correct = false;
       } else if (q.type === "mcq" || q.type === "tf" || q.type === "fill") {
         if (normalizeAnswer(response) === normalizeAnswer(q.correct_answer)) {
           awarded = q.marks;
