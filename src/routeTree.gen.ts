@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MockTestsIndexRouteImport } from './routes/mock-tests.index'
+import { Route as UPublicIdRouteImport } from './routes/u.$publicId'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
@@ -51,6 +52,11 @@ const IndexRoute = IndexRouteImport.update({
 const MockTestsIndexRoute = MockTestsIndexRouteImport.update({
   id: '/mock-tests/',
   path: '/mock-tests/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UPublicIdRoute = UPublicIdRouteImport.update({
+  id: '/u/$publicId',
+  path: '/u/$publicId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/u/$publicId': typeof UPublicIdRoute
   '/mock-tests/': typeof MockTestsIndexRoute
   '/admin/ai-mock': typeof AuthenticatedAdminAiMockRoute
   '/practice/$qid': typeof AuthenticatedPracticeQidRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/u/$publicId': typeof UPublicIdRoute
   '/mock-tests': typeof MockTestsIndexRoute
   '/admin/ai-mock': typeof AuthenticatedAdminAiMockRoute
   '/practice/$qid': typeof AuthenticatedPracticeQidRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/u/$publicId': typeof UPublicIdRoute
   '/mock-tests/': typeof MockTestsIndexRoute
   '/_authenticated/admin_/ai-mock': typeof AuthenticatedAdminAiMockRoute
   '/_authenticated/practice/$qid': typeof AuthenticatedPracticeQidRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/notifications'
     | '/profile'
+    | '/u/$publicId'
     | '/mock-tests/'
     | '/admin/ai-mock'
     | '/practice/$qid'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/notifications'
     | '/profile'
+    | '/u/$publicId'
     | '/mock-tests'
     | '/admin/ai-mock'
     | '/practice/$qid'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leaderboard'
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
+    | '/u/$publicId'
     | '/mock-tests/'
     | '/_authenticated/admin_/ai-mock'
     | '/_authenticated/practice/$qid'
@@ -261,6 +273,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   OnboardingRoute: typeof OnboardingRoute
+  UPublicIdRoute: typeof UPublicIdRoute
   MockTestsIndexRoute: typeof MockTestsIndexRoute
   MockTestsTestIdResultRoute: typeof MockTestsTestIdResultRoute
   MockTestsTestIdRunRoute: typeof MockTestsTestIdRunRoute
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       path: '/mock-tests'
       fullPath: '/mock-tests/'
       preLoaderRoute: typeof MockTestsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$publicId': {
+      id: '/u/$publicId'
+      path: '/u/$publicId'
+      fullPath: '/u/$publicId'
+      preLoaderRoute: typeof UPublicIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/profile': {
@@ -438,6 +458,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   OnboardingRoute: OnboardingRoute,
+  UPublicIdRoute: UPublicIdRoute,
   MockTestsIndexRoute: MockTestsIndexRoute,
   MockTestsTestIdResultRoute: MockTestsTestIdResultRoute,
   MockTestsTestIdRunRoute: MockTestsTestIdRunRoute,
