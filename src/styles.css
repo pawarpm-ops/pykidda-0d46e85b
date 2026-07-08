@@ -149,3 +149,43 @@
   0% { transform: translateX(0); }
   100% { transform: translateX(400%); }
 }
+
+/* Warm hover glow used across clickable cards / list rows.
+   Adds a soft sunrise-gradient bloom and lifts the element on hover. */
+@utility card-glow {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform 300ms ease,
+    border-color 300ms ease,
+    background-color 300ms ease,
+    box-shadow 300ms ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: var(--gradient-sunrise);
+    filter: blur(14px);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklch, var(--accent) 55%, transparent);
+    box-shadow: var(--shadow-warm);
+  }
+
+  &:hover::before {
+    opacity: 0.45;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 70%, transparent);
+  }
+}
