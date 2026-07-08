@@ -401,7 +401,19 @@ function AdminPage() {
 
         {tab === "overview" && (
           <>
-            <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleDownloadOverviewPdf}
+                disabled={downloadingPdf}
+                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-60"
+                style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              >
+                {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
+              </button>
+            </div>
+            <div ref={overviewRef} className="bg-background p-2">
+            <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
               <Stat label="Total students" value={totalStudents} />
               <Stat label="Mock tests conducted" value={totalMocks} />
               <Stat label="Practice attempts" value={totalPractice} />
