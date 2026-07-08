@@ -205,6 +205,11 @@ function ProfilePage() {
           </form>
         )}
 
+        <div className="mt-8">
+          <StreakCard />
+        </div>
+
+
         <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
           <h2 className="text-lg font-bold">Website tutorial</h2>
           <p className="mt-1 text-sm text-muted-foreground">
