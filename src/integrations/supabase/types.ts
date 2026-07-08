@@ -204,6 +204,7 @@ export type Database = {
           created_at: string
           id: string
           priority: string
+          scheduled_at: string | null
           target_user_id: string | null
           title: string
         }
@@ -213,6 +214,7 @@ export type Database = {
           created_at?: string
           id?: string
           priority?: string
+          scheduled_at?: string | null
           target_user_id?: string | null
           title: string
         }
@@ -222,6 +224,7 @@ export type Database = {
           created_at?: string
           id?: string
           priority?: string
+          scheduled_at?: string | null
           target_user_id?: string | null
           title?: string
         }
