@@ -1034,13 +1034,13 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
     if (!title.trim() || !body.trim()) return;
     let iso: string | null = null;
     if (scheduleEnabled) {
-      if (!scheduledAt) {
-        alert("Please pick a date & time to schedule this announcement.");
+      if (!scheduledDate || !scheduledTime) {
+        alert("Please pick both a date and a time to schedule this announcement.");
         return;
       }
-      const dt = new Date(scheduledAt);
+      const dt = new Date(`${scheduledDate}T${scheduledTime}`);
       if (Number.isNaN(dt.getTime())) {
-        alert("Invalid scheduled date.");
+        alert("Invalid scheduled date or time.");
         return;
       }
       if (dt.getTime() <= Date.now()) {
