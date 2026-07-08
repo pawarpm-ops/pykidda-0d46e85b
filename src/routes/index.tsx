@@ -236,10 +236,10 @@ function Index() {
 
         {/* Mock tests */}
         <section className="mx-auto max-w-6xl px-6 pb-24">
-          <div className="relative rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-2xl p-8 md:p-10 shadow-2xl">
+          <div className="group relative rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-2xl p-8 md:p-10 shadow-2xl transition-all duration-500 hover:border-white/25">
             <div
-              className="absolute -inset-1 rounded-3xl blur-2xl opacity-40 -z-10"
-              style={{ background: "linear-gradient(135deg,#8b5cf6,#ec4899,#f59e0b)" }}
+              className="pointer-events-none absolute -inset-1 rounded-3xl blur-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 -z-10"
+              style={{ background: "linear-gradient(135deg,#f59e0b,#f97316,#fbbf24)" }}
               aria-hidden
             />
             <h2 className="text-2xl md:text-3xl font-black text-white">Available mock tests</h2>
