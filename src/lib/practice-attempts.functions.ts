@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { QUESTIONS } from "./questions";
 
 const InputSchema = z.object({
   questionId: z.string().min(1).max(200),
@@ -14,6 +15,19 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data, context }) => {
+    // Server-side sanity checks — reject fabricated scores. The actual
+    // Python execution happens in-browser (Pyodide) so we cannot re-verify
+    // the code here, but we DO enforce that the counters submitted are
+    // internally consistent with the question's real test-case count.
+    const q = QUESTIONS.find((x) => x.id === data.questionId);
+    if (!q) throw new Error("Unknown question");
+    if (data.unit !== q.unit) throw new Error("Unit mismatch");
+    if (data.total !== q.tests.length) throw new Error("Invalid total");
+    if (data.passed > data.total) throw new Error("Invalid pass count");
+    if (data.solved !== (data.passed === data.total && data.total > 0)) {
+      throw new Error("Inconsistent solved flag");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("practice_attempts").insert({
       user_id: context.userId,
