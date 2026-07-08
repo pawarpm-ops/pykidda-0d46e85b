@@ -128,7 +128,7 @@ function NotificationsPage() {
         <section className="mt-8 space-y-3">
           {loading ? (
             <p className="text-muted-foreground">Loading…</p>
-          ) : items.length === 0 ? (
+          ) : visibleItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
               <p className="text-lg font-semibold">No announcements yet</p>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -142,7 +142,7 @@ function NotificationsPage() {
               </Link>
             </div>
           ) : (
-            items.map((n) => {
+            visibleItems.map((n) => {
               const unread = !readIds.has(n.id);
               return (
                 <article
@@ -153,7 +153,7 @@ function NotificationsPage() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="font-semibold leading-tight">{n.title}</h2>
                         {n.priority === "high" && (
@@ -172,7 +172,20 @@ function NotificationsPage() {
                         {new Date(n.created_at).toLocaleString()}
                       </p>
                     </div>
-                    {unread && <span className="mt-1 h-2.5 w-2.5 rounded-full bg-accent shrink-0" />}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {unread && <span className="mt-1 h-2.5 w-2.5 rounded-full bg-accent" />}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleDeleteOne(n.id);
+                        }}
+                        aria-label="Delete notification"
+                        title="Delete this notification"
+                        className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground hover:border-destructive hover:text-destructive transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </article>
               );
