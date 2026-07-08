@@ -1064,7 +1064,8 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
       setPriority("normal");
       setTarget("");
       setScheduleEnabled(false);
-      setScheduledAt("");
+      setScheduledDate("");
+      setScheduledTime("");
       await load();
     } catch (err) {
       alert("Failed to send: " + (err as Error).message);
