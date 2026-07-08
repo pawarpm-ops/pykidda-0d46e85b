@@ -70,9 +70,16 @@ export async function recordStreakActivity(
 ): Promise<{ current_streak: number; longest_streak: number; is_new_day: boolean; unlocked_rank: StreakRank | null } | null> {
   const { data, error } = await supabase.rpc("record_streak_activity", {
     _activity_type: activity,
-    _reference_id: referenceId,
+    _reference_id: referenceId ?? undefined,
   });
-  if (error || !data || !data[0]) return null;
+  if (error) {
+    console.error("[streak] record_streak_activity failed:", error.message, error);
+    return null;
+  }
+  if (!data || !data[0]) {
+    console.warn("[streak] record_streak_activity returned no rows", { activity, referenceId });
+    return null;
+  }
   const row = data[0] as { current_streak: number; longest_streak: number; today_completed: boolean; is_new_day: boolean };
   const prevRank = getCurrentRank(row.current_streak - (row.is_new_day ? 1 : 0));
   const currRank = getCurrentRank(row.current_streak);
