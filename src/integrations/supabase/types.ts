@@ -171,18 +171,21 @@ export type Database = {
       announcement_reads: {
         Row: {
           announcement_id: string
+          dismissed_at: string | null
           id: string
           read_at: string
           user_id: string
         }
         Insert: {
           announcement_id: string
+          dismissed_at?: string | null
           id?: string
           read_at?: string
           user_id: string
         }
         Update: {
           announcement_id?: string
+          dismissed_at?: string | null
           id?: string
           read_at?: string
           user_id?: string

@@ -1,18 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { listAnnouncements, listReadIds, markAllRead, type Announcement } from "@/lib/notifications";
+import { listAnnouncements, listDismissedIds, listReadIds, markAllRead, type Announcement } from "@/lib/notifications";
 
 export function NotificationBell() {
   const [userId, setUserId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Announcement[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
   async function refresh(uid: string) {
-    const [a, r] = await Promise.all([listAnnouncements(), listReadIds(uid)]);
+    const [a, r, d] = await Promise.all([listAnnouncements(), listReadIds(uid), listDismissedIds(uid)]);
     setItems(a);
     setReadIds(r);
+    setDismissedIds(d);
   }
 
   useEffect(() => {
@@ -39,7 +41,8 @@ export function NotificationBell() {
   }, [userId]);
 
   if (!userId) return null;
-  const unread = items.filter((i) => !readIds.has(i.id));
+  const visibleItems = items.filter((i) => !dismissedIds.has(i.id));
+  const unread = visibleItems.filter((i) => !readIds.has(i.id));
 
   async function handleToggle() {
     const next = !open;
@@ -88,11 +91,11 @@ export function NotificationBell() {
               View all
             </Link>
           </div>
-          {items.length === 0 ? (
+          {visibleItems.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">No announcements yet.</p>
           ) : (
             <ul className="divide-y divide-border">
-              {items.slice(0, 8).map((n) => {
+              {visibleItems.slice(0, 8).map((n) => {
                 const isUnread = !readIds.has(n.id);
                 return (
                   <li key={n.id} className={`px-4 py-3 text-sm ${isUnread ? "bg-accent/5" : ""}`}>

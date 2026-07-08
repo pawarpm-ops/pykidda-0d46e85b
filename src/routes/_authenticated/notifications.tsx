@@ -4,9 +4,12 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listAnnouncements,
+  listDismissedIds,
   listReadIds,
   markAllRead,
   markRead,
+  dismissAnnouncement,
+  dismissAllAnnouncements,
   type Announcement,
 } from "@/lib/notifications";
 
@@ -25,13 +28,15 @@ function NotificationsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [items, setItems] = useState<Announcement[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   async function load(uid: string) {
     setLoading(true);
-    const [a, r] = await Promise.all([listAnnouncements(), listReadIds(uid)]);
+    const [a, r, d] = await Promise.all([listAnnouncements(), listReadIds(uid), listDismissedIds(uid)]);
     setItems(a);
     setReadIds(r);
+    setDismissedIds(d);
     setLoading(false);
   }
 
@@ -43,9 +48,11 @@ function NotificationsPage() {
     });
   }, []);
 
+  const visibleItems = items.filter((i) => !dismissedIds.has(i.id));
+
   async function handleMarkAllRead() {
     if (!userId) return;
-    const unreadIds = items.filter((i) => !readIds.has(i.id)).map((i) => i.id);
+    const unreadIds = visibleItems.filter((i) => !readIds.has(i.id)).map((i) => i.id);
     await markAllRead(userId, unreadIds);
     setReadIds(new Set([...readIds, ...unreadIds]));
   }
@@ -56,7 +63,35 @@ function NotificationsPage() {
     setReadIds(new Set([...readIds, id]));
   }
 
-  const unreadCount = items.filter((i) => !readIds.has(i.id)).length;
+  async function handleDeleteOne(id: string) {
+    if (!userId) return;
+    setDismissedIds((prev) => new Set([...prev, id]));
+    try {
+      await dismissAnnouncement(userId, id);
+    } catch {
+      // rollback on failure
+      setDismissedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }
+
+  async function handleDeleteAll() {
+    if (!userId || visibleItems.length === 0) return;
+    if (!window.confirm("Delete all notifications? This will clear them from your inbox only.")) return;
+    const ids = visibleItems.map((i) => i.id);
+    const prev = dismissedIds;
+    setDismissedIds(new Set([...prev, ...ids]));
+    try {
+      await dismissAllAnnouncements(userId, ids);
+    } catch {
+      setDismissedIds(prev);
+    }
+  }
+
+  const unreadCount = visibleItems.filter((i) => !readIds.has(i.id)).length;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -70,20 +105,30 @@ function NotificationsPage() {
               {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
             </p>
           </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={handleMarkAllRead}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition"
-            >
-              Mark all as read
-            </button>
-          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition"
+              >
+                Mark all as read
+              </button>
+            )}
+            {visibleItems.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                className="rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-1.5 text-sm hover:bg-destructive/20 transition"
+              >
+                Delete all
+              </button>
+            )}
+          </div>
         </div>
 
         <section className="mt-8 space-y-3">
           {loading ? (
             <p className="text-muted-foreground">Loading…</p>
-          ) : items.length === 0 ? (
+          ) : visibleItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
               <p className="text-lg font-semibold">No announcements yet</p>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -97,7 +142,7 @@ function NotificationsPage() {
               </Link>
             </div>
           ) : (
-            items.map((n) => {
+            visibleItems.map((n) => {
               const unread = !readIds.has(n.id);
               return (
                 <article
@@ -108,7 +153,7 @@ function NotificationsPage() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h2 className="font-semibold leading-tight">{n.title}</h2>
                         {n.priority === "high" && (
@@ -127,7 +172,20 @@ function NotificationsPage() {
                         {new Date(n.created_at).toLocaleString()}
                       </p>
                     </div>
-                    {unread && <span className="mt-1 h-2.5 w-2.5 rounded-full bg-accent shrink-0" />}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {unread && <span className="mt-1 h-2.5 w-2.5 rounded-full bg-accent" />}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleDeleteOne(n.id);
+                        }}
+                        aria-label="Delete notification"
+                        title="Delete this notification"
+                        className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground hover:border-destructive hover:text-destructive transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </article>
               );

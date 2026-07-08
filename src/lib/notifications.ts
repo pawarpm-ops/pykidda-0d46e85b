@@ -27,7 +27,18 @@ export async function listReadIds(userId: string): Promise<Set<string>> {
   const { data, error } = await supabase
     .from("announcement_reads")
     .select("announcement_id")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .is("dismissed_at", null);
+  if (error) return new Set();
+  return new Set((data ?? []).map((r) => r.announcement_id));
+}
+
+export async function listDismissedIds(userId: string): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from("announcement_reads")
+    .select("announcement_id")
+    .eq("user_id", userId)
+    .not("dismissed_at", "is", null);
   if (error) return new Set();
   return new Set((data ?? []).map((r) => r.announcement_id));
 }
@@ -47,6 +58,26 @@ export async function markAllRead(userId: string, ids: string[]) {
       ids.map((announcement_id) => ({ user_id: userId, announcement_id })),
       { onConflict: "announcement_id,user_id" },
     );
+}
+
+export async function dismissAnnouncement(userId: string, announcementId: string) {
+  const { error } = await supabase.from("announcement_reads").upsert(
+    { user_id: userId, announcement_id: announcementId, dismissed_at: new Date().toISOString() },
+    { onConflict: "announcement_id,user_id" },
+  );
+  if (error) throw error;
+}
+
+export async function dismissAllAnnouncements(userId: string, ids: string[]) {
+  if (!ids.length) return;
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("announcement_reads")
+    .upsert(
+      ids.map((announcement_id) => ({ user_id: userId, announcement_id, dismissed_at: now })),
+      { onConflict: "announcement_id,user_id" },
+    );
+  if (error) throw error;
 }
 
 export async function createAnnouncement(input: {
