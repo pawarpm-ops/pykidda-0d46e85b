@@ -643,18 +643,48 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
   return (
     <section className="mt-6 grid gap-6 lg:grid-cols-[360px_1fr]">
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <p className="text-sm font-semibold mb-2">All students ({students.length})</p>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, email, or ID…"
-          className="w-full mb-3 rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent"
-        />
+        <p className="text-sm font-semibold mb-3">All students ({students.length})</p>
+        <div className="relative mb-3 group">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-accent transition-colors"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search students…"
+            aria-label="Search students"
+            className="w-full rounded-full border border-border bg-background pl-9 pr-9 py-2.5 text-sm shadow-sm transition-all duration-200 focus:outline-none focus:border-accent focus:ring-4 focus:ring-accent/20 focus:shadow-md placeholder:text-muted-foreground"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
         {students.length === 0 ? (
           <p className="text-sm text-muted-foreground">No student activity yet.</p>
         ) : filteredStudents.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No students match “{query}”.</p>
+          <p className="text-sm text-muted-foreground text-center py-6">No student found.</p>
         ) : (
           <ul className="divide-y divide-border max-h-[600px] overflow-auto">
             {filteredStudents.map((s) => (
