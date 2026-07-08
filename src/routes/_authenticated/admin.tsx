@@ -25,6 +25,7 @@ import {
 } from "@/lib/notifications";
 import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
 import { getScreenshotSignedUrl } from "@/components/ReportProblem";
+import { HomeworkAdminTab } from "./admin.assignments";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
