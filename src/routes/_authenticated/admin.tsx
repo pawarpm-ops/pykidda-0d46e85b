@@ -1149,16 +1149,29 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
               ⏰ Schedule for later
             </label>
             {scheduleEnabled && (
-              <div className="mt-2">
-                <input
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
-                  min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  required
-                />
-                <p className="mt-1 text-[11px] text-muted-foreground">
+              <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Date</label>
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    min={new Date().toISOString().slice(0, 10)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Time</label>
+                  <input
+                    type="time"
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    required
+                  />
+                </div>
+                <p className="sm:col-span-2 mt-0 text-[11px] text-muted-foreground">
                   Students will only see this announcement once the scheduled time arrives ({Intl.DateTimeFormat().resolvedOptions().timeZone}).
                 </p>
               </div>
