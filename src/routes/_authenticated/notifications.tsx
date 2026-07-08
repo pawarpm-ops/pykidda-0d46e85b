@@ -4,9 +4,12 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listAnnouncements,
+  listDismissedIds,
   listReadIds,
   markAllRead,
   markRead,
+  dismissAnnouncement,
+  dismissAllAnnouncements,
   type Announcement,
 } from "@/lib/notifications";
 
