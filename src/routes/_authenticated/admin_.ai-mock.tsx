@@ -396,7 +396,7 @@ function Editor() {
       <div className="space-y-6">
         <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <span>📄</span> 1. Syllabus PDF <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+            <span>📄</span> 1. Syllabus PDF
           </h2>
           <p className="text-sm text-muted-foreground mt-1">Text-based PDFs work best (not scanned images). Skip this if you'd rather just tell the AI what to build below.</p>
           <div className="mt-4 flex items-center gap-3 flex-wrap">
@@ -417,7 +417,7 @@ function Editor() {
 
         <section className="rounded-2xl border-2 border-dashed border-accent/50 bg-accent/5 p-6">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <span>✨</span> 2. Custom instructions to the AI <span className="text-xs font-normal text-muted-foreground">(optional but powerful)</span>
+            <span>✨</span> 2. Custom instructions to the AI
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
             Write in plain English exactly how you want this test built — topics to cover, difficulty, style, focus areas, question wording, examples, marks weighting, anything. GPT-5 will follow this precisely.
