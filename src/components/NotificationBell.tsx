@@ -41,7 +41,8 @@ export function NotificationBell() {
   }, [userId]);
 
   if (!userId) return null;
-  const unread = items.filter((i) => !readIds.has(i.id));
+  const visibleItems = items.filter((i) => !dismissedIds.has(i.id));
+  const unread = visibleItems.filter((i) => !readIds.has(i.id));
 
   async function handleToggle() {
     const next = !open;
