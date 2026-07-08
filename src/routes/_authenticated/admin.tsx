@@ -1017,6 +1017,8 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
   const [body, setBody] = useState("");
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
   const [target, setTarget] = useState<string>("");
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -1029,6 +1031,23 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !body.trim()) return;
+    let iso: string | null = null;
+    if (scheduleEnabled) {
+      if (!scheduledAt) {
+        alert("Please pick a date & time to schedule this announcement.");
+        return;
+      }
+      const dt = new Date(scheduledAt);
+      if (Number.isNaN(dt.getTime())) {
+        alert("Invalid scheduled date.");
+        return;
+      }
+      if (dt.getTime() <= Date.now()) {
+        alert("Scheduled time must be in the future.");
+        return;
+      }
+      iso = dt.toISOString();
+    }
     setBusy(true);
     try {
       await createAnnouncement({
@@ -1037,11 +1056,14 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
         body: body.trim(),
         priority,
         targetUserId: target || null,
+        scheduledAt: iso,
       });
       setTitle("");
       setBody("");
       setPriority("normal");
       setTarget("");
+      setScheduleEnabled(false);
+      setScheduledAt("");
       await load();
     } catch (err) {
       alert("Failed to send: " + (err as Error).message);
@@ -1049,6 +1071,7 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
       setBusy(false);
     }
   }
+
 
   async function remove(id: string) {
     if (!confirm("Delete this announcement?")) return;
@@ -1113,16 +1136,43 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
               </select>
             </label>
           </div>
+          <div className="rounded-md border border-border bg-background/40 p-3">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={scheduleEnabled}
+                onChange={(e) => setScheduleEnabled(e.target.checked)}
+                className="h-4 w-4"
+              />
+              ⏰ Schedule for later
+            </label>
+            {scheduleEnabled && (
+              <div className="mt-2">
+                <input
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  required
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Students will only see this announcement once the scheduled time arrives ({Intl.DateTimeFormat().resolvedOptions().timeZone}).
+                </p>
+              </div>
+            )}
+          </div>
           <button
             type="submit"
             disabled={busy}
             className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
             style={{ backgroundImage: "var(--gradient-sunrise)" }}
           >
-            {busy ? "Sending…" : "Send announcement"}
+            {busy ? "Sending…" : scheduleEnabled ? "Schedule announcement" : "Send announcement"}
           </button>
         </form>
       </div>
+
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-base font-semibold">Recent announcements</h2>
@@ -1134,12 +1184,23 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
               <li key={n.id} className="py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-semibold truncate">{n.title}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold truncate">{n.title}</p>
+                      {n.scheduled_at && new Date(n.scheduled_at).getTime() > Date.now() && (
+                        <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-accent">
+                          ⏰ Scheduled
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {new Date(n.created_at).toLocaleString()} ·{" "}
+                      {n.scheduled_at && new Date(n.scheduled_at).getTime() > Date.now()
+                        ? `Goes live ${new Date(n.scheduled_at).toLocaleString()}`
+                        : new Date(n.scheduled_at ?? n.created_at).toLocaleString()}
+                      {" · "}
                       {n.target_user_id ? "direct" : "broadcast"} · {n.priority}
                     </p>
                   </div>
+
                   {n.author_id === authorId && (
                     <button
                       onClick={() => remove(n.id)}

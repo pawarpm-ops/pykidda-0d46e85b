@@ -9,12 +9,14 @@ export type Announcement = {
   priority: "low" | "normal" | "high";
   target_user_id: string | null;
   created_at: string;
+  scheduled_at: string | null;
 };
 
 export async function listAnnouncements(): Promise<Announcement[]> {
   const { data, error } = await supabase
     .from("announcements")
     .select("*")
+    .order("scheduled_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw error;
@@ -53,6 +55,7 @@ export async function createAnnouncement(input: {
   body: string;
   priority?: "low" | "normal" | "high";
   targetUserId?: string | null;
+  scheduledAt?: string | null;
 }) {
   const { error } = await supabase.from("announcements").insert({
     author_id: input.authorId,
@@ -60,9 +63,11 @@ export async function createAnnouncement(input: {
     body: input.body,
     priority: input.priority ?? "normal",
     target_user_id: input.targetUserId ?? null,
-  });
+    scheduled_at: input.scheduledAt ?? null,
+  } as never);
   if (error) throw error;
 }
+
 
 export async function deleteAnnouncement(id: string) {
   const { error } = await supabase.from("announcements").delete().eq("id", id);
