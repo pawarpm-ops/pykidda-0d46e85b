@@ -693,8 +693,8 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                   onClick={() => setSelected(s.user_id)}
                   className={`w-full text-left py-2.5 px-2 rounded-lg transition-all duration-200 ${
                     selected === s.user_id
-                      ? "bg-accent/15 ring-1 ring-accent/40 shadow-[0_0_18px_-6px_hsl(var(--accent)/0.55)]"
-                      : "hover:bg-accent/10 hover:ring-1 hover:ring-accent/30 hover:shadow-[0_0_16px_-6px_hsl(var(--accent)/0.5)] hover:-translate-y-[1px]"
+                      ? "bg-accent/15 ring-1 ring-accent/40 shadow-[0_0_18px_-6px_color-mix(in_oklch,var(--accent)_55%,transparent)]"
+                      : "hover:bg-accent/10 hover:ring-1 hover:ring-accent/30 hover:shadow-[0_0_16px_-6px_color-mix(in_oklch,var(--accent)_50%,transparent)] hover:-translate-y-[1px]"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -1001,7 +1001,7 @@ function ActivityTab({
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((r) => (
-                  <tr key={r.user_id} className="transition-all duration-200 hover:bg-accent/10 hover:shadow-[inset_0_0_0_1px_hsl(var(--accent)/0.35),0_0_18px_-8px_hsl(var(--accent)/0.6)] cursor-default">
+                  <tr key={r.user_id} className="transition-all duration-200 hover:bg-accent/10 hover:shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--accent)_35%,transparent),0_0_18px_-8px_color-mix(in_oklch,var(--accent)_60%,transparent)] cursor-default">
 
                     <td className="py-2 pr-3 font-medium">{r.name}</td>
                     <td className="py-2 pr-3 text-xs text-muted-foreground break-all">{r.email ?? "—"}</td>
@@ -1490,8 +1490,8 @@ function ReportsTab() {
                     onClick={() => setSelected(r)}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-200 ${
                       selected?.id === r.id
-                        ? "bg-accent/15 ring-1 ring-accent/40 shadow-[0_0_18px_-6px_hsl(var(--accent)/0.55)]"
-                        : "hover:bg-accent/10 hover:ring-1 hover:ring-accent/30 hover:shadow-[0_0_16px_-6px_hsl(var(--accent)/0.5)]"
+                        ? "bg-accent/15 ring-1 ring-accent/40 shadow-[0_0_18px_-6px_color-mix(in_oklch,var(--accent)_55%,transparent)]"
+                        : "hover:bg-accent/10 hover:ring-1 hover:ring-accent/30 hover:shadow-[0_0_16px_-6px_color-mix(in_oklch,var(--accent)_50%,transparent)]"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
