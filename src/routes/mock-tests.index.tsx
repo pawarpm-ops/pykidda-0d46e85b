@@ -65,7 +65,7 @@ function MockTestsList() {
               {aiTests.map((t) => (
                 <div
                   key={`ai-${t.id}`}
-                  className="rounded-xl border border-border bg-card p-5 flex flex-col relative overflow-hidden"
+                  className="card-glow rounded-xl border border-border bg-card p-5 flex flex-col relative overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 rounded-bl-lg bg-[oklch(0.65_0.16_145)] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
                     AI
@@ -95,7 +95,7 @@ function MockTestsList() {
                 const qs = mockTestQuestions(t);
                 const marks = qs.reduce((a, q) => a + q.marks, 0);
                 return (
-                  <div key={t.id} className="rounded-xl border border-border bg-card p-5 flex flex-col">
+                  <div key={t.id} className="card-glow rounded-xl border border-border bg-card p-5 flex flex-col">
                     <h3 className="font-semibold text-lg">{t.name}</h3>
                     <p className="mt-2 text-sm text-muted-foreground flex-1">{t.description}</p>
                     <div className="mt-4 flex items-center justify-between text-sm">
