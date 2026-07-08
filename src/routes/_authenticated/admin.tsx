@@ -642,7 +642,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
               );
             })()}
 
-            <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Account & activity</h3>
+            <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Account</h3>
             {!selAuth ? (
               <p className="mt-2 text-sm text-muted-foreground">No account details available.</p>
             ) : (
@@ -664,20 +664,6 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                   <dd className="font-medium">{fmtDate(selAuth.email_confirmed_at)}</dd>
                 </div>
                 <div className="rounded-md border border-border bg-background/40 px-3 py-2">
-                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Last sign-in</dt>
-                  <dd className="font-medium">
-                    {fmtDate(selAuth.last_sign_in_at)}
-                    <span className="ml-2 text-xs text-muted-foreground">({fmtRelative(selAuth.last_sign_in_at)})</span>
-                  </dd>
-                </div>
-                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
-                  <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Last activity (token refresh / logout)</dt>
-                  <dd className="font-medium">
-                    {fmtDate(selAuth.updated_at)}
-                    <span className="ml-2 text-xs text-muted-foreground">({fmtRelative(selAuth.updated_at)})</span>
-                  </dd>
-                </div>
-                <div className="rounded-md border border-border bg-background/40 px-3 py-2">
                   <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">Status</dt>
                   <dd className="font-medium">
                     {selAuth.is_banned ? (
@@ -695,6 +681,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                 </div>
               </dl>
             )}
+
 
 
 
