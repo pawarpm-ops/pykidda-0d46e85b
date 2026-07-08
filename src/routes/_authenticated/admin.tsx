@@ -689,7 +689,19 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
           <p className="text-sm text-muted-foreground">Select a student to view their detailed report.</p>
         ) : (
           <>
+            <div className="mb-3 flex justify-end">
+              <button
+                onClick={handleDownloadStudentPdf}
+                disabled={downloadingPdf}
+                className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-60"
+                style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              >
+                {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
+              </button>
+            </div>
+            <div ref={reportRef} className="bg-background p-2">
             <div className="flex items-end justify-between gap-3 flex-wrap">
+
               <div>
                 <h2 className="text-xl font-bold">{selStudent.name}</h2>
                 <p className="text-xs text-muted-foreground">User ID {selStudent.user_id}</p>
