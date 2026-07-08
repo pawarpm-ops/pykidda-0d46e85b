@@ -1001,7 +1001,8 @@ function ActivityTab({
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((r) => (
-                  <tr key={r.user_id}>
+                  <tr key={r.user_id} className="transition-all duration-200 hover:bg-accent/10 hover:shadow-[inset_0_0_0_1px_hsl(var(--accent)/0.35),0_0_18px_-8px_hsl(var(--accent)/0.6)] cursor-default">
+
                     <td className="py-2 pr-3 font-medium">{r.name}</td>
                     <td className="py-2 pr-3 text-xs text-muted-foreground break-all">{r.email ?? "—"}</td>
                     <td className="py-2 pr-3 text-xs">{r.providers.join(", ") || "—"}</td>
