@@ -26,6 +26,7 @@ import {
 import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
 import { getScreenshotSignedUrl } from "@/components/ReportProblem";
 import { HomeworkAdminTab } from "./admin.assignments";
+import { AdminMockOverview } from "@/components/AdminMockOverview";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -136,6 +137,7 @@ function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework">("overview");
+  const [overviewSubTab, setOverviewSubTab] = useState<"complete" | "mocks">("complete");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
@@ -402,17 +404,51 @@ function AdminPage() {
 
         {tab === "overview" && (
           <>
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={handleDownloadOverviewPdf}
-                disabled={downloadingPdf}
-                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-60"
-                style={{ backgroundImage: "var(--gradient-sunrise)" }}
-              >
-                {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
-              </button>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setOverviewSubTab("complete")}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    overviewSubTab === "complete"
+                      ? "border-accent bg-accent/15 text-accent-foreground"
+                      : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
+                  }`}
+                >
+                  📊 Complete Overview
+                </button>
+                <button
+                  onClick={() => setOverviewSubTab("mocks")}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    overviewSubTab === "mocks"
+                      ? "border-accent bg-accent/15 text-accent-foreground"
+                      : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
+                  }`}
+                >
+                  🧪 Mock Test Overview
+                </button>
+              </div>
+              {overviewSubTab === "complete" && (
+                <button
+                  onClick={handleDownloadOverviewPdf}
+                  disabled={downloadingPdf}
+                  className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-60"
+                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                >
+                  {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
+                </button>
+              )}
             </div>
+
+            {overviewSubTab === "mocks" ? (
+              <AdminMockOverview mocks={mocks as any} profiles={profiles as any} currentUserId={authorId} />
+            ) : (
+              <></>
+            )}
+
+            {overviewSubTab === "complete" && (
+              <>
             <div ref={overviewRef} className="bg-background p-2">
+
             <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
               <Stat label="Total students" value={totalStudents} />
@@ -513,6 +549,8 @@ function AdminPage() {
               </section>
             )}
             </div>
+              </>
+            )}
           </>
 
         )}
