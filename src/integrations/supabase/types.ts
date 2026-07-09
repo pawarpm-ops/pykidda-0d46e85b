@@ -445,6 +445,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mock_test_attempt_comments: {
+        Row: {
+          attempt_id: string
+          attempt_kind: string
+          comment_text: string
+          created_at: string
+          id: string
+          student_id: string
+          teacher_id: string
+          test_id: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_id: string
+          attempt_kind: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          student_id: string
+          teacher_id: string
+          test_id: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_id?: string
+          attempt_kind?: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          student_id?: string
+          teacher_id?: string
+          test_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       practice_attempts: {
         Row: {
           attempted_at: string
