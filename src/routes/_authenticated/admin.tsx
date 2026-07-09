@@ -559,6 +559,8 @@ function AdminPage() {
               </section>
             )}
             </div>
+              </>
+            )}
           </>
 
         )}
