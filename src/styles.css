@@ -156,36 +156,32 @@
   position: relative;
   isolation: isolate;
   transition:
-    transform 300ms ease,
-    border-color 300ms ease,
-    background-color 300ms ease,
-    box-shadow 300ms ease;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    background: var(--gradient-sunrise);
-    filter: blur(14px);
-    opacity: 0;
-    z-index: -1;
-    transition: opacity 300ms ease;
-    pointer-events: none;
-  }
+    transform 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
 
   &:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in oklch, var(--accent) 55%, transparent);
-    box-shadow: var(--shadow-warm);
-  }
-
-  &:hover::before {
-    opacity: 0.45;
+    transform: scale(1.02);
+    border-color: color-mix(in oklch, var(--accent) 70%, transparent);
+    box-shadow: 0 4px 12px -6px oklch(0 0 0 / 0.15);
   }
 
   &:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 70%, transparent);
+  }
+
+  &:disabled,
+  &[aria-disabled="true"],
+  &[data-disabled="true"] {
+    cursor: default;
+  }
+
+  &:disabled:hover,
+  &[aria-disabled="true"]:hover,
+  &[data-disabled="true"]:hover {
+    transform: none;
+    border-color: inherit;
+    box-shadow: none;
   }
 }
