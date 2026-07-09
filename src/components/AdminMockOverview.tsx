@@ -657,8 +657,8 @@ function StudentAnalysis(props: {
     setSavingComment(true);
     try {
       if (comment) {
-        const { data, error } = await supabase
-          .from("mock_test_attempt_comments" as never)
+        const { data, error } = await (supabase
+          .from("mock_test_attempt_comments" as never) as any)
           .update({ comment_text: commentDraft, teacher_id: props.currentUserId })
           .eq("id", comment.id)
           .select()
@@ -666,8 +666,8 @@ function StudentAnalysis(props: {
         if (error) throw error;
         if (data) setComment(data as unknown as CommentRow);
       } else {
-        const { data, error } = await supabase
-          .from("mock_test_attempt_comments" as never)
+        const { data, error } = await (supabase
+          .from("mock_test_attempt_comments" as never) as any)
           .insert({
             attempt_kind: props.kind,
             attempt_id: props.attemptId,
