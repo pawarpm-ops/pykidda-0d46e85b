@@ -404,8 +404,52 @@ function AdminPage() {
 
         {tab === "overview" && (
           <>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setOverviewSubTab("complete")}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    overviewSubTab === "complete"
+                      ? "border-accent bg-accent/15 text-accent-foreground"
+                      : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
+                  }`}
+                >
+                  📊 Complete Overview
+                </button>
+                <button
+                  onClick={() => setOverviewSubTab("mocks")}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    overviewSubTab === "mocks"
+                      ? "border-accent bg-accent/15 text-accent-foreground"
+                      : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
+                  }`}
+                >
+                  🧪 Mock Test Overview
+                </button>
+              </div>
+              {overviewSubTab === "complete" && (
+                <button
+                  onClick={handleDownloadOverviewPdf}
+                  disabled={downloadingPdf}
+                  className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-60"
+                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                >
+                  {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
+                </button>
+              )}
+            </div>
+
+            {overviewSubTab === "mocks" ? (
+              <AdminMockOverview mocks={mocks as any} profiles={profiles as any} currentUserId={authorId} />
+            ) : (
+              <></>
+            )}
+
+            {overviewSubTab === "complete" && (
+              <>
             <div className="mt-6 flex justify-end">
-              <button
+              <div />
+            </div>
                 onClick={handleDownloadOverviewPdf}
                 disabled={downloadingPdf}
                 className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-60"
