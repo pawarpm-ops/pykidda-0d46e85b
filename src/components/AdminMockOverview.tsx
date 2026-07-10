@@ -103,6 +103,8 @@ export function AdminMockOverview({
   currentUserId: string | null;
 }) {
   const [kind, setKind] = useState<"normal" | "scheduled">("normal");
+  const [normalDrilled, setNormalDrilled] = useState(false);
+  const [aiNormalDrilled, setAiNormalDrilled] = useState(false);
 
   return (
     <section className="mt-6 space-y-5">
@@ -130,10 +132,44 @@ export function AdminMockOverview({
       </div>
 
       {kind === "normal" ? (
-        <>
-          <NormalMockList mocks={mocks} profiles={profiles} currentUserId={currentUserId} />
-          <AiMockList kind="normal" profiles={profiles} currentUserId={currentUserId} />
-        </>
+        <div className="space-y-8">
+          {!aiNormalDrilled && (
+            <div className="space-y-3">
+              {!normalDrilled && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+                  <h3 className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">
+                    Built-in Mock Tests
+                  </h3>
+                </div>
+              )}
+              <NormalMockList
+                mocks={mocks}
+                profiles={profiles}
+                currentUserId={currentUserId}
+                onDrillChange={setNormalDrilled}
+              />
+            </div>
+          )}
+          {!normalDrilled && (
+            <div className="space-y-3">
+              {!aiNormalDrilled && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
+                  <h3 className="text-xs uppercase tracking-widest font-semibold text-muted-foreground">
+                    AI-Generated Normal Tests
+                  </h3>
+                </div>
+              )}
+              <AiMockList
+                kind="normal"
+                profiles={profiles}
+                currentUserId={currentUserId}
+                onDrillChange={setAiNormalDrilled}
+              />
+            </div>
+          )}
+        </div>
       ) : (
         <AiMockList kind="scheduled" profiles={profiles} currentUserId={currentUserId} />
       )}
