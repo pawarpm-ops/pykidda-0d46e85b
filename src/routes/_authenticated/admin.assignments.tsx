@@ -234,16 +234,18 @@ export function HomeworkAdminTab() {
       difficulty: a.difficulty,
       assignment_type: a.assignment_type,
       total_marks: String(a.total_marks),
-      due_at: fromISO(a.due_at),
+      due_at: a.due_at ? fromISO(a.due_at) : "",
       allow_late_submission: !!a.allow_late_submission,
       status: a.status,
       sample_input: a.sample_input ?? "",
       sample_output: a.sample_output ?? "",
       expected_output: a.expected_output ?? "",
       starter_code: a.starter_code ?? "",
+      submission_mode: (a.submission_mode as "submit" | "self_solve") ?? "submit",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
 
   async function save(publishOverride?: "published" | "draft") {
     setBusy(true);
