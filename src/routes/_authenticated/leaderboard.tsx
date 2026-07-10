@@ -525,7 +525,7 @@ function PodiumCard({
       </div>
       <p className="text-xs font-semibold uppercase tracking-[0.25em] opacity-70">{s.label}</p>
       <h3 className="mt-1 truncate text-lg font-bold">
-        {row.display_name || "Anonymous"}
+        <NameLink entry={entry}>{row.display_name || "Anonymous"}</NameLink>
         {isMe && <span className="ml-1 text-sm font-normal opacity-70">(you)</span>}
       </h3>
       {entry?.student_unique_id && (
