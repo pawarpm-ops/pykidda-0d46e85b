@@ -463,41 +463,6 @@ export type Database = {
         }
         Relationships: []
       }
-      mock_test_attempt_comment_replies: {
-        Row: {
-          author_id: string
-          author_role: string
-          body: string
-          comment_id: string
-          created_at: string
-          id: string
-        }
-        Insert: {
-          author_id: string
-          author_role: string
-          body: string
-          comment_id: string
-          created_at?: string
-          id?: string
-        }
-        Update: {
-          author_id?: string
-          author_role?: string
-          body?: string
-          comment_id?: string
-          created_at?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mock_test_attempt_comment_replies_comment_id_fkey"
-            columns: ["comment_id"]
-            isOneToOne: false
-            referencedRelation: "mock_test_attempt_comments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       mock_test_attempt_comments: {
         Row: {
           attempt_id: string
