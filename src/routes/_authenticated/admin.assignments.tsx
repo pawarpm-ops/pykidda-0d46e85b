@@ -357,8 +357,8 @@ function HomeworkAdminSection({
           <Field label="Total marks">
             <input value={form.total_marks} onChange={(e) => setForm({ ...form, total_marks: e.target.value.replace(/[^0-9]/g, "") })} className={inputCls} />
           </Field>
-          <Field label="Due date & time *">
-            <input type="datetime-local" value={form.due_at} onChange={(e) => setForm({ ...form, due_at: e.target.value })} className={inputCls} />
+          <Field label="Due date & time *" full>
+            <DueDateTimePicker value={form.due_at} onChange={(v) => setForm({ ...form, due_at: v })} />
           </Field>
           <Field label="Status">
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as any })} className={inputCls}>
