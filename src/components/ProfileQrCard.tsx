@@ -118,9 +118,6 @@ export function ProfileQrCard({ publicId, displayName, enabled }: Props) {
             </a>
           </div>
         </div>
-        <div className="pointer-events-none absolute bottom-2 right-3 text-4xl opacity-70" aria-hidden>
-          🐍
-        </div>
       </div>
     </div>
   );
