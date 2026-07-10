@@ -652,7 +652,16 @@ function Editor() {
           <p className="text-sm text-muted-foreground mt-3">No tests yet.</p>
         ) : (
           <ul className="mt-3 space-y-2 max-h-[70vh] overflow-auto">
-            {tests.map((t) => (
+            {tests.map((t) => {
+              const kind = t.test_kind ?? "normal";
+              const now = Date.now();
+              const start = t.scheduled_start_at ? new Date(t.scheduled_start_at).getTime() : 0;
+              const end = t.scheduled_end_at ? new Date(t.scheduled_end_at).getTime() : 0;
+              let schedStatus: "upcoming" | "live" | "closed" | null = null;
+              if (kind === "scheduled" && start && end) {
+                schedStatus = now < start ? "upcoming" : now > end ? "closed" : "live";
+              }
+              return (
               <li key={t.id} className={`rounded-md border p-3 text-sm ${editingId === t.id ? "border-accent bg-accent/10" : "border-border"}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -660,22 +669,38 @@ function Editor() {
                     <p className="text-xs text-muted-foreground">
                       {t.question_count} Qs · {t.total_marks} marks · {Math.round(t.duration_sec / 60)}m
                     </p>
-                    <p className="text-xs mt-1">
+                    <p className="text-xs mt-1 flex flex-wrap gap-1 items-center">
                       <span className={`inline-block rounded px-2 py-0.5 ${t.status === "published" ? "bg-[oklch(0.65_0.16_145)]/20 text-[oklch(0.45_0.16_145)]" : "bg-secondary text-muted-foreground"}`}>
                         {t.status}
                       </span>
+                      {kind === "scheduled" && (
+                        <span className="inline-block rounded px-2 py-0.5 bg-[oklch(0.55_0.18_260)]/20 text-[oklch(0.45_0.18_260)]">📅 scheduled</span>
+                      )}
+                      {schedStatus === "upcoming" && <span className="text-muted-foreground">upcoming</span>}
+                      {schedStatus === "live" && <span className="text-[oklch(0.55_0.18_145)] font-semibold">LIVE</span>}
+                      {schedStatus === "closed" && <span className="text-muted-foreground">closed</span>}
                     </p>
+                    {kind === "scheduled" && t.scheduled_start_at && t.scheduled_end_at && (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        {new Date(t.scheduled_start_at).toLocaleString()} → {new Date(t.scheduled_end_at).toLocaleTimeString()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   <button onClick={() => onLoadTest(t.id)} className="text-primary hover:underline">Edit</button>
+                  {kind === "scheduled" && t.status === "published" && schedStatus !== "closed" && (
+                    <button onClick={() => openScheduleForEdit(t)} className="text-primary hover:underline">Edit schedule</button>
+                  )}
                   {t.status === "published" ? (
-                    <button onClick={() => { setEditingId(t.id); void onPublish(false); }} className="text-muted-foreground hover:underline">Unpublish</button>
+                    <button onClick={() => unpublish(t.id)} className="text-muted-foreground hover:underline">Unpublish</button>
                   ) : null}
                   <button onClick={() => onDelete(t.id)} className="text-destructive hover:underline">Delete</button>
                 </div>
               </li>
-            ))}
+              );
+            })}
+
           </ul>
         )}
       </aside>
