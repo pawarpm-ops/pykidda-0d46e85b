@@ -1,7 +1,8 @@
 // Student-facing view of teacher comments on their mock test attempts.
 // Read-only: teachers send comments via the admin "Add comment" button.
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_TESTS } from "@/lib/questions";
 
