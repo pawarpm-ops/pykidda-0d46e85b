@@ -54,6 +54,31 @@ function StudentIdChip({ entry }: { entry: DirectoryEntry | undefined }) {
   return <span className={base}>{id}</span>;
 }
 
+function NameLink({
+  entry,
+  children,
+  className = "",
+}: {
+  entry: DirectoryEntry | undefined;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const canLink = !!entry?.public_profile_id && entry.qr_enabled;
+  if (canLink) {
+    return (
+      <Link
+        to="/u/$publicId"
+        params={{ publicId: entry!.public_profile_id! }}
+        className={`hover:text-accent hover:underline underline-offset-4 transition-colors ${className}`}
+        title="Open student profile"
+      >
+        {children}
+      </Link>
+    );
+  }
+  return <span className={className}>{children}</span>;
+
+
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
