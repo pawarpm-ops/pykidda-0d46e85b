@@ -139,7 +139,7 @@ export function SiteHeader() {
             onClick={() => setMenuOpen((v) => !v)}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
-            className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:border-accent transition-colors"
+            className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover-glow"
           >
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
