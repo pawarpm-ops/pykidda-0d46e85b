@@ -42,6 +42,7 @@ function fmt(dt: string) {
 }
 
 function TeacherCommentsPage() {
+  const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [titles, setTitles] = useState<Record<string, string>>({});
