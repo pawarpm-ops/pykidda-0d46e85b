@@ -54,6 +54,32 @@ function StudentIdChip({ entry }: { entry: DirectoryEntry | undefined }) {
   return <span className={base}>{id}</span>;
 }
 
+function NameLink({
+  entry,
+  children,
+  className = "",
+}: {
+  entry: DirectoryEntry | undefined;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const canLink = !!entry?.public_profile_id && entry.qr_enabled;
+  if (canLink) {
+    return (
+      <Link
+        to="/u/$publicId"
+        params={{ publicId: entry!.public_profile_id! }}
+        className={`hover:text-accent hover:underline underline-offset-4 transition-colors ${className}`}
+        title="Open student profile"
+      >
+        {children}
+      </Link>
+    );
+  }
+  return <span className={className}>{children}</span>;
+}
+
+
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
@@ -250,14 +276,14 @@ function LeaderboardPage() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               <Avatar row={r} size={32} />
-                              <span className="font-medium">
+                              <NameLink entry={directory.get(r.user_id)} className="font-medium">
                                 {r.display_name || "Anonymous"}
-                                {isMe && (
-                                  <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
-                                    you
-                                  </span>
-                                )}
-                              </span>
+                              </NameLink>
+                              {isMe && (
+                                <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                                  you
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-3">
@@ -356,19 +382,19 @@ function StreakLeaderboard({
               >
                 <td className="px-4 py-3 font-bold text-lg">{medal}</td>
                 <td className="px-4 py-3">
-                  <span className="font-medium">
+                  <NameLink entry={directory.get(r.user_id)} className="font-medium">
                     {r.display_name || "Anonymous"}
-                    {isMe && (
-                      <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
-                        you
-                      </span>
-                    )}
-                    {label && (
-                      <span className="ml-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                        {label}
-                      </span>
-                    )}
-                  </span>
+                  </NameLink>
+                  {isMe && (
+                    <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                      you
+                    </span>
+                  )}
+                  {label && (
+                    <span className="ml-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                      {label}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <StudentIdChip entry={directory.get(r.user_id)} />
@@ -499,7 +525,7 @@ function PodiumCard({
       </div>
       <p className="text-xs font-semibold uppercase tracking-[0.25em] opacity-70">{s.label}</p>
       <h3 className="mt-1 truncate text-lg font-bold">
-        {row.display_name || "Anonymous"}
+        <NameLink entry={entry}>{row.display_name || "Anonymous"}</NameLink>
         {isMe && <span className="ml-1 text-sm font-normal opacity-70">(you)</span>}
       </h3>
       {entry?.student_unique_id && (
