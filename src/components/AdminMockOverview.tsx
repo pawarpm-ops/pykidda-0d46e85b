@@ -130,9 +130,12 @@ export function AdminMockOverview({
       </div>
 
       {kind === "normal" ? (
-        <NormalMockList mocks={mocks} profiles={profiles} currentUserId={currentUserId} />
+        <>
+          <NormalMockList mocks={mocks} profiles={profiles} currentUserId={currentUserId} />
+          <AiMockList kind="normal" profiles={profiles} currentUserId={currentUserId} />
+        </>
       ) : (
-        <ScheduledMockList profiles={profiles} currentUserId={currentUserId} />
+        <AiMockList kind="scheduled" profiles={profiles} currentUserId={currentUserId} />
       )}
     </section>
   );
@@ -447,10 +450,12 @@ function NormalTestDetail({
 
 // ---------- Scheduled ----------
 
-function ScheduledMockList({
+function AiMockList({
+  kind,
   profiles,
   currentUserId,
 }: {
+  kind: "normal" | "scheduled";
   profiles: Record<string, { display_name: string | null; full_name: string | null; college_name: string | null }>;
   currentUserId: string | null;
 }) {
@@ -462,9 +467,10 @@ function ScheduledMockList({
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: t } = await supabase
-        .from("ai_mock_tests" as never)
-        .select("id,title,description,duration_sec,total_marks,question_count,status,published_at,created_at")
+      const { data: t } = await (supabase
+        .from("ai_mock_tests" as never) as any)
+        .select("id,title,description,duration_sec,total_marks,question_count,status,published_at,created_at,test_kind")
+        .or(kind === "normal" ? "test_kind.eq.normal,test_kind.is.null" : "test_kind.eq.scheduled")
         .order("created_at", { ascending: false });
       const testList = (t ?? []) as unknown as ScheduledTest[];
       setTests(testList);
@@ -481,14 +487,21 @@ function ScheduledMockList({
       setAttemptsByTest(grouped);
       setLoading(false);
     })();
-  }, []);
+  }, [kind]);
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading scheduled mock tests…</p>;
+  const label = kind === "scheduled" ? "📅 Scheduled" : "🤖 AI Normal";
+  const loadingText = kind === "scheduled" ? "Loading scheduled mock tests…" : "Loading AI mock tests…";
+  const emptyText = kind === "scheduled"
+    ? "No scheduled mock tests yet. Use the AI Mock Creator to add one."
+    : "No AI-generated normal mock tests yet.";
+
+  if (loading) return <p className="text-sm text-muted-foreground">{loadingText}</p>;
 
   if (selectedTestId) {
     const t = tests.find((x) => x.id === selectedTestId);
     return (
       <ScheduledTestDetail
+        kind={kind}
         test={t!}
         attempts={attemptsByTest[selectedTestId] ?? []}
         profiles={profiles}
@@ -511,7 +524,7 @@ function ScheduledMockList({
             className="card-glow group rounded-2xl border border-border bg-card p-5 text-left shadow-sm"
           >
             <div className="flex items-center gap-2">
-              <p className="text-xs uppercase tracking-widest text-accent font-semibold">📅 Scheduled</p>
+              <p className="text-xs uppercase tracking-widest text-accent font-semibold">{label}</p>
               <span className={`text-[10px] px-2 py-0.5 rounded-full ${
                 t.status === "published" ? "bg-[oklch(0.65_0.16_145)]/20 text-[oklch(0.4_0.16_145)]" : "bg-muted text-muted-foreground"
               }`}>
@@ -541,19 +554,21 @@ function ScheduledMockList({
         );
       })}
       {tests.length === 0 && (
-        <p className="text-sm text-muted-foreground">No scheduled mock tests yet. Use the AI Mock Creator to add one.</p>
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
       )}
     </div>
   );
 }
 
 function ScheduledTestDetail({
+  kind,
   test,
   attempts,
   profiles,
   currentUserId,
   onBack,
 }: {
+  kind: "normal" | "scheduled";
   test: ScheduledTest;
   attempts: ScheduledAttempt[];
   profiles: Record<string, { display_name: string | null; full_name: string | null; college_name: string | null }>;
@@ -576,7 +591,7 @@ function ScheduledTestDetail({
   if (selectedAttempt) {
     return (
       <StudentAnalysis
-        kind="scheduled"
+        kind={kind}
         testId={test.id}
         testName={test.title}
         studentId={selectedAttempt.user_id}
