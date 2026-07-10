@@ -18,6 +18,7 @@ import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { ReportProblem } from "@/components/ReportProblem";
 import { ReviewPopup } from "@/components/ReviewPopup";
 import { StreakUnlockModal } from "@/components/StreakUnlockModal";
+import { WhatsNewPopups } from "@/components/WhatsNewPopups";
 import { InactivityLogout } from "@/components/InactivityLogout";
 import { recordStreakActivity } from "@/lib/streaks";
 import { isAdminEmail } from "@/lib/admin-emails";
@@ -261,6 +262,8 @@ function AuthGate({ children }: { children: ReactNode }) {
   // Only mount global popups on safe routes (never on /auth, /onboarding, or during a live mock test).
   const showGlobals = authed && onboardChecked && onboarded && !isAuthRoute && !isOnboardingRoute;
 
+  const isDashboardRoute = pathname === "/";
+
   return (
     <>
       {children}
@@ -270,9 +273,11 @@ function AuthGate({ children }: { children: ReactNode }) {
           <ReportProblem />
           <ReviewPopup />
           <StreakUnlockModal />
+          {isDashboardRoute && <WhatsNewPopups />}
           {!isSecureRoute && <InactivityLogout />}
         </>
       )}
     </>
   );
 }
+
