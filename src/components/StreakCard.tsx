@@ -1,20 +1,37 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { fetchMyStreak, getCurrentRank, getNextRank, type StreakState } from "@/lib/streaks";
+import { fetchMyStreak, getCurrentRank, getNextRank, recordStreakActivity, type StreakState } from "@/lib/streaks";
+import { supabase } from "@/integrations/supabase/client";
 
 export function StreakCard() {
   const [streak, setStreak] = useState<StreakState | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetchMyStreak().then((s) => alive && setStreak(s));
-    const handler = () => fetchMyStreak().then((s) => alive && setStreak(s));
+    const load = () => fetchMyStreak().then((s) => alive && setStreak(s));
+
+    // Belt-and-suspenders: on dashboard mount, if today's login streak was never
+    // recorded (fresh account, or root-level trigger missed), fire it here.
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const s = await fetchMyStreak();
+      if (!alive) return;
+      setStreak(s);
+      if (!s || !s.today_completed) {
+        const r = await recordStreakActivity("login");
+        if (r && alive) load();
+      }
+    })();
+
+    const handler = () => load();
     window.addEventListener("pk:streak-updated", handler);
     return () => {
       alive = false;
       window.removeEventListener("pk:streak-updated", handler);
     };
   }, []);
+
 
   const cur = streak?.current_streak ?? 0;
   const longest = streak?.longest_streak ?? 0;
