@@ -93,7 +93,8 @@ export function SiteHeader() {
                 item.iconOnly && "inline-flex items-center justify-center h-9 w-9 p-0 rounded-full",
               )}
             >
-              {item.iconOnly ? <User size={18} /> : item.label}
+              {item.iconOnly ? (() => { const Icon = item.icon ?? User; return <Icon size={18} />; })() : item.label}
+
             </Link>
           ))}
           {email && isAdmin && (
