@@ -591,11 +591,13 @@ function Editor() {
               <button onClick={onSaveDraft} disabled={!!busy} className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground disabled:opacity-50">💾 Save draft</button>
               {editingId && (
                 <>
-                  <button onClick={() => onPublish(true)} disabled={!!busy} className="rounded-md bg-[oklch(0.65_0.16_145)] px-4 py-2 font-semibold text-white disabled:opacity-50">🚀 Publish to students</button>
-                  <button onClick={() => onPublish(false)} disabled={!!busy} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-secondary">Unpublish</button>
+                  <button onClick={publishNormal} disabled={!!busy} className="rounded-md bg-[oklch(0.65_0.16_145)] px-4 py-2 font-semibold text-white disabled:opacity-50">🚀 Publish as Normal Mock Test</button>
+                  <button onClick={openScheduleForPublish} disabled={!!busy} className="rounded-md bg-[oklch(0.55_0.18_260)] px-4 py-2 font-semibold text-white disabled:opacity-50">📅 Publish as Scheduled Mock Test</button>
+                  <button onClick={() => unpublish()} disabled={!!busy} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-secondary">Unpublish</button>
                   <button onClick={() => onDelete(editingId)} disabled={!!busy} className="rounded-md border border-destructive/50 text-destructive px-4 py-2 text-sm hover:bg-destructive/10">Delete test</button>
                 </>
               )}
+
             </div>
           </section>
         )}
