@@ -68,9 +68,11 @@ export async function recordStreakActivity(
   activity: StreakActivityType,
   referenceId?: string,
 ): Promise<{ current_streak: number; longest_streak: number; is_new_day: boolean; unlocked_rank: StreakRank | null } | null> {
+  // Pass null (not undefined) so the JSON body always includes `_reference_id`;
+  // some PostgREST setups fail overload resolution when an optional param key is missing.
   const { data, error } = await supabase.rpc("record_streak_activity", {
     _activity_type: activity,
-    _reference_id: referenceId ?? undefined,
+    _reference_id: referenceId ?? (null as unknown as string),
   });
   if (error) {
     console.error("[streak] record_streak_activity failed:", error.message, error);
