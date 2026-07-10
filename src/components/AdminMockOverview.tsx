@@ -347,7 +347,7 @@ function NormalTestDetail({
                   const hasMore = list.length > 1;
                   const isOpen = expanded.has(uid);
                   return (
-                    <>
+                    <Fragment key={uid}>
                       <tr key={uid} className="hover:bg-accent/5 transition-colors">
                         <td className="py-2 pr-1 text-center">
                           {hasMore ? (
@@ -431,7 +431,7 @@ function NormalTestDetail({
                           </td>
                         </tr>
                       ))}
-                    </>
+                    </Fragment>
                   );
                 })}
               </tbody>
