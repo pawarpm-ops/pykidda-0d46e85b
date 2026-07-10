@@ -1,7 +1,8 @@
 // Student-facing view of teacher comments on their mock test attempts.
 // Read-only: teachers send comments via the admin "Add comment" button.
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_TESTS } from "@/lib/questions";
 
@@ -41,6 +42,7 @@ function fmt(dt: string) {
 }
 
 function TeacherCommentsPage() {
+  const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [titles, setTitles] = useState<Record<string, string>>({});
@@ -90,6 +92,14 @@ function TeacherCommentsPage() {
   return (
     <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
       <header className="mb-6">
+        <button
+          type="button"
+          onClick={() => router.history.back()}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover-glow mb-3"
+          aria-label="Go back"
+        >
+          <ArrowLeft size={16} /> Back
+        </button>
         <h1 className="text-3xl font-bold">💬 Teacher Comments</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Feedback from your teachers on your mock test attempts.
