@@ -382,19 +382,19 @@ function StreakLeaderboard({
               >
                 <td className="px-4 py-3 font-bold text-lg">{medal}</td>
                 <td className="px-4 py-3">
-                  <span className="font-medium">
+                  <NameLink entry={directory.get(r.user_id)} className="font-medium">
                     {r.display_name || "Anonymous"}
-                    {isMe && (
-                      <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
-                        you
-                      </span>
-                    )}
-                    {label && (
-                      <span className="ml-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                        {label}
-                      </span>
-                    )}
-                  </span>
+                  </NameLink>
+                  {isMe && (
+                    <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                      you
+                    </span>
+                  )}
+                  {label && (
+                    <span className="ml-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                      {label}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <StudentIdChip entry={directory.get(r.user_id)} />
