@@ -130,9 +130,12 @@ export function AdminMockOverview({
       </div>
 
       {kind === "normal" ? (
-        <NormalMockList mocks={mocks} profiles={profiles} currentUserId={currentUserId} />
+        <>
+          <NormalMockList mocks={mocks} profiles={profiles} currentUserId={currentUserId} />
+          <AiMockList kind="normal" profiles={profiles} currentUserId={currentUserId} />
+        </>
       ) : (
-        <ScheduledMockList profiles={profiles} currentUserId={currentUserId} />
+        <AiMockList kind="scheduled" profiles={profiles} currentUserId={currentUserId} />
       )}
     </section>
   );
