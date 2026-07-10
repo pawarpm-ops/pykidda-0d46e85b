@@ -276,14 +276,14 @@ function LeaderboardPage() {
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               <Avatar row={r} size={32} />
-                              <span className="font-medium">
+                              <NameLink entry={directory.get(r.user_id)} className="font-medium">
                                 {r.display_name || "Anonymous"}
-                                {isMe && (
-                                  <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
-                                    you
-                                  </span>
-                                )}
-                              </span>
+                              </NameLink>
+                              {isMe && (
+                                <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                                  you
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-3">
