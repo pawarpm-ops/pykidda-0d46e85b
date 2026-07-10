@@ -291,14 +291,13 @@ function AssignmentDetailPage() {
           {!readOnly && canSubmit && (
             <button
               onClick={() => setConfirmOpen(true)}
-              className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-              style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              className={`rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] ${overdue ? "" : ""}`}
+              style={{ backgroundImage: overdue
+                ? "linear-gradient(135deg, oklch(0.72 0.16 60), oklch(0.55 0.22 25))"
+                : "var(--gradient-sunrise)" }}
             >
-              Submit assignment
+              {overdue ? "Submit late" : "Submit assignment"}
             </button>
-          )}
-          {!readOnly && !canSubmit && overdue && (
-            <span className="text-sm text-destructive font-semibold">Deadline passed — late submissions not allowed.</span>
           )}
           <span className="text-xs text-muted-foreground">
             {saving ? "Saving draft…" : savedAt ? `Draft saved at ${savedAt}` : readOnly ? "Reviewed — read-only" : "Autosaves as you type"}
