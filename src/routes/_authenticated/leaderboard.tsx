@@ -295,14 +295,29 @@ function EmptySearch() {
 }
 
 
-function StreakLeaderboard({ rows, meId }: { rows: StreakLeaderRow[] | null; meId: string | null }) {
+function StreakLeaderboard({
+  rows,
+  allRows,
+  meId,
+  directory,
+  searching,
+}: {
+  rows: StreakLeaderRow[] | null;
+  allRows: StreakLeaderRow[] | null;
+  meId: string | null;
+  directory: Directory;
+  searching: boolean;
+}) {
   if (!rows) return <div className="py-16 text-center text-muted-foreground">Loading streak leaders…</div>;
-  if (rows.length === 0)
+  if (rows.length === 0) {
+    if (searching) return <EmptySearch />;
     return (
       <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
         No streaks yet — solve a question today to start yours!
       </div>
     );
+  }
+
   const today = new Date().toISOString().slice(0, 10);
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
