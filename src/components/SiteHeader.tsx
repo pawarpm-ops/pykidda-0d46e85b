@@ -1,16 +1,32 @@
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useIsAdmin } from "@/lib/role";
+import { cn } from "@/lib/utils";
+
+type NavItem = { to: string; label: string; tour?: string; authOnly?: boolean };
+
+const NAV_ITEMS: NavItem[] = [
+  { to: "/", label: "Dashboard" },
+  { to: "/practice", label: "Practice", tour: "nav-practice" },
+  { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock" },
+  { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard" },
+  { to: "/assignments", label: "Homework", authOnly: true },
+  { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true },
+  { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true },
+];
 
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const router = useRouter();
   const isAdmin = useIsAdmin();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -22,77 +38,152 @@ export function SiteHeader() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  const items = NAV_ITEMS.filter((i) => !i.authOnly || email);
+
+  const isActive = (to: string) =>
+    to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(to + "/");
+
+  const linkCls = (to: string) =>
+    cn(
+      "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+      isActive(to)
+        ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+        : "text-foreground/70 hover:text-foreground hover:bg-secondary",
+    );
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.invalidate();
+    navigate({ to: "/" });
+  }
+
   return (
-    <header className="border-b border-border/60 backdrop-blur sticky top-0 z-20 bg-background/80">
-      <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between gap-4">
-        <Link to="/" className="flex items-center gap-2">
+    <header className="border-b border-border/60 backdrop-blur sticky top-0 z-30 bg-background/85">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center gap-4">
+        {/* Left: logo */}
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <BrandLogo size={36} />
         </Link>
-        <nav className="flex items-center gap-1 sm:gap-3 text-sm">
-          <Link to="/practice" data-tour="nav-practice" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
-            Practice
-          </Link>
+
+        {/* Center: desktop nav */}
+        <nav className="hidden lg:flex flex-1 items-center justify-center gap-1">
+          {items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              data-tour={item.tour}
+              className={linkCls(item.to)}
+            >
+              {item.label}
+            </Link>
+          ))}
           {email && isAdmin && (
             <Link
               to="/admin"
-              className="px-3 py-1 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-opacity ml-1",
+                "bg-primary text-primary-foreground hover:opacity-90",
+              )}
             >
               Admin
             </Link>
           )}
-          <Link to="/mock-tests" data-tour="nav-mock" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
-            Mock Tests
-          </Link>
+        </nav>
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-2 ml-auto lg:ml-0 shrink-0">
+          <ThemeToggle />
           {email && (
-            <Link to="/assignments" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
-              Homework
-            </Link>
-          )}
-          <Link to="/leaderboard" data-tour="nav-leaderboard" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
-            Leaderboard
-          </Link>
-          {email && (
-            <Link to="/analytics" data-tour="nav-analytics" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
-              Analytics
-            </Link>
-          )}
-          {email && (
-            <Link to="/profile" data-tour="nav-profile" className="px-2 py-1 rounded hover:bg-secondary transition-colors">
-              Profile
-            </Link>
-          )}
-          <ThemeToggle className="ml-1" />
-          {email && (
-            <span data-tour="nav-notifications">
+            <span data-tour="nav-notifications" className="inline-flex">
               <NotificationBell />
             </span>
           )}
           {email ? (
-            <div className="flex items-center gap-2 ml-1">
-              <span className="hidden sm:inline text-xs text-muted-foreground">{email}</span>
+            <>
+              <span
+                className="hidden xl:inline-flex max-w-[180px] truncate rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-xs text-muted-foreground"
+                title={email}
+              >
+                {email}
+              </span>
               <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  router.invalidate();
-                  navigate({ to: "/" });
-                }}
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition-colors"
+                onClick={handleSignOut}
+                className="hidden sm:inline-flex rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition-colors whitespace-nowrap"
               >
                 Sign out
               </button>
-            </div>
+            </>
           ) : (
             <Link
               to="/auth"
-              className="rounded-md px-3 py-1.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+              className="rounded-md px-3 py-1.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] whitespace-nowrap"
               style={{ backgroundImage: "var(--gradient-sunrise)" }}
             >
               Sign in
             </Link>
           )}
-        </nav>
+
+          {/* Mobile menu button */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:border-accent transition-colors"
+          >
+            {menuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div className="lg:hidden border-t border-border/60 bg-background/95 backdrop-blur">
+          <nav className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex flex-col gap-1">
+            {items.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                data-tour={item.tour}
+                className={cn(
+                  "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActive(item.to)
+                    ? "bg-primary/15 text-primary"
+                    : "text-foreground/80 hover:bg-secondary",
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+            {email && isAdmin && (
+              <Link
+                to="/admin"
+                className="px-3 py-2 rounded-md text-sm font-semibold bg-primary text-primary-foreground"
+              >
+                Admin
+              </Link>
+            )}
+            {email && (
+              <div className="mt-2 pt-2 border-t border-border/60 flex items-center justify-between gap-2">
+                <span className="truncate text-xs text-muted-foreground" title={email}>
+                  {email}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition-colors whitespace-nowrap"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
-
