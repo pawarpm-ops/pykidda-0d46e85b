@@ -443,12 +443,28 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SubmitInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
+    // Time-gate scheduled tests server-side (source of truth)
+    const { data: tRow } = await supabaseAdmin
+      .from("ai_mock_tests")
+      .select("test_kind,scheduled_start_at,scheduled_end_at,status")
+      .eq("id", data.test_id)
+      .single();
+    if (tRow && (tRow as any).test_kind === "scheduled") {
+      const now = Date.now();
+      const s = (tRow as any).scheduled_start_at ? new Date((tRow as any).scheduled_start_at).getTime() : 0;
+      const e = (tRow as any).scheduled_end_at ? new Date((tRow as any).scheduled_end_at).getTime() : 0;
+      if (!s || !e) throw new Error("Scheduled test is misconfigured");
+      // Allow a small grace window on submit (in case fullscreen exit fires right at end)
+      if (now < s) throw new Error("Scheduled test has not started yet");
+      if (now > e + 60_000) throw new Error("Scheduled test window has ended");
+    }
     const { data: qs, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
       .select("*")
       .eq("test_id", data.test_id)
       .order("order_index");
     if (qErr) throw new Error(qErr.message);
+
     const questions = (qs ?? []) as Array<{
       id: string;
       type: "mcq" | "tf" | "fill" | "short" | "code";
