@@ -4,6 +4,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_TESTS } from "@/lib/questions";
+import { CommentThread } from "@/components/CommentThread";
+
 
 type NormalAttempt = {
   id: string;
