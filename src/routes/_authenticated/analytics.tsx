@@ -16,6 +16,7 @@ import {
   YAxis,
 } from "recharts";
 import { SiteHeader } from "@/components/SiteHeader";
+import { ViolationAnalytics } from "@/components/ViolationAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { computeAnalytics, getProgress, clearProgress, type Analytics } from "@/lib/progress";
 import { QUESTIONS } from "@/lib/questions";
@@ -539,17 +540,7 @@ function AnalyticsPage() {
             {/* Violations bar */}
             {violationData.length > 0 && (
               <section className="mt-6">
-                <ChartCard title="Violation reasons" subtitle="Why tests were auto-submitted">
-                  <ResponsiveContainer width="100%" height={240}>
-                    <BarChart data={violationData} layout="vertical" margin={{ top: 5, right: 16, left: 60, bottom: 0 }}>
-                      <CartesianGrid stroke="oklch(0.85 0.01 250)" strokeDasharray="3 3" opacity={0.4} />
-                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-                      <YAxis type="category" dataKey="reason" tick={{ fontSize: 12 }} width={180} />
-                      <Tooltip />
-                      <Bar dataKey="count" fill={C.bad} radius={[0, 6, 6, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartCard>
+                <ViolationAnalytics mocks={filtered.mocks as any} />
               </section>
             )}
 
