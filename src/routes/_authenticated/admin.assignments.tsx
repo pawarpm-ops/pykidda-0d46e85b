@@ -2,6 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { DueDateTimePicker } from "@/components/DueDateTimePicker";
 import { useIsAdmin } from "@/lib/role";
@@ -13,6 +14,8 @@ import {
   adminReviewSubmission,
   adminUpdateAssignment,
 } from "@/lib/assignments.functions";
+import { GenerateAiDialog, RefineAiDialog, HomeworkEntryCards } from "@/components/HomeworkAiDialogs";
+
 
 export const Route = createFileRoute("/_authenticated/admin/assignments")({
   head: () => ({
@@ -41,6 +44,7 @@ type FormState = {
   sample_output: string;
   expected_output: string;
   starter_code: string;
+  submission_mode: "submit" | "self_solve";
 };
 
 const empty: FormState = {
@@ -58,7 +62,9 @@ const empty: FormState = {
   sample_output: "",
   expected_output: "",
   starter_code: "",
+  submission_mode: "submit",
 };
+
 
 function toISO(local: string) {
   // datetime-local returns "YYYY-MM-DDTHH:mm"
@@ -104,16 +110,18 @@ function AdminAssignmentsPage() {
       difficulty: a.difficulty,
       assignment_type: a.assignment_type,
       total_marks: String(a.total_marks),
-      due_at: fromISO(a.due_at),
+      due_at: a.due_at ? fromISO(a.due_at) : "",
       allow_late_submission: !!a.allow_late_submission,
       status: a.status,
       sample_input: a.sample_input ?? "",
       sample_output: a.sample_output ?? "",
       expected_output: a.expected_output ?? "",
       starter_code: a.starter_code ?? "",
+      submission_mode: (a.submission_mode as "submit" | "self_solve") ?? "submit",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
 
   async function save(publishOverride?: "published" | "draft") {
     setBusy(true);
@@ -127,16 +135,17 @@ function AdminAssignmentsPage() {
         difficulty: form.difficulty,
         assignment_type: form.assignment_type,
         total_marks: Number(form.total_marks) || 10,
-        due_at: toISO(form.due_at),
+        due_at: form.submission_mode === "self_solve" ? null : (form.due_at ? toISO(form.due_at) : null),
         allow_late_submission: form.allow_late_submission,
         status: publishOverride ?? form.status,
         sample_input: form.sample_input || null,
         sample_output: form.sample_output || null,
         expected_output: form.expected_output || null,
         starter_code: form.starter_code || null,
+        submission_mode: form.submission_mode,
       };
       if (!payload.title) throw new Error("Title required");
-      if (!payload.due_at) throw new Error("Due date required");
+      if (form.submission_mode === "submit" && !payload.due_at) throw new Error("Due date required for submit-mode homework");
 
       if (form.id) {
         await updateFn({ data: { id: form.id, ...payload } });
@@ -152,6 +161,7 @@ function AdminAssignmentsPage() {
       setBusy(false);
     }
   }
+
 
   async function remove(id: string) {
     if (!confirm("Delete assignment and all submissions?")) return;
@@ -226,16 +236,18 @@ export function HomeworkAdminTab() {
       difficulty: a.difficulty,
       assignment_type: a.assignment_type,
       total_marks: String(a.total_marks),
-      due_at: fromISO(a.due_at),
+      due_at: a.due_at ? fromISO(a.due_at) : "",
       allow_late_submission: !!a.allow_late_submission,
       status: a.status,
       sample_input: a.sample_input ?? "",
       sample_output: a.sample_output ?? "",
       expected_output: a.expected_output ?? "",
       starter_code: a.starter_code ?? "",
+      submission_mode: (a.submission_mode as "submit" | "self_solve") ?? "submit",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
 
   async function save(publishOverride?: "published" | "draft") {
     setBusy(true);
@@ -249,16 +261,17 @@ export function HomeworkAdminTab() {
         difficulty: form.difficulty,
         assignment_type: form.assignment_type,
         total_marks: Number(form.total_marks) || 10,
-        due_at: toISO(form.due_at),
+        due_at: form.submission_mode === "self_solve" ? null : (form.due_at ? toISO(form.due_at) : null),
         allow_late_submission: form.allow_late_submission,
         status: publishOverride ?? form.status,
         sample_input: form.sample_input || null,
         sample_output: form.sample_output || null,
         expected_output: form.expected_output || null,
         starter_code: form.starter_code || null,
+        submission_mode: form.submission_mode,
       };
       if (!payload.title) throw new Error("Title required");
-      if (!payload.due_at) throw new Error("Due date required");
+      if (form.submission_mode === "submit" && !payload.due_at) throw new Error("Due date required for submit-mode homework");
       if (form.id) await updateFn({ data: { id: form.id, ...payload } });
       else await createFn({ data: payload });
       setForm(empty);
@@ -270,6 +283,7 @@ export function HomeworkAdminTab() {
       setBusy(false);
     }
   }
+
 
   async function remove(id: string) {
     if (!confirm("Delete assignment and all submissions?")) return;
@@ -323,11 +337,33 @@ function HomeworkAdminSection({
   loadInto: (a: any) => void;
   resetForm: () => void;
 }) {
+  const [showManual, setShowManual] = useState(false);
+  const [showAi, setShowAi] = useState(false);
+  const [refiningId, setRefiningId] = useState<string | null>(null);
+  const formOpen = showManual || !!form.id;
   return (
     <>
+      {!formOpen && (
+        <HomeworkEntryCards
+          onManual={() => { setShowManual(true); setTimeout(() => window.scrollTo({ top: 400, behavior: "smooth" }), 50); }}
+          onAi={() => setShowAi(true)}
+        />
+      )}
+      {showAi && <GenerateAiDialog onClose={() => setShowAi(false)} onSaved={() => setShowAi(false)} />}
+      {refiningId && <RefineAiDialog assignmentId={refiningId} onClose={() => setRefiningId(null)} onApplied={() => setRefiningId(null)} />}
+
       {/* Create / Edit form */}
+      {formOpen && (
       <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-        <h2 className="text-lg font-bold">{form.id ? "Edit assignment" : "Create assignment"}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-bold">{form.id ? "Edit homework question" : "Create homework question"}</h2>
+          <button
+            onClick={() => { resetForm(); setShowManual(false); }}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            ← Close form
+          </button>
+        </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <Field label="Title *">
             <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputCls} />
@@ -358,9 +394,17 @@ function HomeworkAdminSection({
           <Field label="Total marks">
             <input value={form.total_marks} onChange={(e) => setForm({ ...form, total_marks: e.target.value.replace(/[^0-9]/g, "") })} className={inputCls} />
           </Field>
-          <Field label="Due date & time *" full>
-            <DueDateTimePicker value={form.due_at} onChange={(v) => setForm({ ...form, due_at: v })} />
+          <Field label="Mode">
+            <select value={form.submission_mode} onChange={(e) => setForm({ ...form, submission_mode: e.target.value as "submit" | "self_solve" })} className={inputCls}>
+              <option value="submit">Submit for grading</option>
+              <option value="self_solve">Self-solve (like Practice)</option>
+            </select>
           </Field>
+          {form.submission_mode === "submit" && (
+            <Field label="Due date & time *" full>
+              <DueDateTimePicker value={form.due_at} onChange={(v) => setForm({ ...form, due_at: v })} />
+            </Field>
+          )}
           <Field label="Status">
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as any })} className={inputCls}>
               <option value="draft">Draft</option>
@@ -368,12 +412,14 @@ function HomeworkAdminSection({
               <option value="closed">Closed</option>
             </select>
           </Field>
-          <Field label="" full>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.allow_late_submission} onChange={(e) => setForm({ ...form, allow_late_submission: e.target.checked })} />
-              Allow late submissions after due date
-            </label>
-          </Field>
+          {form.submission_mode === "submit" && (
+            <Field label="" full>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.allow_late_submission} onChange={(e) => setForm({ ...form, allow_late_submission: e.target.checked })} />
+                Allow late submissions after due date
+              </label>
+            </Field>
+          )}
           <Field label="Sample input">
             <textarea rows={3} value={form.sample_input} onChange={(e) => setForm({ ...form, sample_input: e.target.value })} className={inputCls + " font-mono text-xs"} />
           </Field>
@@ -400,19 +446,27 @@ function HomeworkAdminSection({
           {msg && <span className="text-sm text-muted-foreground">{msg}</span>}
         </div>
       </section>
+      )}
 
       {/* List */}
       <section className="mt-6">
-        <h2 className="text-lg font-bold">All assignments</h2>
+        <h2 className="text-lg font-bold">All homework</h2>
         {isLoading && <p className="mt-2 text-sm text-muted-foreground">Loading…</p>}
         <ul className="mt-3 space-y-3">
           {data?.map((a: any) => {
-            const due = new Date(a.due_at);
-            const overdue = due < new Date();
+            const due = a.due_at ? new Date(a.due_at) : null;
+            const overdue = due ? due < new Date() : false;
             const statusPill = a.status === "published"
               ? "bg-[oklch(0.65_0.16_145)]/15 text-[oklch(0.45_0.16_145)] border-[oklch(0.65_0.16_145)]/40"
               : a.status === "closed" ? "bg-secondary text-secondary-foreground border-border"
               : "bg-secondary/50 text-muted-foreground border-border";
+            const src = (a.question_source ?? "manual") as string;
+            const srcLabel = src === "ai_generated" ? "🤖 AI-generated" : src === "migrated_practice" ? "📥 From Practice" : "✍ Manual";
+            const srcCls = src === "ai_generated"
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : src === "migrated_practice"
+              ? "border-accent/40 bg-accent/10 text-accent"
+              : "border-border bg-secondary text-secondary-foreground";
             return (
               <li key={a.id} className="card-glow rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -420,13 +474,17 @@ function HomeworkAdminSection({
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-bold">{a.title}</h3>
                       <span className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusPill}`}>{a.status}</span>
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${srcCls}`}>{srcLabel}</span>
+                      {a.refined_by_ai && <span className="rounded-full border border-primary/40 bg-primary/5 px-2 py-0.5 text-[10px] font-semibold text-primary">✨ AI-refined</span>}
+                      {a.submission_mode === "self_solve" && <span className="rounded-full border border-border bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">Self-solve</span>}
                       {overdue && a.status === "published" && (
                         <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive">Overdue</span>
                       )}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {a.assignment_type} · {a.difficulty}
-                      {a.unit != null ? ` · Unit ${a.unit}` : ""} · {a.total_marks} marks · Due {due.toLocaleString()}
+                      {a.unit != null ? ` · Unit ${a.unit}` : ""} · {a.total_marks} marks
+                      {due ? ` · Due ${due.toLocaleString()}` : " · No due date"}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {a.counts.submitted} submitted · {a.counts.reviewed} reviewed
@@ -435,6 +493,13 @@ function HomeworkAdminSection({
                   <div className="flex flex-wrap gap-2">
                     <button onClick={() => setReviewing(reviewing === a.id ? null : a.id)} className="rounded-md border border-border bg-background px-3 py-1.5 text-sm">
                       {reviewing === a.id ? "Hide submissions" : "Submissions"}
+                    </button>
+                    <button
+                      onClick={() => setRefiningId(a.id)}
+                      className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary"
+                      title="Rewrite this question with AI"
+                    >
+                      <Sparkles size={14} /> Refine with AI
                     </button>
                     <button onClick={() => loadInto(a)} className="rounded-md border border-border bg-background px-3 py-1.5 text-sm">Edit</button>
                     <button onClick={() => togglePublish(a)} className="rounded-md border border-border bg-background px-3 py-1.5 text-sm">
@@ -451,6 +516,7 @@ function HomeworkAdminSection({
       </section>
     </>
   );
+
 }
 
 const inputCls = "block w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent";

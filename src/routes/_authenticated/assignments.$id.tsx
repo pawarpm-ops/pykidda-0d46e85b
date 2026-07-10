@@ -61,7 +61,7 @@ function AssignmentDetailPage() {
 
   const submission = data?.submission ?? null;
   const isReviewed = submission?.status === "reviewed";
-  const overdue = data ? new Date(data.assignment.due_at) < new Date() : false;
+  const overdue = data?.assignment.due_at ? new Date(data.assignment.due_at) < new Date() : false;
   // Late submissions are always allowed — student can submit even after due date.
   const canSubmit = data ? !isReviewed : false;
   const readOnly = isReviewed;
@@ -168,9 +168,14 @@ function AssignmentDetailPage() {
         </div>
         <h1 className="mt-1 text-2xl md:text-3xl font-bold tracking-tight">{a.title}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-          <span className={overdue ? "text-destructive font-semibold" : "text-muted-foreground"}>
-            ⏰ Due {new Date(a.due_at).toLocaleString()}
-          </span>
+          {a.due_at ? (
+            <span className={overdue ? "text-destructive font-semibold" : "text-muted-foreground"}>
+              ⏰ Due {new Date(a.due_at).toLocaleString()}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Self-solve · no due date</span>
+          )}
+
           {a.allow_late_submission && <span className="text-muted-foreground">Late submissions allowed</span>}
           {submission && (
             <span className="rounded-full border border-border bg-secondary px-2 py-0.5 font-semibold">

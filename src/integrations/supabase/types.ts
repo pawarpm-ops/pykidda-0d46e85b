@@ -315,19 +315,29 @@ export type Database = {
       }
       assignments: {
         Row: {
+          ai_prompt_summary: string | null
           allow_late_submission: boolean
           assignment_type: string
+          constraints: string | null
           created_at: string
           created_by: string
           description: string
           difficulty: string
-          due_at: string
+          due_at: string | null
           expected_output: string | null
+          hints: string | null
           id: string
+          input_format: string | null
+          instructions: string | null
+          output_format: string | null
+          question_source: string
+          refined_by_ai: boolean
           sample_input: string | null
           sample_output: string | null
           starter_code: string | null
           status: string
+          submission_mode: string
+          test_cases: Json
           title: string
           topic: string | null
           total_marks: number
@@ -335,19 +345,29 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_prompt_summary?: string | null
           allow_late_submission?: boolean
           assignment_type?: string
+          constraints?: string | null
           created_at?: string
           created_by: string
           description?: string
           difficulty?: string
-          due_at: string
+          due_at?: string | null
           expected_output?: string | null
+          hints?: string | null
           id?: string
+          input_format?: string | null
+          instructions?: string | null
+          output_format?: string | null
+          question_source?: string
+          refined_by_ai?: boolean
           sample_input?: string | null
           sample_output?: string | null
           starter_code?: string | null
           status?: string
+          submission_mode?: string
+          test_cases?: Json
           title: string
           topic?: string | null
           total_marks?: number
@@ -355,19 +375,29 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_prompt_summary?: string | null
           allow_late_submission?: boolean
           assignment_type?: string
+          constraints?: string | null
           created_at?: string
           created_by?: string
           description?: string
           difficulty?: string
-          due_at?: string
+          due_at?: string | null
           expected_output?: string | null
+          hints?: string | null
           id?: string
+          input_format?: string | null
+          instructions?: string | null
+          output_format?: string | null
+          question_source?: string
+          refined_by_ai?: boolean
           sample_input?: string | null
           sample_output?: string | null
           starter_code?: string | null
           status?: string
+          submission_mode?: string
+          test_cases?: Json
           title?: string
           topic?: string | null
           total_marks?: number

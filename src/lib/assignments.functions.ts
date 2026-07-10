@@ -135,9 +135,9 @@ export const submitAssignment = createServerFn({ method: "POST" })
     if (!a) throw new Error("Assignment not found");
 
     const now = new Date();
-    const due = new Date(a.due_at);
-    const isLate = now > due;
+    const isLate = a.due_at ? now > new Date(a.due_at) : false;
     // Late submissions are always allowed — they are just flagged as late.
+
 
     const payload = {
       answer_text: data.answer_text ?? null,
@@ -190,14 +190,22 @@ const AssignmentInputSchema = z.object({
   difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
   assignment_type: z.enum(["coding", "written", "mixed"]).default("coding"),
   total_marks: z.number().int().min(1).max(1000).default(10),
-  due_at: z.string().min(1),
+  due_at: z.string().nullable().optional(),
   allow_late_submission: z.boolean().default(false),
   status: z.enum(["draft", "published", "closed"]).default("draft"),
   sample_input: z.string().max(5000).nullable().optional(),
   sample_output: z.string().max(5000).nullable().optional(),
   expected_output: z.string().max(5000).nullable().optional(),
   starter_code: z.string().max(20000).nullable().optional(),
+  submission_mode: z.enum(["submit", "self_solve"]).optional(),
+  question_source: z.enum(["manual", "ai_generated", "migrated_practice"]).optional(),
+  input_format: z.string().max(5000).nullable().optional(),
+  output_format: z.string().max(5000).nullable().optional(),
+  constraints: z.string().max(5000).nullable().optional(),
+  hints: z.string().max(5000).nullable().optional(),
+  instructions: z.string().max(5000).nullable().optional(),
 });
+
 
 export const adminListAssignments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
