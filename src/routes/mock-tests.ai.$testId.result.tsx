@@ -65,6 +65,9 @@ function ResultPage() {
     result.percentage >= 60 ? "text-primary" :
     result.percentage >= 40 ? "text-[oklch(0.65_0.16_85)]" : "text-destructive";
 
+  const correctAnswers = result.answers.filter((a) => a.correct);
+  const incorrectAnswers = result.answers.filter((a) => !a.correct);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
@@ -77,25 +80,7 @@ function ResultPage() {
           <p className="mt-2 text-lg">Grade <b>{result.grade}</b> · {result.marks_obtained} / {result.total_marks} marks</p>
         </div>
 
-        <h2 className="mt-8 text-xl font-semibold">Question-by-question breakdown</h2>
-        <ol className="mt-4 space-y-3">
-          {result.answers.map((a, i) => (
-            <li key={a.question_id} className={`rounded-xl border-l-4 border border-border bg-card p-4 ${a.correct ? "border-l-[oklch(0.65_0.16_145)]" : "border-l-destructive"}`}>
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <p className="font-semibold text-sm">Q{i + 1} · {a.marks_awarded}/{a.marks_total} marks</p>
-                <span className={`text-xs font-bold ${a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"}`}>
-                  {a.correct ? "✓ Correct" : "✗ Incorrect"}
-                  {a.code_total !== null ? ` · ${a.code_passed}/${a.code_total} tests` : ""}
-                </span>
-              </div>
-              <p className="mt-2 text-sm"><span className="text-muted-foreground">Your answer: </span><span className="font-mono">{a.response ? (a.response.length > 200 ? a.response.slice(0, 200) + "…" : a.response) : "(blank)"}</span></p>
-              {a.correct_answer && !a.correct && (
-                <p className="mt-1 text-sm"><span className="text-muted-foreground">Expected: </span><span className="font-mono">{a.correct_answer}</span></p>
-              )}
-              {a.explanation && <p className="mt-2 text-xs text-muted-foreground italic">💡 {a.explanation}</p>}
-            </li>
-          ))}
-        </ol>
+        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} />
 
         <div className="mt-8 flex gap-3">
           <Link to="/mock-tests" className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground">Back to tests</Link>
@@ -103,5 +88,112 @@ function ResultPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+type TabKey = "correct" | "incorrect" | "key";
+
+function AnswerTabs({ correct, incorrect, all }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[] }) {
+  const [tab, setTab] = useState<TabKey>("correct");
+
+  const tabs: { key: TabKey; label: string; count: number }[] = [
+    { key: "correct", label: "Correct Questions", count: correct.length },
+    { key: "incorrect", label: "Incorrect Questions", count: incorrect.length },
+    { key: "key", label: "Answer Key", count: all.length },
+  ];
+
+  const list = tab === "correct" ? correct : tab === "incorrect" ? incorrect : all;
+
+  return (
+    <section className="mt-8">
+      <div className="flex flex-wrap gap-2 border-b border-border">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-2 text-sm font-semibold rounded-t-md border-b-2 transition ${
+              tab === t.key
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label} <span className="ml-1 text-xs opacity-70">({t.count})</span>
+          </button>
+        ))}
+      </div>
+
+      {list.length === 0 ? (
+        <p className="mt-6 text-sm text-muted-foreground text-center py-8">
+          {tab === "correct" ? "No correct answers yet." : tab === "incorrect" ? "No incorrect answers — great job!" : "No questions."}
+        </p>
+      ) : (
+        <ol className="mt-4 space-y-3">
+          {list.map((a) => {
+            const origIdx = all.indexOf(a);
+            return (
+              <li
+                key={a.question_id}
+                className={`rounded-xl border-l-4 border border-border bg-card p-4 ${
+                  tab === "key"
+                    ? "border-l-primary"
+                    : a.correct
+                      ? "border-l-[oklch(0.65_0.16_145)]"
+                      : "border-l-destructive"
+                }`}
+              >
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <p className="font-semibold text-sm">Q{origIdx + 1} · {a.marks_awarded}/{a.marks_total} marks</p>
+                  {tab !== "key" && (
+                    <span className={`text-xs font-bold ${a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"}`}>
+                      {a.correct ? "✓ Correct" : "✗ Incorrect"}
+                      {a.code_total !== null ? ` · ${a.code_passed}/${a.code_total} tests` : ""}
+                    </span>
+                  )}
+                </div>
+
+                {tab === "correct" && (
+                  <p className="mt-2 text-sm">
+                    <span className="text-muted-foreground">Your answer: </span>
+                    <span className="font-mono whitespace-pre-wrap">{a.response || "(blank)"}</span>
+                  </p>
+                )}
+
+                {tab === "incorrect" && (
+                  <>
+                    <p className="mt-2 text-sm">
+                      <span className="text-muted-foreground">Your answer: </span>
+                      <span className="font-mono whitespace-pre-wrap text-destructive">{a.response || "(blank)"}</span>
+                    </p>
+                    {a.correct_answer && (
+                      <div className="mt-3 rounded-md border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/5 p-3">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[oklch(0.55_0.16_145)]">✨ AI Correct Solution</p>
+                        <p className="mt-1 text-sm font-mono whitespace-pre-wrap">{a.correct_answer}</p>
+                        {a.explanation && (
+                          <p className="mt-2 text-xs text-muted-foreground italic">💡 {a.explanation}</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {tab === "key" && (
+                  <div className="mt-2 space-y-2">
+                    {a.correct_answer && (
+                      <p className="text-sm">
+                        <span className="text-muted-foreground">Correct answer: </span>
+                        <span className="font-mono whitespace-pre-wrap">{a.correct_answer}</span>
+                      </p>
+                    )}
+                    {a.explanation && (
+                      <p className="text-xs text-muted-foreground italic">💡 {a.explanation}</p>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
   );
 }
