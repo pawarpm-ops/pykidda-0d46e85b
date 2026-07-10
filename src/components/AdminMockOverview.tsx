@@ -496,15 +496,21 @@ function AiMockList({
   kind,
   profiles,
   currentUserId,
+  onDrillChange,
 }: {
   kind: "normal" | "scheduled";
   profiles: Record<string, { display_name: string | null; full_name: string | null; college_name: string | null }>;
   currentUserId: string | null;
+  onDrillChange?: (drilled: boolean) => void;
 }) {
   const [tests, setTests] = useState<ScheduledTest[]>([]);
   const [attemptsByTest, setAttemptsByTest] = useState<Record<string, ScheduledAttempt[]>>({});
   const [loading, setLoading] = useState(true);
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+
+  useEffect(() => {
+    onDrillChange?.(selectedTestId !== null);
+  }, [selectedTestId, onDrillChange]);
 
   useEffect(() => {
     (async () => {
