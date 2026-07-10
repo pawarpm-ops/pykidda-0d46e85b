@@ -145,6 +145,47 @@
   }
 }
 
+/* Global clickable cursor — matches header/navbar link behavior across the app */
+@layer base {
+  a[href],
+  button:not(:disabled):not([aria-disabled="true"]):not([data-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]):not([data-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]):not([data-disabled="true"]),
+  [role="menuitem"]:not([aria-disabled="true"]):not([data-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]):not([data-disabled="true"]),
+  [role="link"],
+  summary,
+  select:not(:disabled),
+  label[for],
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  .clickable,
+  .card-clickable,
+  .card-glow:not(:disabled):not([aria-disabled="true"]):not([data-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  button[aria-disabled="true"],
+  button[data-disabled="true"],
+  [role="button"][aria-disabled="true"],
+  [role="button"][data-disabled="true"],
+  [role="tab"][aria-disabled="true"],
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  a[aria-disabled="true"],
+  .card-glow:disabled,
+  .card-glow[aria-disabled="true"],
+  .card-glow[data-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
 @keyframes shimmer {
   0% { transform: translateX(0); }
   100% { transform: translateX(400%); }
