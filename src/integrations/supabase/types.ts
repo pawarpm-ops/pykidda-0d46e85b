@@ -635,6 +635,7 @@ export type Database = {
           qr_created_at: string | null
           qr_enabled: boolean
           qr_updated_at: string | null
+          student_unique_id: string | null
           tutorial_status: string
           updated_at: string
         }
@@ -656,6 +657,7 @@ export type Database = {
           qr_created_at?: string | null
           qr_enabled?: boolean
           qr_updated_at?: string | null
+          student_unique_id?: string | null
           tutorial_status?: string
           updated_at?: string
         }
@@ -677,6 +679,7 @@ export type Database = {
           qr_created_at?: string | null
           qr_enabled?: boolean
           qr_updated_at?: string | null
+          student_unique_id?: string | null
           tutorial_status?: string
           updated_at?: string
         }
@@ -859,9 +862,21 @@ export type Database = {
     }
     Functions: {
       generate_public_profile_id: { Args: never; Returns: string }
+      generate_student_unique_id: { Args: never; Returns: string }
       get_public_student_profile: {
         Args: { _public_id: string }
         Returns: Json
+      }
+      get_student_directory: {
+        Args: { _ids: string[] }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          public_profile_id: string
+          qr_enabled: boolean
+          student_unique_id: string
+        }[]
       }
       has_role: {
         Args: {
