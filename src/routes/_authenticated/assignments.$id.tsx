@@ -179,6 +179,18 @@ function AssignmentDetailPage() {
           )}
         </div>
 
+        {overdue && !isReviewed && (
+          <div className="mt-4 flex items-start gap-3 rounded-xl border-2 border-[oklch(0.72_0.16_60)]/60 bg-[oklch(0.72_0.16_60)]/10 p-4">
+            <span className="text-2xl leading-none">⚠️</span>
+            <div className="text-sm">
+              <p className="font-bold text-[oklch(0.55_0.18_45)]">This homework deadline is over.</p>
+              <p className="mt-1 text-muted-foreground">
+                You can still submit it, but your submission will be marked as <span className="font-semibold text-[oklch(0.55_0.18_45)]">Late</span>.
+              </p>
+            </div>
+          </div>
+        )}
+
         {a.description && (
           <div className="mt-5 rounded-xl border border-border bg-card p-4 text-sm whitespace-pre-wrap leading-relaxed">
             {a.description}
