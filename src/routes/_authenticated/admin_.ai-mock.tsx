@@ -48,7 +48,13 @@ type TestRow = {
   question_count: number;
   created_at?: string;
   published_at?: string | null;
+  test_kind?: "normal" | "scheduled";
+  scheduled_start_at?: string | null;
+  scheduled_end_at?: string | null;
+  schedule_instructions?: string;
+  results_visibility?: "immediate" | "after_end";
 };
+
 
 const TYPE_LABEL: Record<QType, string> = {
   mcq: "Multiple choice",
