@@ -359,6 +359,17 @@ function TakeAiMock() {
         void submit("normal");
         return;
       }
+      // Arrow keys for prev/next — ignore when typing in editor/input/textarea
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const t = e.target as HTMLElement | null;
+        const tag = t?.tagName;
+        const isEditable = !!t && (t === editorRef.current || tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable);
+        if (!isEditable) {
+          e.preventDefault();
+          if (e.key === "ArrowLeft") goPrev(); else goNext();
+          return;
+        }
+      }
       if (e.altKey) {
         const k = lower;
         if (k === "p") { e.preventDefault(); goPrev(); return; }
