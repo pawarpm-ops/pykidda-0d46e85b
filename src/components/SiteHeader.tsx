@@ -21,7 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", iconOnly: true, icon: Home },
   { to: "/practice", label: "Practice", tour: "nav-practice" },
   { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock" },
-  { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard" },
+  { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard", iconOnly: true, icon: Trophy },
   { to: "/assignments", label: "Homework", authOnly: true },
   { to: "/teacher-comments", label: "Teacher Comments", authOnly: true },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true, iconOnly: true, icon: TrendingUp },
