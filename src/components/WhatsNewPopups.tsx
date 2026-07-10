@@ -178,6 +178,11 @@ export function WhatsNewPopups() {
     }
   }
 
+  // Dismiss without marking seen — popup can reappear next session.
+  function dismissTemporarily() {
+    setQueue((q) => q.slice(1));
+  }
+
   function handleView() {
     const item = current;
     if (!item) return;
