@@ -50,10 +50,10 @@ export function SiteHeader() {
 
   const linkCls = (to: string) =>
     cn(
-      "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+      "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap border border-transparent hover-glow",
       isActive(to)
-        ? "bg-primary/15 text-primary ring-1 ring-primary/30"
-        : "text-foreground/70 hover:text-foreground hover:bg-secondary",
+        ? "bg-primary/15 text-primary border-primary/30"
+        : "text-foreground/70 hover:text-foreground",
     );
 
   async function handleSignOut() {
