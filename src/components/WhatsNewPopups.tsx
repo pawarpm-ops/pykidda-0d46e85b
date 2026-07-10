@@ -222,7 +222,7 @@ export function WhatsNewPopups() {
 
         <button
           type="button"
-          onClick={markSeenAndAdvance}
+          onClick={dismissTemporarily}
           aria-label="Close"
           className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/70 hover:bg-secondary transition-colors"
         >
