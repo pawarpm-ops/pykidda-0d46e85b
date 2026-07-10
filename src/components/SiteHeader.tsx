@@ -20,7 +20,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", iconOnly: true, icon: Home },
   { to: "/practice", label: "Practice", tour: "nav-practice" },
-  { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock" },
+  { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock", iconOnly: true, icon: ClipboardList },
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard", iconOnly: true, icon: Trophy },
   { to: "/assignments", label: "Homework", authOnly: true, iconOnly: true, icon: NotebookPen },
   { to: "/teacher-comments", label: "Teacher Comments", authOnly: true, iconOnly: true, icon: MessageCircleMore },
