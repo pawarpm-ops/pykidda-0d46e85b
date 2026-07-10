@@ -467,17 +467,42 @@ function SubmissionsPanel({ assignmentId, totalMarks }: { assignmentId: string; 
   const listFn = useServerFn(adminListSubmissions);
   const reviewFn = useServerFn(adminReviewSubmission);
   const qc = useQueryClient();
+  const [filter, setFilter] = useState<"all" | "on_time" | "late">("all");
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-submissions", assignmentId],
     queryFn: () => listFn({ data: { assignment_id: assignmentId } }),
   });
 
+  const filtered = (data ?? []).filter((s: any) => {
+    if (filter === "all") return true;
+    if (filter === "late") return !!s.is_late;
+    return !s.is_late && (s.status === "submitted" || s.status === "reviewed");
+  });
+
+  const counts = (data ?? []).reduce(
+    (acc: { total: number; late: number; onTime: number }, s: any) => {
+      acc.total++;
+      if (s.is_late) acc.late++;
+      else if (s.status === "submitted" || s.status === "reviewed") acc.onTime++;
+      return acc;
+    },
+    { total: 0, late: 0, onTime: 0 },
+  );
+
+  const tabCls = (active: boolean) =>
+    `rounded-md border px-3 py-1 text-xs font-semibold ${active ? "border-accent bg-accent/15 text-accent-foreground" : "border-border bg-background text-muted-foreground"}`;
+
   return (
     <div className="mt-4 rounded-lg border border-border bg-secondary/20 p-3">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <button onClick={() => setFilter("all")} className={tabCls(filter === "all")}>All ({counts.total})</button>
+        <button onClick={() => setFilter("on_time")} className={tabCls(filter === "on_time")}>On time ({counts.onTime})</button>
+        <button onClick={() => setFilter("late")} className={tabCls(filter === "late")}>Late ({counts.late})</button>
+      </div>
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
-      {data && data.length === 0 && <p className="text-sm text-muted-foreground">No submissions yet.</p>}
+      {data && filtered.length === 0 && <p className="text-sm text-muted-foreground">No submissions in this view.</p>}
       <ul className="space-y-3">
-        {data?.map((s: any) => (
+        {filtered.map((s: any) => (
           <SubmissionRow
             key={s.id}
             sub={s}
