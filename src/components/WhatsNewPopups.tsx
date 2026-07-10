@@ -262,7 +262,7 @@ export function WhatsNewPopups() {
               onClick={markSeenAndAdvance}
               className="rounded-md border border-border bg-background px-4 py-2 text-sm hover:border-accent transition-colors"
             >
-              Close
+              Don't show again
             </button>
             {current.viewUrl && (
               <button
