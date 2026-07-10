@@ -22,7 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/practice", label: "Practice", tour: "nav-practice" },
   { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock" },
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard", iconOnly: true, icon: Trophy },
-  { to: "/assignments", label: "Homework", authOnly: true },
+  { to: "/assignments", label: "Homework", authOnly: true, iconOnly: true, icon: NotebookPen },
   { to: "/teacher-comments", label: "Teacher Comments", authOnly: true, iconOnly: true, icon: MessageCircleMore },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true, iconOnly: true, icon: TrendingUp },
   { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, iconOnly: true, icon: User },
