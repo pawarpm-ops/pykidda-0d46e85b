@@ -457,6 +457,17 @@ function RunTest() {
         return;
       }
 
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const t = e.target as HTMLElement | null;
+        const tag = t?.tagName;
+        const isEditable = !!t && (t === editorRef.current || tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable);
+        if (!isEditable) {
+          e.preventDefault();
+          if (e.key === "ArrowLeft") goPrev(); else goNext();
+          return;
+        }
+      }
+
       if (e.altKey) {
         const k = e.key.toLowerCase();
         if (k === "p") { e.preventDefault(); goPrev(); return; }
