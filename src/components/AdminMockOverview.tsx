@@ -101,49 +101,36 @@ export function AdminMockOverview({
   profiles: Record<string, { display_name: string | null; full_name: string | null; college_name: string | null }>;
   currentUserId: string | null;
 }) {
-  const [kind, setKind] = useState<"menu" | "normal" | "scheduled">("menu");
+  const [kind, setKind] = useState<"normal" | "scheduled">("normal");
 
   return (
     <section className="mt-6 space-y-5">
       <div className="flex flex-wrap gap-2">
-        {kind !== "menu" && (
-          <button
-            onClick={() => setKind("menu")}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold transition hover:border-accent/60 hover:bg-accent/5"
-          >
-            ← Back
-          </button>
-        )}
-        {(kind === "menu" || kind === "normal") && (
-          <button
-            onClick={() => setKind("normal")}
-            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-              kind === "normal"
-                ? "border-accent bg-accent/15 text-accent-foreground"
-                : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
-            }`}
-          >
-            📝 Normal Mock Tests
-          </button>
-        )}
-        {(kind === "menu" || kind === "scheduled") && (
-          <button
-            onClick={() => setKind("scheduled")}
-            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-              kind === "scheduled"
-                ? "border-accent bg-accent/15 text-accent-foreground"
-                : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
-            }`}
-          >
-            📅 Scheduled Mock Tests
-          </button>
-        )}
+        <button
+          onClick={() => setKind("normal")}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+            kind === "normal"
+              ? "border-accent bg-accent/15 text-accent-foreground"
+              : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
+          }`}
+        >
+          📝 Normal Mock Tests
+        </button>
+        <button
+          onClick={() => setKind("scheduled")}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+            kind === "scheduled"
+              ? "border-accent bg-accent/15 text-accent-foreground"
+              : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
+          }`}
+        >
+          📅 Scheduled Mock Tests
+        </button>
       </div>
 
-      {kind === "normal" && (
+      {kind === "normal" ? (
         <NormalMockList mocks={mocks} profiles={profiles} currentUserId={currentUserId} />
-      )}
-      {kind === "scheduled" && (
+      ) : (
         <ScheduledMockList profiles={profiles} currentUserId={currentUserId} />
       )}
     </section>
