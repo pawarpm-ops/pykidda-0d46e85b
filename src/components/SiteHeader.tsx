@@ -118,7 +118,7 @@ export function SiteHeader() {
               </span>
               <button
                 onClick={handleSignOut}
-                className="hidden sm:inline-flex rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition-colors whitespace-nowrap"
+                className="hidden sm:inline-flex rounded-md border border-border bg-background px-3 py-1.5 text-sm whitespace-nowrap hover-glow"
               >
                 Sign out
               </button>
