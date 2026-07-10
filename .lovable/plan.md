@@ -1,103 +1,86 @@
-## Goal
+# Homework Module Plan
 
-Give admins a choice when publishing an AI-generated mock test — publish as a **Normal Mock Test** (works exactly like today) or as a **Scheduled Mock Test** that is only attemptable during the teacher-selected date/time window. Split the student mock-tests page into Normal / Scheduled tabs, and send a notification with a **View** button that opens the specific scheduled test.
+Based on your answers:
+- Remove Practice tab entirely
+- Build brand-new Homework module (separate from Assignments)
+- Per-homework mode: **Self-solve** or **Submit for grading**
+- Leave the static `src/lib/questions.ts` Practice content alone (no DB migration for legacy)
 
-Everything reuses the existing AI mock test infrastructure (`ai_mock_tests`, `ai_mock_questions`, `ai_mock_attempts`, the existing take/warning/result routes, secure fullscreen mode, grading, timer). No parallel test engine.
+## 1. Database (single migration)
 
----
+New tables in `public`:
 
-## Part 1 — Database
+- `homework`
+  - `id`, `created_by` (uuid → auth.users), `title`, `description`, `mode` ('self_solve' | 'submit'), `status` ('draft' | 'published'), `due_at` (nullable), `instructions`, `created_at`, `updated_at`
+- `homework_questions`
+  - `id`, `homework_id`, `position` (int), `question_source` ('manual' | 'ai_generated'), `refined_by_ai` (bool)
+  - `title`, `problem_statement`, `input_format`, `output_format`, `sample_input`, `sample_output`, `constraints`, `marks` (int), `difficulty` ('easy' | 'medium' | 'hard'), `hints` (nullable)
+  - `test_cases` (jsonb) — optional array of `{input, expected_output, is_hidden}`
+- `homework_submissions` (only used when `mode = 'submit'`)
+  - `id`, `homework_id`, `student_id`, `answers` (jsonb), `submitted_at`, `is_late`, `marks_obtained`, `teacher_feedback`, `reviewed_by`, `reviewed_at`, `status`
 
-Migration on `ai_mock_tests`:
+RLS + GRANTs:
+- Admins full CRUD on `homework` + `homework_questions`
+- Students SELECT published homework + questions (hidden test cases stripped via a view/RPC)
+- Students insert/update own submissions; admins read/grade all
 
-- `test_kind` text default `'normal'` (`'normal' | 'scheduled'`)
-- `scheduled_start_at` timestamptz null
-- `scheduled_end_at` timestamptz null
-- `schedule_instructions` text default `''`
-- `results_visibility` text default `'immediate'` (`'immediate' | 'after_end'`)
+## 2. Server functions (`src/lib/homework.functions.ts`)
 
-CHECK: when `test_kind='scheduled'` and `status='published'`, both `scheduled_start_at` and `scheduled_end_at` are non-null and `end > start`. Existing rows default to `normal` — no behaviour change.
+- `listHomeworkAdmin`, `getHomework`, `createHomework`, `updateHomework`, `deleteHomework`, `publishHomework`
+- `addQuestion`, `updateQuestion`, `deleteQuestion`, `reorderQuestions`
+- `generateHomeworkWithAI({ topic, difficulty, count, marksPer, questionType, instructions, dueAt })` — calls Lovable AI Gateway (`google/gemini-3-flash-preview`), returns generated questions
+- `refineQuestionWithAI({ questionId })` — returns `{ before, after }` diff-friendly payload; teacher accepts/rejects on the client
+- `applyRefinement({ questionId, accepted })`
+- Student side: `listPublishedHomework`, `getHomeworkForStudent` (strips hidden test cases), `submitHomework`
 
-## Part 2 — Admin AI Mock creator (`src/routes/_authenticated/admin_.ai-mock.tsx`)
+## 3. Admin UI — `/_authenticated/admin_.homework`
 
-Replace the single "🚀 Publish to students" button with two:
+Landing page with two big cards:
+```
+┌─────────────────────┐  ┌─────────────────────┐
+│ ✍ Create Manually   │  │ ✨ Generate with AI │
+│ Design each Q your… │  │ Let AI draft Qs from│
+└─────────────────────┘  └─────────────────────┘
+```
+Below: tabs for **Drafts** and **Published** listing existing homework.
 
-- **Publish as Normal Mock Test** — current behaviour (status=`published`, `test_kind='normal'`).
-- **Publish as Scheduled Mock Test** — opens a modal:
-  - Date picker (calendar) + start time + end time
-  - Duration is auto-derived from `duration_sec` but shown for confirmation
-  - Instructions textarea
-  - Results visibility toggle (Immediate / After test ends)
-  - Confirm → publishes with `test_kind='scheduled'` and schedule fields set
+Sub-routes:
+- `/admin/homework/new/manual` — form: homework meta + repeatable question editor (add/edit/delete/reorder). Save as draft / Publish.
+- `/admin/homework/new/ai` — AI form (topic, difficulty, count, marks, question type, instructions, due). Generate → preview list → edit any question inline → Save/Publish.
+- `/admin/homework/$id` — edit existing (both manual + AI questions live together). Every question card shows a **Refine with AI** button.
 
-Also in the admin list rows: show a `SCHEDULED · <date/time>` badge, and add an **Edit schedule** button (only before start time) that reopens the modal.
+Refine flow (modal):
+- Side-by-side **Before / After** diff
+- Buttons: `Accept`, `Reject`, `Edit Manually`, `Regenerate`
 
-Server functions in `src/lib/ai-mock.functions.ts`:
+## 4. Student UI
 
-- Extend `publishAiMockTest` input to accept `{ id, publish, test_kind?, scheduled_start_at?, scheduled_end_at?, schedule_instructions?, results_visibility? }`. Validate schedule fields when `test_kind='scheduled'`.
-- New `updateAiMockSchedule({ id, ... })` for reschedule.
-- Extend `listAiMockTests` to project the new fields.
-- On successful scheduled publish, insert a row into `announcements` with:
-  - `title = "New Scheduled Mock Test"`
-  - `body = "A new scheduled mock test <title> is scheduled for <date/time>."`
-  - `priority = "high"`
-  - New column `action_url = "/mock-tests/scheduled/<id>"` (add to `announcements` in the same migration; nullable text). This is how the View button gets the deep link.
+- Rename Practice nav item → **Homework** (route `/homework`), remove old Practice routes/links.
+- List published homework (title, mode badge, due date, marks, difficulty).
+- Detail page: shows questions. If `mode='submit'`, provides submission form + due-date enforcement. If `mode='self_solve'`, provides a solve UI similar to today's Practice.
 
-## Part 3 — Notification View button
+## 5. Remove Practice tab
 
-Update `src/components/NotificationBell.tsx` (and any inline announcement rendering) so that when `action_url` is set, the row shows a **View** button that `navigate({ to: action_url })`. Non-scheduled announcements are unchanged.
+- Remove Practice nav entry from student + admin sidebars.
+- Delete/redirect `/practice*` routes to `/homework`.
+- **Leave `src/lib/questions.ts` untouched** — it stays in the codebase but no route surfaces it.
 
-## Part 4 — Student mock-tests page (`src/routes/mock-tests.index.tsx`)
+## 6. AI safety
 
-Replace the single grid with two tabs:
+- All AI calls happen inside `createServerFn` handlers using `LOVABLE_API_KEY` server-side.
+- Loading + error states on every AI action ("AI could not generate questions right now. Please try again.").
 
-- **Normal Mock Tests** — static `MOCK_TESTS` + AI tests where `test_kind='normal'` (existing behaviour).
-- **Scheduled Mock Tests** — AI tests where `test_kind='scheduled'`, each rendered as a card with:
-  - Title, description
-  - 📅 Date, ⏰ Start–End, Duration, marks, Q count
-  - Status badge derived from current time:
-    - `Upcoming` (before start) — button disabled, "This test will start on <date/time>"
-    - `Available Now` (within window) — enabled **Attend Test** button → existing warning route `/mock-tests/ai/$testId/warning`
-    - `Closed` (after end) — button disabled, "This scheduled test is closed."
+## 7. Styling
 
-Ticking clock via `useEffect` interval so status flips live.
+- Reuses existing Py Kidda Hub tokens (`bg-card`, `border-border`, primary accents).
+- Cards get `transition-transform hover:scale-[1.02] hover:border-primary` and existing shadow tokens — no custom glow.
 
-New route `src/routes/_authenticated/mock-tests.scheduled.$testId.tsx` — a details view the notification's View button lands on. Shows the same card + a large Attend button (same time-gating).
+## Technical notes
 
-## Part 5 — Security gate for scheduled tests
+- New route files: `src/routes/_authenticated/admin_.homework.tsx`, `admin_.homework.new.manual.tsx`, `admin_.homework.new.ai.tsx`, `admin_.homework.$id.tsx`, `_authenticated/homework.tsx`, `_authenticated/homework.$id.tsx`.
+- One migration file creating all 3 tables with GRANTs + RLS + `updated_at` trigger.
+- AI generation uses `google/gemini-3-flash-preview` with structured JSON output.
+- Refinement stores the "after" candidate in component state only — nothing is written until teacher clicks Accept.
+- Since this is a large build, I'll ship it in this order and report progress: (1) migration, (2) server fns, (3) admin manual flow, (4) admin AI flow + refine, (5) student side + Practice removal.
 
-In `getStudentAiTest` and `submitAiMockAttempt` handlers, when `test_kind='scheduled'`:
-
-- Reject with `Test not started yet` if `now < scheduled_start_at`
-- Reject with `Scheduled test window has ended` if `now > scheduled_end_at`
-
-This is the real enforcement — the UI gate is a UX layer, the server-fn gate is the security boundary. Existing secure fullscreen / anti-cheat / grading / timer / attempt tracking already runs through the same take route, so nothing else changes.
-
-Also in the result page, if `results_visibility='after_end'` and `now < scheduled_end_at`, hide the graded breakdown and show "Results will be available after <end time>."
-
-## Part 6 — Admin Scheduled management
-
-Small additions in the existing AI mock admin list:
-
-- Filter chip: All / Normal / Scheduled
-- On scheduled rows: countdown ("Starts in 2h 15m" / "Ends in 30m" / "Ended"), attempt count (reuse existing count), Edit-schedule button, Cancel button (sets status back to draft, removes schedule).
-
-## Technical details
-
-Files touched:
-
-- `supabase/migrations/<new>.sql` — schema + `announcements.action_url`
-- `src/lib/ai-mock.functions.ts` — publish/update/list changes + scheduled-time gate in student read/submit
-- `src/routes/_authenticated/admin_.ai-mock.tsx` — two publish buttons + schedule modal + filter/edit/cancel
-- `src/routes/mock-tests.index.tsx` — Normal / Scheduled tabs
-- `src/routes/_authenticated/mock-tests.scheduled.$testId.tsx` — new deep-link details page
-- `src/components/NotificationBell.tsx` — View button when `action_url` present
-- `src/integrations/supabase/types.ts` — regenerated after migration approval
-
-Constraints:
-
-- The take/warning/result routes for AI mock tests stay unchanged — scheduled tests reuse them, gated by time on the server.
-- Static `MOCK_TESTS` remain "normal" and untouched.
-- All timestamps stored/compared in UTC; UI formats to local time.
-
-Ready to implement on approval.
+Reply "go" to proceed, or tell me anything to adjust (e.g. simpler UI, skip submissions, keep Practice nav pointing to Homework as a redirect only, etc.).
