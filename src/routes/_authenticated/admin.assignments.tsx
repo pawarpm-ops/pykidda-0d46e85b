@@ -135,16 +135,17 @@ function AdminAssignmentsPage() {
         difficulty: form.difficulty,
         assignment_type: form.assignment_type,
         total_marks: Number(form.total_marks) || 10,
-        due_at: toISO(form.due_at),
+        due_at: form.submission_mode === "self_solve" ? null : (form.due_at ? toISO(form.due_at) : null),
         allow_late_submission: form.allow_late_submission,
         status: publishOverride ?? form.status,
         sample_input: form.sample_input || null,
         sample_output: form.sample_output || null,
         expected_output: form.expected_output || null,
         starter_code: form.starter_code || null,
+        submission_mode: form.submission_mode,
       };
       if (!payload.title) throw new Error("Title required");
-      if (!payload.due_at) throw new Error("Due date required");
+      if (form.submission_mode === "submit" && !payload.due_at) throw new Error("Due date required for submit-mode homework");
 
       if (form.id) {
         await updateFn({ data: { id: form.id, ...payload } });
@@ -160,6 +161,7 @@ function AdminAssignmentsPage() {
       setBusy(false);
     }
   }
+
 
   async function remove(id: string) {
     if (!confirm("Delete assignment and all submissions?")) return;
@@ -259,16 +261,17 @@ export function HomeworkAdminTab() {
         difficulty: form.difficulty,
         assignment_type: form.assignment_type,
         total_marks: Number(form.total_marks) || 10,
-        due_at: toISO(form.due_at),
+        due_at: form.submission_mode === "self_solve" ? null : (form.due_at ? toISO(form.due_at) : null),
         allow_late_submission: form.allow_late_submission,
         status: publishOverride ?? form.status,
         sample_input: form.sample_input || null,
         sample_output: form.sample_output || null,
         expected_output: form.expected_output || null,
         starter_code: form.starter_code || null,
+        submission_mode: form.submission_mode,
       };
       if (!payload.title) throw new Error("Title required");
-      if (!payload.due_at) throw new Error("Due date required");
+      if (form.submission_mode === "submit" && !payload.due_at) throw new Error("Due date required for submit-mode homework");
       if (form.id) await updateFn({ data: { id: form.id, ...payload } });
       else await createFn({ data: payload });
       setForm(empty);
@@ -280,6 +283,7 @@ export function HomeworkAdminTab() {
       setBusy(false);
     }
   }
+
 
   async function remove(id: string) {
     if (!confirm("Delete assignment and all submissions?")) return;
