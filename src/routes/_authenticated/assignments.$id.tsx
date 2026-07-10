@@ -62,9 +62,8 @@ function AssignmentDetailPage() {
   const submission = data?.submission ?? null;
   const isReviewed = submission?.status === "reviewed";
   const overdue = data ? new Date(data.assignment.due_at) < new Date() : false;
-  const canSubmit = data
-    ? !isReviewed && (!overdue || data.assignment.allow_late_submission)
-    : false;
+  // Late submissions are always allowed — student can submit even after due date.
+  const canSubmit = data ? !isReviewed : false;
   const readOnly = isReviewed;
 
   // autosave draft
