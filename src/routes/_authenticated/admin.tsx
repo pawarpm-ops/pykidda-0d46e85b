@@ -380,27 +380,31 @@ function AdminPage() {
         {tab === "overview" && (
           <>
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setOverviewSubTab("complete")}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    overviewSubTab === "complete"
-                      ? "border-accent bg-accent/15 text-accent-foreground"
-                      : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
-                  }`}
-                >
-                  📊 Total Overview
-                </button>
-                <button
-                  onClick={() => setOverviewSubTab("mocks")}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    overviewSubTab === "mocks"
-                      ? "border-accent bg-accent/15 text-accent-foreground"
-                      : "border-border bg-card hover:border-accent/60 hover:bg-accent/5"
-                  }`}
-                >
-                  🧪 Mock Test Overview
-                </button>
+              <div className="flex flex-wrap items-center gap-2">
+                {overviewSubTab === "mocks" ? (
+                  <button
+                    onClick={() => setOverviewSubTab("complete")}
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold hover:border-accent/60 hover:bg-accent/5 transition"
+                    aria-label="Back"
+                  >
+                    ← Back
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setOverviewSubTab("complete")}
+                      className="inline-flex items-center gap-2 rounded-full border border-accent bg-accent/15 px-4 py-2 text-sm font-semibold text-accent-foreground transition"
+                    >
+                      📊 Total Overview
+                    </button>
+                    <button
+                      onClick={() => setOverviewSubTab("mocks")}
+                      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold hover:border-accent/60 hover:bg-accent/5 transition"
+                    >
+                      🧪 Mock Test Overview
+                    </button>
+                  </>
+                )}
               </div>
               {overviewSubTab === "complete" && (
                 <button
