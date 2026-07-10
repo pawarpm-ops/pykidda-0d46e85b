@@ -1,9 +1,59 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Search, X } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchLeaderboard, syncMyScore, type LeaderboardRow } from "@/lib/leaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchStreakLeaderboard, getCurrentRank, type StreakLeaderRow } from "@/lib/streaks";
+
+type DirectoryEntry = {
+  student_unique_id: string | null;
+  public_profile_id: string | null;
+  qr_enabled: boolean;
+};
+type Directory = Map<string, DirectoryEntry>;
+
+async function loadDirectory(ids: string[]): Promise<Directory> {
+  const map: Directory = new Map();
+  if (ids.length === 0) return map;
+  const { data, error } = await supabase.rpc("get_student_directory", { _ids: ids });
+  if (error || !data) return map;
+  for (const r of data as Array<{
+    id: string;
+    student_unique_id: string | null;
+    public_profile_id: string | null;
+    qr_enabled: boolean;
+  }>) {
+    map.set(r.id, {
+      student_unique_id: r.student_unique_id,
+      public_profile_id: r.public_profile_id,
+      qr_enabled: r.qr_enabled,
+    });
+  }
+  return map;
+}
+
+function StudentIdChip({ entry }: { entry: DirectoryEntry | undefined }) {
+  const id = entry?.student_unique_id;
+  if (!id) return <span className="text-[11px] text-muted-foreground">—</span>;
+  const canLink = !!entry?.public_profile_id && entry.qr_enabled;
+  const base =
+    "inline-flex items-center rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 font-mono text-[11px] font-semibold tracking-wider text-accent";
+  if (canLink) {
+    return (
+      <Link
+        to="/u/$publicId"
+        params={{ publicId: entry!.public_profile_id! }}
+        className={`${base} hover:bg-accent/20 hover:border-accent transition-colors`}
+        title="Open student profile"
+      >
+        {id}
+      </Link>
+    );
+  }
+  return <span className={base}>{id}</span>;
+}
+
 
 export const Route = createFileRoute("/_authenticated/leaderboard")({
   head: () => ({
