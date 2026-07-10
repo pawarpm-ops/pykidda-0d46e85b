@@ -520,9 +520,10 @@ function Editor() {
         <section className="rounded-2xl border-2 border-dashed border-accent/50 bg-accent/5 p-6">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <span>✨</span> 2. Custom instructions to the AI
+            <span className="text-xs font-normal text-muted-foreground">(optional)</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Write in plain English exactly how you want this test built — topics to cover, difficulty, style, focus areas, question wording, examples, marks weighting, anything. GPT-5 will follow this precisely.
+            Optional — leave blank if the syllabus PDF is enough. Otherwise write in plain English exactly how you want this test built: topics, difficulty, style, focus areas, wording, examples, marks weighting. GPT-5 will follow it precisely.
           </p>
           <textarea
             value={customInstructions}
