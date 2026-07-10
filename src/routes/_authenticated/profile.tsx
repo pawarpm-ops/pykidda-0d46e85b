@@ -49,9 +49,11 @@ function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState("");
 
   const [publicId, setPublicId] = useState<string | null>(null);
+  const [studentUniqueId, setStudentUniqueId] = useState<string | null>(null);
   const [qrEnabled, setQrEnabled] = useState<boolean>(true);
   const [publicSettings, setPublicSettings] = useState<PublicProfileSettings>(DEFAULT_PUBLIC_SETTINGS);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
+
 
   useEffect(() => {
     (async () => {
@@ -61,7 +63,7 @@ function ProfilePage() {
       setUserId(u.user.id);
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name, bio, avatar_url, public_profile_id, qr_enabled, public_profile_settings")
+        .select("display_name, bio, avatar_url, public_profile_id, student_unique_id, qr_enabled, public_profile_settings")
         .eq("id", u.user.id)
         .maybeSingle();
       if (error) {
@@ -71,6 +73,7 @@ function ProfilePage() {
         setBio(data.bio ?? "");
         setAvatarUrl(data.avatar_url ?? "");
         setPublicId(data.public_profile_id ?? null);
+        setStudentUniqueId((data as { student_unique_id?: string | null }).student_unique_id ?? null);
         setQrEnabled(data.qr_enabled ?? true);
         setPublicSettings({
           ...DEFAULT_PUBLIC_SETTINGS,
@@ -214,8 +217,15 @@ function ProfilePage() {
               <div className="min-w-0">
                 <p className="font-semibold truncate">{displayName || "Unnamed kidda"}</p>
                 <p className="text-sm text-muted-foreground truncate">{email}</p>
+                {studentUniqueId && (
+                  <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-accent">
+                    <span className="opacity-70">Student ID:</span>
+                    <span className="tracking-wider">{studentUniqueId}</span>
+                  </p>
+                )}
               </div>
             </div>
+
 
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium">Display name</span>
