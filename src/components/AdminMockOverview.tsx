@@ -184,12 +184,18 @@ function NormalMockList({
   mocks,
   profiles,
   currentUserId,
+  onDrillChange,
 }: {
   mocks: NormalAttempt[];
   profiles: Record<string, { display_name: string | null; full_name: string | null; college_name: string | null }>;
   currentUserId: string | null;
+  onDrillChange?: (drilled: boolean) => void;
 }) {
   const [selectedTestId, setSelectedTestId] = useState<string | null>(null);
+
+  useEffect(() => {
+    onDrillChange?.(selectedTestId !== null);
+  }, [selectedTestId, onDrillChange]);
 
   const summaries = useMemo(() => {
     const byTest = new Map<string, { id: string; name: string; attempts: NormalAttempt[] }>();
