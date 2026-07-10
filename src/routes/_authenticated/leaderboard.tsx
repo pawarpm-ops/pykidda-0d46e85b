@@ -400,7 +400,15 @@ function StreakLeaderboard({
 }
 
 
-function Podium({ top3, meId }: { top3: LeaderboardRow[]; meId: string | null }) {
+function Podium({
+  top3,
+  meId,
+  directory,
+}: {
+  top3: LeaderboardRow[];
+  meId: string | null;
+  directory: Directory;
+}) {
   // Render order: 2nd, 1st, 3rd for podium look. Fall back gracefully when fewer than 3 exist.
   const first = top3[0];
   const second = top3[1];
@@ -410,19 +418,28 @@ function Podium({ top3, meId }: { top3: LeaderboardRow[]; meId: string | null })
     <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-3">
       {/* 2nd */}
       <div className="order-2 sm:order-1">
-        {second ? <PodiumCard rank={2} row={second} meId={meId} /> : <EmptyPlace rank={2} />}
+        {second ? (
+          <PodiumCard rank={2} row={second} meId={meId} entry={directory.get(second.user_id)} />
+        ) : (
+          <EmptyPlace rank={2} />
+        )}
       </div>
       {/* 1st */}
       <div className="order-1 sm:order-2">
-        <PodiumCard rank={1} row={first} meId={meId} />
+        <PodiumCard rank={1} row={first} meId={meId} entry={directory.get(first.user_id)} />
       </div>
       {/* 3rd */}
       <div className="order-3">
-        {third ? <PodiumCard rank={3} row={third} meId={meId} /> : <EmptyPlace rank={3} />}
+        {third ? (
+          <PodiumCard rank={3} row={third} meId={meId} entry={directory.get(third.user_id)} />
+        ) : (
+          <EmptyPlace rank={3} />
+        )}
       </div>
     </div>
   );
 }
+
 
 const RANK_STYLE: Record<
   number,
@@ -454,7 +471,17 @@ const RANK_STYLE: Record<
   },
 };
 
-function PodiumCard({ rank, row, meId }: { rank: 1 | 2 | 3; row: LeaderboardRow; meId: string | null }) {
+function PodiumCard({
+  rank,
+  row,
+  meId,
+  entry,
+}: {
+  rank: 1 | 2 | 3;
+  row: LeaderboardRow;
+  meId: string | null;
+  entry: DirectoryEntry | undefined;
+}) {
   const s = RANK_STYLE[rank];
   const isMe = row.user_id === meId;
   return (
@@ -475,6 +502,11 @@ function PodiumCard({ rank, row, meId }: { rank: 1 | 2 | 3; row: LeaderboardRow;
         {row.display_name || "Anonymous"}
         {isMe && <span className="ml-1 text-sm font-normal opacity-70">(you)</span>}
       </h3>
+      {entry?.student_unique_id && (
+        <div className="mt-1">
+          <StudentIdChip entry={entry} />
+        </div>
+      )}
       <div className="mt-2 flex items-baseline gap-1">
         <span className="text-4xl font-extrabold tabular-nums">{row.score}</span>
         <span className="text-sm font-medium opacity-70">pts</span>
@@ -487,6 +519,7 @@ function PodiumCard({ rank, row, meId }: { rank: 1 | 2 | 3; row: LeaderboardRow;
     </div>
   );
 }
+
 
 function EmptyPlace({ rank }: { rank: 2 | 3 }) {
   const s = RANK_STYLE[rank];
