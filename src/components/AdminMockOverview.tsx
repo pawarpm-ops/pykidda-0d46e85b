@@ -450,10 +450,12 @@ function NormalTestDetail({
 
 // ---------- Scheduled ----------
 
-function ScheduledMockList({
+function AiMockList({
+  kind,
   profiles,
   currentUserId,
 }: {
+  kind: "normal" | "scheduled";
   profiles: Record<string, { display_name: string | null; full_name: string | null; college_name: string | null }>;
   currentUserId: string | null;
 }) {
@@ -465,9 +467,10 @@ function ScheduledMockList({
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: t } = await supabase
-        .from("ai_mock_tests" as never)
-        .select("id,title,description,duration_sec,total_marks,question_count,status,published_at,created_at")
+      const { data: t } = await (supabase
+        .from("ai_mock_tests" as never) as any)
+        .select("id,title,description,duration_sec,total_marks,question_count,status,published_at,created_at,test_kind")
+        .or(kind === "normal" ? "test_kind.eq.normal,test_kind.is.null" : "test_kind.eq.scheduled")
         .order("created_at", { ascending: false });
       const testList = (t ?? []) as unknown as ScheduledTest[];
       setTests(testList);
