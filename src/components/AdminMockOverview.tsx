@@ -561,12 +561,14 @@ function AiMockList({
 }
 
 function ScheduledTestDetail({
+  kind,
   test,
   attempts,
   profiles,
   currentUserId,
   onBack,
 }: {
+  kind: "normal" | "scheduled";
   test: ScheduledTest;
   attempts: ScheduledAttempt[];
   profiles: Record<string, { display_name: string | null; full_name: string | null; college_name: string | null }>;
@@ -589,7 +591,7 @@ function ScheduledTestDetail({
   if (selectedAttempt) {
     return (
       <StudentAnalysis
-        kind="scheduled"
+        kind={kind}
         testId={test.id}
         testName={test.title}
         studentId={selectedAttempt.user_id}
