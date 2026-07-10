@@ -2,6 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { DueDateTimePicker } from "@/components/DueDateTimePicker";
 import { useIsAdmin } from "@/lib/role";
@@ -13,6 +14,8 @@ import {
   adminReviewSubmission,
   adminUpdateAssignment,
 } from "@/lib/assignments.functions";
+import { GenerateAiDialog, RefineAiDialog, HomeworkEntryCards } from "@/components/HomeworkAiDialogs";
+
 
 export const Route = createFileRoute("/_authenticated/admin/assignments")({
   head: () => ({

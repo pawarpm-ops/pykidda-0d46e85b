@@ -1,6 +1,7 @@
 // Homework AI dialogs: Generate with AI, Refine with AI.
 // Used inside the admin Homework tab.
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { X, Sparkles, Loader2, Check, RefreshCcw, Pencil } from "lucide-react";
@@ -228,7 +229,8 @@ export function RefineAiDialog({ assignmentId, onClose, onApplied }: { assignmen
   }
 
   // load on mount
-  useState(() => { void run(); return 0; });
+  useEffect(() => { void run(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [assignmentId]);
+
 
   async function accept() {
     if (!after) return;
