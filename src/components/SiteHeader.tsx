@@ -77,9 +77,14 @@ export function SiteHeader() {
               key={item.to}
               to={item.to}
               data-tour={item.tour}
-              className={linkCls(item.to)}
+              aria-label={item.label}
+              title={item.iconOnly ? item.label : undefined}
+              className={cn(
+                linkCls(item.to),
+                item.iconOnly && "inline-flex items-center justify-center h-9 w-9 p-0 rounded-full",
+              )}
             >
-              {item.label}
+              {item.iconOnly ? <User size={18} /> : item.label}
             </Link>
           ))}
           {email && isAdmin && (
