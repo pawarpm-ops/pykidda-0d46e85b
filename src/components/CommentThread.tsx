@@ -41,7 +41,7 @@ export function CommentThread({
       .select("*")
       .eq("comment_id", commentId)
       .order("created_at", { ascending: true });
-    setReplies(((data ?? []) as ReplyRow[]) ?? []);
+    setReplies((data ?? []) as ReplyRow[]);
     setLoading(false);
   }, [commentId]);
 
