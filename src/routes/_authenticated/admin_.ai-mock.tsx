@@ -192,7 +192,7 @@ function Editor() {
     setError(null);
     if (!title.trim()) { setError("Give the test a title."); return; }
     if (syllabusText.trim().length < 20 && customInstructions.trim().length < 20) {
-      setError("Upload a syllabus PDF or write custom instructions (~20+ chars) telling the AI how to build the test.");
+      setError("Upload a syllabus PDF — that alone is enough. (Or, if you skip the PDF, write custom instructions of ~20+ chars.)");
       return;
     }
     setBusy("🧠 GPT-5 is drafting your test — this can take 20-60 seconds…");
