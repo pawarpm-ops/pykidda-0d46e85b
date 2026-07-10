@@ -705,7 +705,45 @@ function Editor() {
         )}
       </aside>
 
+      {scheduleOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setScheduleOpen(null)}>
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <span>📅</span> {scheduleOpen.mode === "publish" ? "Schedule this mock test" : "Edit schedule"}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Students will be able to attend only during this window. Duration: {durationMinutes} min.
+            </p>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Field label="Date"><input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className="input" /></Field>
+              <Field label="Start time"><input type="time" value={schedStart} onChange={(e) => setSchedStart(e.target.value)} className="input" /></Field>
+              <Field label="End time"><input type="time" value={schedEnd} onChange={(e) => setSchedEnd(e.target.value)} className="input" /></Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Instructions for students">
+                <textarea value={schedInstr} onChange={(e) => setSchedInstr(e.target.value)} rows={3} className="input" placeholder="e.g. Attend in a quiet room. Fullscreen required. No tabs." />
+              </Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Results visibility">
+                <select value={schedResults} onChange={(e) => setSchedResults(e.target.value as "immediate" | "after_end")} className="input">
+                  <option value="immediate">Show immediately after submit</option>
+                  <option value="after_end">Show only after test window ends</option>
+                </select>
+              </Field>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={() => setScheduleOpen(null)} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-secondary">Cancel</button>
+              <button onClick={submitSchedule} disabled={!!busy} className="rounded-md bg-[oklch(0.55_0.18_260)] px-4 py-2 font-semibold text-white disabled:opacity-50">
+                {scheduleOpen.mode === "publish" ? "Publish scheduled" : "Save schedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`.input{width:100%;border:1px solid oklch(from var(--color-border) l c h);background:var(--color-background);border-radius:6px;padding:8px 10px;font-size:14px;font-family:inherit}.input:focus{outline:2px solid var(--color-accent)}`}</style>
+
     </div>
   );
 }
