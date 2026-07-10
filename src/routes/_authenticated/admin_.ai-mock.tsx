@@ -715,10 +715,15 @@ function Editor() {
             <p className="text-sm text-muted-foreground mt-1">
               Students will be able to attend only during this window. Duration: {durationMinutes} min.
             </p>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Field label="Date"><input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className="input" /></Field>
-              <Field label="Start time"><input type="time" value={schedStart} onChange={(e) => setSchedStart(e.target.value)} className="input" /></Field>
-              <Field label="End time"><input type="time" value={schedEnd} onChange={(e) => setSchedEnd(e.target.value)} className="input" /></Field>
+            <div className="mt-4">
+              <DateTimeRangePicker
+                date={schedDate}
+                startTime={schedStart}
+                endTime={schedEnd}
+                onDateChange={setSchedDate}
+                onStartTimeChange={setSchedStart}
+                onEndTimeChange={setSchedEnd}
+              />
             </div>
             <div className="mt-3">
               <Field label="Instructions for students">
