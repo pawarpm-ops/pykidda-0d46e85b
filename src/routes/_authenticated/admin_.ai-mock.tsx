@@ -313,11 +313,74 @@ function Editor() {
     }
   };
 
-  const onPublish = async (publish: boolean) => {
+  // Schedule modal state
+  const [scheduleOpen, setScheduleOpen] = useState<null | { mode: "publish" | "edit"; testId: string }>(null);
+  const [schedDate, setSchedDate] = useState<string>("");
+  const [schedStart, setSchedStart] = useState<string>("");
+  const [schedEnd, setSchedEnd] = useState<string>("");
+  const [schedInstr, setSchedInstr] = useState<string>("");
+  const [schedResults, setSchedResults] = useState<"immediate" | "after_end">("immediate");
+
+  const openScheduleForPublish = () => {
     if (!editingId) { setError("Save the draft first."); return; }
-    setBusy(publish ? "Publishing…" : "Unpublishing…");
+    setSchedDate("");
+    setSchedStart("");
+    setSchedEnd("");
+    setSchedInstr("");
+    setSchedResults("immediate");
+    setScheduleOpen({ mode: "publish", testId: editingId });
+  };
+
+  const openScheduleForEdit = (t: TestRow) => {
+    const start = t.scheduled_start_at ? new Date(t.scheduled_start_at) : new Date();
+    const end = t.scheduled_end_at ? new Date(t.scheduled_end_at) : new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setSchedDate(`${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`);
+    setSchedStart(`${pad(start.getHours())}:${pad(start.getMinutes())}`);
+    setSchedEnd(`${pad(end.getHours())}:${pad(end.getMinutes())}`);
+    setSchedInstr(t.schedule_instructions || "");
+    setSchedResults(t.results_visibility || "immediate");
+    setScheduleOpen({ mode: "edit", testId: t.id });
+  };
+
+  const buildScheduleISO = (): { start: string; end: string } | null => {
+    if (!schedDate || !schedStart || !schedEnd) return null;
+    const start = new Date(`${schedDate}T${schedStart}`);
+    const end = new Date(`${schedDate}T${schedEnd}`);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return null;
+    return { start: start.toISOString(), end: end.toISOString() };
+  };
+
+  const submitSchedule = async () => {
+    if (!scheduleOpen) return;
+    const iso = buildScheduleISO();
+    if (!iso) { setError("Pick a valid date, start time, and end time (end after start)."); return; }
+    setBusy(scheduleOpen.mode === "publish" ? "Publishing scheduled test…" : "Updating schedule…");
     try {
-      await publishFn({ data: { id: editingId, publish } });
+      if (scheduleOpen.mode === "publish") {
+        await publishFn({
+          data: {
+            id: scheduleOpen.testId,
+            publish: true,
+            test_kind: "scheduled",
+            scheduled_start_at: iso.start,
+            scheduled_end_at: iso.end,
+            schedule_instructions: schedInstr,
+            results_visibility: schedResults,
+          },
+        });
+      } else {
+        await updateScheduleFn({
+          data: {
+            id: scheduleOpen.testId,
+            scheduled_start_at: iso.start,
+            scheduled_end_at: iso.end,
+            schedule_instructions: schedInstr,
+            results_visibility: schedResults,
+          },
+        });
+      }
+      setScheduleOpen(null);
       await refreshTests();
     } catch (e) {
       setError((e as Error).message);
@@ -325,6 +388,34 @@ function Editor() {
       setBusy(null);
     }
   };
+
+  const publishNormal = async () => {
+    if (!editingId) { setError("Save the draft first."); return; }
+    setBusy("Publishing…");
+    try {
+      await publishFn({ data: { id: editingId, publish: true, test_kind: "normal" } });
+      await refreshTests();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const unpublish = async (id?: string) => {
+    const tid = id ?? editingId;
+    if (!tid) return;
+    setBusy("Unpublishing…");
+    try {
+      await publishFn({ data: { id: tid, publish: false } });
+      await refreshTests();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
 
   const onLoadTest = async (id: string) => {
     setBusy("Loading test…");
