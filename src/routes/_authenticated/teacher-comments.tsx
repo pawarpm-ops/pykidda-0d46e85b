@@ -1,10 +1,8 @@
-// Student & teacher-facing conversation view.
-// Lists all teacher comments addressed to the current user (as student), plus
-// threaded replies. For the current student, viewer role is "student".
+// Student-facing view of teacher comments on their mock test attempts.
+// Read-only: teachers send comments via the admin "Add comment" button.
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CommentThread } from "@/components/CommentThread";
 import { MOCK_TESTS } from "@/lib/questions";
 
 export const Route = createFileRoute("/_authenticated/teacher-comments")({
@@ -13,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/teacher-comments")({
       { title: "Teacher Comments · PyKidda" },
       {
         name: "description",
-        content: "Read teacher feedback on your mock test attempts and reply to your teacher.",
+        content: "Read teacher feedback on your mock test attempts.",
       },
     ],
   }),
@@ -65,7 +63,6 @@ function TeacherCommentsPage() {
       const rows = (data ?? []) as CommentRow[];
       setComments(rows);
 
-      // Resolve test titles (AI mock tests via DB; normal via static list)
       const aiIds = Array.from(
         new Set(rows.filter((r) => r.attempt_kind === "scheduled").map((r) => r.test_id)),
       );
@@ -95,8 +92,7 @@ function TeacherCommentsPage() {
       <header className="mb-6">
         <h1 className="text-3xl font-bold">💬 Teacher Comments</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Feedback from your teachers on your mock test attempts. Reply to keep the
-          conversation going.
+          Feedback from your teachers on your mock test attempts.
         </p>
       </header>
 
@@ -138,12 +134,6 @@ function TeacherCommentsPage() {
                 </p>
                 <p className="mt-1 text-sm whitespace-pre-wrap">{c.comment_text}</p>
               </div>
-
-              <CommentThread
-                commentId={c.id}
-                currentUserId={userId}
-                viewerRole="student"
-              />
             </li>
           ))}
         </ul>

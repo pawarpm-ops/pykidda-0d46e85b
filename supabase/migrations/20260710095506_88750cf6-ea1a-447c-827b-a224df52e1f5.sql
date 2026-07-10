@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.mock_test_attempt_comment_replies CASCADE;

@@ -4,7 +4,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_TESTS } from "@/lib/questions";
-import { CommentThread } from "@/components/CommentThread";
 
 
 type NormalAttempt = {
@@ -977,13 +976,6 @@ function StudentAnalysis(props: {
             <>
               <p className="text-sm whitespace-pre-wrap">{comment.comment_text}</p>
               <p className="mt-2 text-[11px] text-muted-foreground">Last updated {fmtDate(comment.updated_at)}</p>
-              {props.currentUserId && (
-                <CommentThread
-                  commentId={comment.id}
-                  currentUserId={props.currentUserId}
-                  viewerRole="teacher"
-                />
-              )}
             </>
           ) : (
             <p className="text-sm text-muted-foreground italic">No comment yet — click "Add comment" above.</p>
