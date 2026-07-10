@@ -457,6 +457,17 @@ function RunTest() {
         return;
       }
 
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const t = e.target as HTMLElement | null;
+        const tag = t?.tagName;
+        const isEditable = !!t && (t === editorRef.current || tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable);
+        if (!isEditable) {
+          e.preventDefault();
+          if (e.key === "ArrowLeft") goPrev(); else goNext();
+          return;
+        }
+      }
+
       if (e.altKey) {
         const k = e.key.toLowerCase();
         if (k === "p") { e.preventDefault(); goPrev(); return; }
@@ -648,8 +659,8 @@ function RunTest() {
       {/* Top keyboard help strip */}
       <div className="sticky top-0 z-20 border-b border-accent/30 bg-accent/10 backdrop-blur px-4 py-2 text-[11px] flex flex-wrap items-center gap-x-4 gap-y-1">
         <span className="font-bold text-accent">🔒 KEYBOARD-ONLY</span>
-        <span><Kbd>Alt</Kbd>+<Kbd>P</Kbd> Previous</span>
-        <span><Kbd>Alt</Kbd>+<Kbd>N</Kbd> Save & Next</span>
+        <span><Kbd>←</Kbd>/<Kbd>Alt</Kbd>+<Kbd>P</Kbd> Previous</span>
+        <span><Kbd>→</Kbd>/<Kbd>Alt</Kbd>+<Kbd>N</Kbd> Save & Next</span>
         <span><Kbd>Alt</Kbd>+<Kbd>R</Kbd> Reset</span>
         <span><Kbd>Alt</Kbd>+<Kbd>S</Kbd> Submit</span>
         <span><Kbd>Alt</Kbd>+<Kbd>E</Kbd> Code Box</span>
