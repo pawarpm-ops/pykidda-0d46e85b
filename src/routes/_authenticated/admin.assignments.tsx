@@ -44,6 +44,7 @@ type FormState = {
   sample_output: string;
   expected_output: string;
   starter_code: string;
+  submission_mode: "submit" | "self_solve";
 };
 
 const empty: FormState = {
@@ -61,7 +62,9 @@ const empty: FormState = {
   sample_output: "",
   expected_output: "",
   starter_code: "",
+  submission_mode: "submit",
 };
+
 
 function toISO(local: string) {
   // datetime-local returns "YYYY-MM-DDTHH:mm"
