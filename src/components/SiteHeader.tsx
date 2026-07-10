@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -8,7 +8,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { useIsAdmin } from "@/lib/role";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; tour?: string; authOnly?: boolean };
+type NavItem = { to: string; label: string; tour?: string; authOnly?: boolean; iconOnly?: boolean };
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard" },
@@ -17,7 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard" },
   { to: "/assignments", label: "Homework", authOnly: true },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true },
-  { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true },
+  { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, iconOnly: true },
 ];
 
 export function SiteHeader() {
@@ -77,9 +77,14 @@ export function SiteHeader() {
               key={item.to}
               to={item.to}
               data-tour={item.tour}
-              className={linkCls(item.to)}
+              aria-label={item.label}
+              title={item.iconOnly ? item.label : undefined}
+              className={cn(
+                linkCls(item.to),
+                item.iconOnly && "inline-flex items-center justify-center h-9 w-9 p-0 rounded-full",
+              )}
             >
-              {item.label}
+              {item.iconOnly ? <User size={18} /> : item.label}
             </Link>
           ))}
           {email && isAdmin && (
@@ -151,12 +156,13 @@ export function SiteHeader() {
                 to={item.to}
                 data-tour={item.tour}
                 className={cn(
-                  "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  "px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
                   isActive(item.to)
                     ? "bg-primary/15 text-primary"
                     : "text-foreground/80 hover:bg-secondary",
                 )}
               >
+                {item.iconOnly && <User size={16} />}
                 {item.label}
               </Link>
             ))}
