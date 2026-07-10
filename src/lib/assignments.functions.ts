@@ -135,9 +135,9 @@ export const submitAssignment = createServerFn({ method: "POST" })
     if (!a) throw new Error("Assignment not found");
 
     const now = new Date();
-    const due = new Date(a.due_at);
-    const isLate = now > due;
+    const isLate = a.due_at ? now > new Date(a.due_at) : false;
     // Late submissions are always allowed — they are just flagged as late.
+
 
     const payload = {
       answer_text: data.answer_text ?? null,
