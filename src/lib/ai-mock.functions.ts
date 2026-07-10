@@ -380,12 +380,23 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: test, error: tErr } = await supabaseAdmin
       .from("ai_mock_tests")
-      .select("id,title,description,duration_sec,status,total_marks,question_count")
+      .select("id,title,description,duration_sec,status,total_marks,question_count,test_kind,scheduled_start_at,scheduled_end_at,schedule_instructions,results_visibility")
       .eq("id", data.id)
       .single();
     if (tErr) throw new Error(tErr.message);
-    const t = test as { status: string };
+    const t = test as {
+      status: string;
+      test_kind?: string;
+      scheduled_start_at?: string | null;
+      scheduled_end_at?: string | null;
+    };
     if (t.status !== "published") throw new Error("Test not available");
+    if (t.test_kind === "scheduled") {
+      const now = Date.now();
+      if (!t.scheduled_start_at || !t.scheduled_end_at) throw new Error("Scheduled test is misconfigured");
+      if (now < new Date(t.scheduled_start_at).getTime()) throw new Error("Scheduled test has not started yet");
+      if (now > new Date(t.scheduled_end_at).getTime()) throw new Error("Scheduled test window has ended");
+    }
 
     const { data: qs, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
@@ -395,6 +406,7 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
     if (qErr) throw new Error(qErr.message);
     return { test, questions: qs ?? [] };
   });
+
 
 // ----------- Student: submit attempt (server-graded for non-code) -----------
 
