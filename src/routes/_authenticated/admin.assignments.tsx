@@ -337,8 +337,21 @@ function HomeworkAdminSection({
   loadInto: (a: any) => void;
   resetForm: () => void;
 }) {
+  const [showManual, setShowManual] = useState(false);
+  const [showAi, setShowAi] = useState(false);
+  const [refiningId, setRefiningId] = useState<string | null>(null);
+  const formOpen = showManual || !!form.id;
   return (
     <>
+      {!formOpen && (
+        <HomeworkEntryCards
+          onManual={() => { setShowManual(true); setTimeout(() => window.scrollTo({ top: 400, behavior: "smooth" }), 50); }}
+          onAi={() => setShowAi(true)}
+        />
+      )}
+      {showAi && <GenerateAiDialog onClose={() => setShowAi(false)} onSaved={() => setShowAi(false)} />}
+      {refiningId && <RefineAiDialog assignmentId={refiningId} onClose={() => setRefiningId(null)} onApplied={() => setRefiningId(null)} />}
+
       {/* Create / Edit form */}
       <section className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
         <h2 className="text-lg font-bold">{form.id ? "Edit assignment" : "Create assignment"}</h2>
