@@ -235,19 +235,107 @@ export const saveAiMockTest = createServerFn({ method: "POST" })
 
 // ----------- Publish / Unpublish / Delete -----------
 
+const PublishInput = z.object({
+  id: z.string().uuid(),
+  publish: z.boolean(),
+  test_kind: z.enum(["normal", "scheduled"]).default("normal"),
+  scheduled_start_at: z.string().datetime().optional().nullable(),
+  scheduled_end_at: z.string().datetime().optional().nullable(),
+  schedule_instructions: z.string().max(4000).default(""),
+  results_visibility: z.enum(["immediate", "after_end"]).default("immediate"),
+});
+
 export const publishAiMockTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), publish: z.boolean() }).parse(d))
+  .inputValidator((d: unknown) => PublishInput.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
-    const patch: Record<string, unknown> = data.publish
-      ? { status: "published", published_at: new Date().toISOString() }
-      : { status: "draft" };
-    const { error } = await supabaseAdmin.from("ai_mock_tests").update(patch).eq("id", data.id);
+    let patch: Record<string, unknown>;
+    if (!data.publish) {
+      patch = { status: "draft" };
+    } else if (data.test_kind === "scheduled") {
+      if (!data.scheduled_start_at || !data.scheduled_end_at) {
+        throw new Error("Scheduled tests require start and end times");
+      }
+      const start = new Date(data.scheduled_start_at).getTime();
+      const end = new Date(data.scheduled_end_at).getTime();
+      if (!(end > start)) throw new Error("End time must be after start time");
+      patch = {
+        status: "published",
+        published_at: new Date().toISOString(),
+        test_kind: "scheduled",
+        scheduled_start_at: data.scheduled_start_at,
+        scheduled_end_at: data.scheduled_end_at,
+        schedule_instructions: data.schedule_instructions,
+        results_visibility: data.results_visibility,
+      };
+    } else {
+      patch = {
+        status: "published",
+        published_at: new Date().toISOString(),
+        test_kind: "normal",
+        scheduled_start_at: null,
+        scheduled_end_at: null,
+        schedule_instructions: "",
+        results_visibility: "immediate",
+      };
+    }
+    const { data: updated, error } = await supabaseAdmin
+      .from("ai_mock_tests")
+      .update(patch)
+      .eq("id", data.id)
+      .select("id,title,scheduled_start_at,scheduled_end_at,test_kind")
+      .single();
+    if (error) throw new Error(error.message);
+
+    // Broadcast a notification with a deep link when scheduling
+    if (data.publish && data.test_kind === "scheduled") {
+      const t = updated as { title: string; scheduled_start_at: string; scheduled_end_at: string };
+      const startFmt = new Date(t.scheduled_start_at).toLocaleString();
+      const endFmt = new Date(t.scheduled_end_at).toLocaleString();
+      await supabaseAdmin.from("announcements").insert({
+        author_id: context.userId,
+        title: "New Scheduled Mock Test",
+        body: `"${t.title}" is scheduled from ${startFmt} to ${endFmt}. Click View to see details.`,
+        priority: "high",
+        action_url: `/mock-tests/scheduled/${data.id}`,
+      });
+    }
+    return { ok: true };
+  });
+
+const UpdateScheduleInput = z.object({
+  id: z.string().uuid(),
+  scheduled_start_at: z.string().datetime(),
+  scheduled_end_at: z.string().datetime(),
+  schedule_instructions: z.string().max(4000).default(""),
+  results_visibility: z.enum(["immediate", "after_end"]).default("immediate"),
+});
+
+export const updateAiMockSchedule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => UpdateScheduleInput.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
+    const start = new Date(data.scheduled_start_at).getTime();
+    const end = new Date(data.scheduled_end_at).getTime();
+    if (!(end > start)) throw new Error("End time must be after start time");
+    const { error } = await supabaseAdmin
+      .from("ai_mock_tests")
+      .update({
+        test_kind: "scheduled",
+        scheduled_start_at: data.scheduled_start_at,
+        scheduled_end_at: data.scheduled_end_at,
+        schedule_instructions: data.schedule_instructions,
+        results_visibility: data.results_visibility,
+      })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 export const deleteAiMockTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -292,12 +380,23 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: test, error: tErr } = await supabaseAdmin
       .from("ai_mock_tests")
-      .select("id,title,description,duration_sec,status,total_marks,question_count")
+      .select("id,title,description,duration_sec,status,total_marks,question_count,test_kind,scheduled_start_at,scheduled_end_at,schedule_instructions,results_visibility")
       .eq("id", data.id)
       .single();
     if (tErr) throw new Error(tErr.message);
-    const t = test as { status: string };
+    const t = test as {
+      status: string;
+      test_kind?: string;
+      scheduled_start_at?: string | null;
+      scheduled_end_at?: string | null;
+    };
     if (t.status !== "published") throw new Error("Test not available");
+    if (t.test_kind === "scheduled") {
+      const now = Date.now();
+      if (!t.scheduled_start_at || !t.scheduled_end_at) throw new Error("Scheduled test is misconfigured");
+      if (now < new Date(t.scheduled_start_at).getTime()) throw new Error("Scheduled test has not started yet");
+      if (now > new Date(t.scheduled_end_at).getTime()) throw new Error("Scheduled test window has ended");
+    }
 
     const { data: qs, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
@@ -307,6 +406,7 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
     if (qErr) throw new Error(qErr.message);
     return { test, questions: qs ?? [] };
   });
+
 
 // ----------- Student: submit attempt (server-graded for non-code) -----------
 
@@ -343,12 +443,28 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => SubmitInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
+    // Time-gate scheduled tests server-side (source of truth)
+    const { data: tRow } = await supabaseAdmin
+      .from("ai_mock_tests")
+      .select("test_kind,scheduled_start_at,scheduled_end_at,status")
+      .eq("id", data.test_id)
+      .single();
+    if (tRow && (tRow as any).test_kind === "scheduled") {
+      const now = Date.now();
+      const s = (tRow as any).scheduled_start_at ? new Date((tRow as any).scheduled_start_at).getTime() : 0;
+      const e = (tRow as any).scheduled_end_at ? new Date((tRow as any).scheduled_end_at).getTime() : 0;
+      if (!s || !e) throw new Error("Scheduled test is misconfigured");
+      // Allow a small grace window on submit (in case fullscreen exit fires right at end)
+      if (now < s) throw new Error("Scheduled test has not started yet");
+      if (now > e + 60_000) throw new Error("Scheduled test window has ended");
+    }
     const { data: qs, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
       .select("*")
       .eq("test_id", data.test_id)
       .order("order_index");
     if (qErr) throw new Error(qErr.message);
+
     const questions = (qs ?? []) as Array<{
       id: string;
       type: "mcq" | "tf" | "fill" | "short" | "code";
@@ -451,14 +567,15 @@ export const listAiMockTests = createServerFn({ method: "POST" })
       await assertAdmin(context);
       const { data: rows, error } = await supabaseAdmin
         .from("ai_mock_tests")
-        .select("id,title,description,status,duration_sec,total_marks,question_count,created_at,published_at")
+        .select("id,title,description,status,duration_sec,total_marks,question_count,created_at,published_at,test_kind,scheduled_start_at,scheduled_end_at,schedule_instructions,results_visibility")
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return rows ?? [];
     }
     const { data: rows, error } = await supabaseAdmin
       .from("ai_mock_tests")
-      .select("id,title,description,status,duration_sec,total_marks,question_count,published_at")
+      .select("id,title,description,status,duration_sec,total_marks,question_count,published_at,test_kind,scheduled_start_at,scheduled_end_at,schedule_instructions,results_visibility")
+
       .eq("status", "published")
       .order("published_at", { ascending: false });
     if (error) throw new Error(error.message);

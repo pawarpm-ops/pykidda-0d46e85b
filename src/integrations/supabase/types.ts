@@ -132,8 +132,13 @@ export type Database = {
           id: string
           published_at: string | null
           question_count: number
+          results_visibility: string
+          schedule_instructions: string
+          scheduled_end_at: string | null
+          scheduled_start_at: string | null
           status: string
           syllabus_snippet: string
+          test_kind: string
           title: string
           total_marks: number
           updated_at: string
@@ -146,8 +151,13 @@ export type Database = {
           id?: string
           published_at?: string | null
           question_count?: number
+          results_visibility?: string
+          schedule_instructions?: string
+          scheduled_end_at?: string | null
+          scheduled_start_at?: string | null
           status?: string
           syllabus_snippet?: string
+          test_kind?: string
           title: string
           total_marks?: number
           updated_at?: string
@@ -160,8 +170,13 @@ export type Database = {
           id?: string
           published_at?: string | null
           question_count?: number
+          results_visibility?: string
+          schedule_instructions?: string
+          scheduled_end_at?: string | null
+          scheduled_start_at?: string | null
           status?: string
           syllabus_snippet?: string
+          test_kind?: string
           title?: string
           total_marks?: number
           updated_at?: string
@@ -202,6 +217,7 @@ export type Database = {
       }
       announcements: {
         Row: {
+          action_url: string | null
           author_id: string
           body: string
           created_at: string
@@ -212,6 +228,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          action_url?: string | null
           author_id: string
           body: string
           created_at?: string
@@ -222,6 +239,7 @@ export type Database = {
           title: string
         }
         Update: {
+          action_url?: string | null
           author_id?: string
           body?: string
           created_at?: string

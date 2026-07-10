@@ -14,7 +14,9 @@ import {
   getAdminAiTest,
   listAiMockTests,
   refineAiMockTest,
+  updateAiMockSchedule,
 } from "@/lib/ai-mock.functions";
+
 
 
 export const Route = createFileRoute("/_authenticated/admin_/ai-mock")({
@@ -46,7 +48,13 @@ type TestRow = {
   question_count: number;
   created_at?: string;
   published_at?: string | null;
+  test_kind?: "normal" | "scheduled";
+  scheduled_start_at?: string | null;
+  scheduled_end_at?: string | null;
+  schedule_instructions?: string;
+  results_visibility?: "immediate" | "after_end";
 };
+
 
 const TYPE_LABEL: Record<QType, string> = {
   mcq: "Multiple choice",
@@ -110,6 +118,8 @@ function Editor() {
   const getFn = useServerFn(getAdminAiTest);
   const listFn = useServerFn(listAiMockTests);
   const refineFn = useServerFn(refineAiMockTest);
+  const updateScheduleFn = useServerFn(updateAiMockSchedule);
+
 
   const [tests, setTests] = useState<TestRow[]>([]);
   const [loadingTests, setLoadingTests] = useState(true);
@@ -303,11 +313,74 @@ function Editor() {
     }
   };
 
-  const onPublish = async (publish: boolean) => {
+  // Schedule modal state
+  const [scheduleOpen, setScheduleOpen] = useState<null | { mode: "publish" | "edit"; testId: string }>(null);
+  const [schedDate, setSchedDate] = useState<string>("");
+  const [schedStart, setSchedStart] = useState<string>("");
+  const [schedEnd, setSchedEnd] = useState<string>("");
+  const [schedInstr, setSchedInstr] = useState<string>("");
+  const [schedResults, setSchedResults] = useState<"immediate" | "after_end">("immediate");
+
+  const openScheduleForPublish = () => {
     if (!editingId) { setError("Save the draft first."); return; }
-    setBusy(publish ? "Publishing…" : "Unpublishing…");
+    setSchedDate("");
+    setSchedStart("");
+    setSchedEnd("");
+    setSchedInstr("");
+    setSchedResults("immediate");
+    setScheduleOpen({ mode: "publish", testId: editingId });
+  };
+
+  const openScheduleForEdit = (t: TestRow) => {
+    const start = t.scheduled_start_at ? new Date(t.scheduled_start_at) : new Date();
+    const end = t.scheduled_end_at ? new Date(t.scheduled_end_at) : new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setSchedDate(`${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`);
+    setSchedStart(`${pad(start.getHours())}:${pad(start.getMinutes())}`);
+    setSchedEnd(`${pad(end.getHours())}:${pad(end.getMinutes())}`);
+    setSchedInstr(t.schedule_instructions || "");
+    setSchedResults(t.results_visibility || "immediate");
+    setScheduleOpen({ mode: "edit", testId: t.id });
+  };
+
+  const buildScheduleISO = (): { start: string; end: string } | null => {
+    if (!schedDate || !schedStart || !schedEnd) return null;
+    const start = new Date(`${schedDate}T${schedStart}`);
+    const end = new Date(`${schedDate}T${schedEnd}`);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return null;
+    return { start: start.toISOString(), end: end.toISOString() };
+  };
+
+  const submitSchedule = async () => {
+    if (!scheduleOpen) return;
+    const iso = buildScheduleISO();
+    if (!iso) { setError("Pick a valid date, start time, and end time (end after start)."); return; }
+    setBusy(scheduleOpen.mode === "publish" ? "Publishing scheduled test…" : "Updating schedule…");
     try {
-      await publishFn({ data: { id: editingId, publish } });
+      if (scheduleOpen.mode === "publish") {
+        await publishFn({
+          data: {
+            id: scheduleOpen.testId,
+            publish: true,
+            test_kind: "scheduled",
+            scheduled_start_at: iso.start,
+            scheduled_end_at: iso.end,
+            schedule_instructions: schedInstr,
+            results_visibility: schedResults,
+          },
+        });
+      } else {
+        await updateScheduleFn({
+          data: {
+            id: scheduleOpen.testId,
+            scheduled_start_at: iso.start,
+            scheduled_end_at: iso.end,
+            schedule_instructions: schedInstr,
+            results_visibility: schedResults,
+          },
+        });
+      }
+      setScheduleOpen(null);
       await refreshTests();
     } catch (e) {
       setError((e as Error).message);
@@ -315,6 +388,34 @@ function Editor() {
       setBusy(null);
     }
   };
+
+  const publishNormal = async () => {
+    if (!editingId) { setError("Save the draft first."); return; }
+    setBusy("Publishing…");
+    try {
+      await publishFn({ data: { id: editingId, publish: true, test_kind: "normal" } });
+      await refreshTests();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const unpublish = async (id?: string) => {
+    const tid = id ?? editingId;
+    if (!tid) return;
+    setBusy("Unpublishing…");
+    try {
+      await publishFn({ data: { id: tid, publish: false } });
+      await refreshTests();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
 
   const onLoadTest = async (id: string) => {
     setBusy("Loading test…");
@@ -490,11 +591,13 @@ function Editor() {
               <button onClick={onSaveDraft} disabled={!!busy} className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground disabled:opacity-50">💾 Save draft</button>
               {editingId && (
                 <>
-                  <button onClick={() => onPublish(true)} disabled={!!busy} className="rounded-md bg-[oklch(0.65_0.16_145)] px-4 py-2 font-semibold text-white disabled:opacity-50">🚀 Publish to students</button>
-                  <button onClick={() => onPublish(false)} disabled={!!busy} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-secondary">Unpublish</button>
+                  <button onClick={publishNormal} disabled={!!busy} className="rounded-md bg-[oklch(0.65_0.16_145)] px-4 py-2 font-semibold text-white disabled:opacity-50">🚀 Publish as Normal Mock Test</button>
+                  <button onClick={openScheduleForPublish} disabled={!!busy} className="rounded-md bg-[oklch(0.55_0.18_260)] px-4 py-2 font-semibold text-white disabled:opacity-50">📅 Publish as Scheduled Mock Test</button>
+                  <button onClick={() => unpublish()} disabled={!!busy} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-secondary">Unpublish</button>
                   <button onClick={() => onDelete(editingId)} disabled={!!busy} className="rounded-md border border-destructive/50 text-destructive px-4 py-2 text-sm hover:bg-destructive/10">Delete test</button>
                 </>
               )}
+
             </div>
           </section>
         )}
@@ -549,7 +652,16 @@ function Editor() {
           <p className="text-sm text-muted-foreground mt-3">No tests yet.</p>
         ) : (
           <ul className="mt-3 space-y-2 max-h-[70vh] overflow-auto">
-            {tests.map((t) => (
+            {tests.map((t) => {
+              const kind = t.test_kind ?? "normal";
+              const now = Date.now();
+              const start = t.scheduled_start_at ? new Date(t.scheduled_start_at).getTime() : 0;
+              const end = t.scheduled_end_at ? new Date(t.scheduled_end_at).getTime() : 0;
+              let schedStatus: "upcoming" | "live" | "closed" | null = null;
+              if (kind === "scheduled" && start && end) {
+                schedStatus = now < start ? "upcoming" : now > end ? "closed" : "live";
+              }
+              return (
               <li key={t.id} className={`rounded-md border p-3 text-sm ${editingId === t.id ? "border-accent bg-accent/10" : "border-border"}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -557,27 +669,81 @@ function Editor() {
                     <p className="text-xs text-muted-foreground">
                       {t.question_count} Qs · {t.total_marks} marks · {Math.round(t.duration_sec / 60)}m
                     </p>
-                    <p className="text-xs mt-1">
+                    <p className="text-xs mt-1 flex flex-wrap gap-1 items-center">
                       <span className={`inline-block rounded px-2 py-0.5 ${t.status === "published" ? "bg-[oklch(0.65_0.16_145)]/20 text-[oklch(0.45_0.16_145)]" : "bg-secondary text-muted-foreground"}`}>
                         {t.status}
                       </span>
+                      {kind === "scheduled" && (
+                        <span className="inline-block rounded px-2 py-0.5 bg-[oklch(0.55_0.18_260)]/20 text-[oklch(0.45_0.18_260)]">📅 scheduled</span>
+                      )}
+                      {schedStatus === "upcoming" && <span className="text-muted-foreground">upcoming</span>}
+                      {schedStatus === "live" && <span className="text-[oklch(0.55_0.18_145)] font-semibold">LIVE</span>}
+                      {schedStatus === "closed" && <span className="text-muted-foreground">closed</span>}
                     </p>
+                    {kind === "scheduled" && t.scheduled_start_at && t.scheduled_end_at && (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        {new Date(t.scheduled_start_at).toLocaleString()} → {new Date(t.scheduled_end_at).toLocaleTimeString()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   <button onClick={() => onLoadTest(t.id)} className="text-primary hover:underline">Edit</button>
+                  {kind === "scheduled" && t.status === "published" && schedStatus !== "closed" && (
+                    <button onClick={() => openScheduleForEdit(t)} className="text-primary hover:underline">Edit schedule</button>
+                  )}
                   {t.status === "published" ? (
-                    <button onClick={() => { setEditingId(t.id); void onPublish(false); }} className="text-muted-foreground hover:underline">Unpublish</button>
+                    <button onClick={() => unpublish(t.id)} className="text-muted-foreground hover:underline">Unpublish</button>
                   ) : null}
                   <button onClick={() => onDelete(t.id)} className="text-destructive hover:underline">Delete</button>
                 </div>
               </li>
-            ))}
+              );
+            })}
+
           </ul>
         )}
       </aside>
 
+      {scheduleOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setScheduleOpen(null)}>
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <span>📅</span> {scheduleOpen.mode === "publish" ? "Schedule this mock test" : "Edit schedule"}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Students will be able to attend only during this window. Duration: {durationMinutes} min.
+            </p>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Field label="Date"><input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className="input" /></Field>
+              <Field label="Start time"><input type="time" value={schedStart} onChange={(e) => setSchedStart(e.target.value)} className="input" /></Field>
+              <Field label="End time"><input type="time" value={schedEnd} onChange={(e) => setSchedEnd(e.target.value)} className="input" /></Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Instructions for students">
+                <textarea value={schedInstr} onChange={(e) => setSchedInstr(e.target.value)} rows={3} className="input" placeholder="e.g. Attend in a quiet room. Fullscreen required. No tabs." />
+              </Field>
+            </div>
+            <div className="mt-3">
+              <Field label="Results visibility">
+                <select value={schedResults} onChange={(e) => setSchedResults(e.target.value as "immediate" | "after_end")} className="input">
+                  <option value="immediate">Show immediately after submit</option>
+                  <option value="after_end">Show only after test window ends</option>
+                </select>
+              </Field>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={() => setScheduleOpen(null)} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-secondary">Cancel</button>
+              <button onClick={submitSchedule} disabled={!!busy} className="rounded-md bg-[oklch(0.55_0.18_260)] px-4 py-2 font-semibold text-white disabled:opacity-50">
+                {scheduleOpen.mode === "publish" ? "Publish scheduled" : "Save schedule"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`.input{width:100%;border:1px solid oklch(from var(--color-border) l c h);background:var(--color-background);border-radius:6px;padding:8px 10px;font-size:14px;font-family:inherit}.input:focus{outline:2px solid var(--color-accent)}`}</style>
+
     </div>
   );
 }

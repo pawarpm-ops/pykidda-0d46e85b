@@ -104,13 +104,25 @@ export function NotificationBell() {
                       {isUnread && <span className="mt-1 h-2 w-2 rounded-full bg-accent shrink-0" />}
                     </div>
                     <p className="mt-1 text-muted-foreground text-xs line-clamp-3">{n.body}</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                      {new Date(n.created_at).toLocaleString()}
-                      {n.target_user_id ? " · direct" : " · broadcast"}
-                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {new Date(n.created_at).toLocaleString()}
+                        {n.target_user_id ? " · direct" : " · broadcast"}
+                      </p>
+                      {n.action_url && (
+                        <Link
+                          to={n.action_url}
+                          onClick={() => setOpen(false)}
+                          className="text-xs font-semibold px-2 py-1 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                        >
+                          View
+                        </Link>
+                      )}
+                    </div>
                   </li>
                 );
               })}
+
             </ul>
           )}
         </div>

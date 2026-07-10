@@ -10,7 +10,9 @@ export type Announcement = {
   target_user_id: string | null;
   created_at: string;
   scheduled_at: string | null;
+  action_url: string | null;
 };
+
 
 export async function listAnnouncements(): Promise<Announcement[]> {
   const { data, error } = await supabase
