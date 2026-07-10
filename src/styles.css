@@ -246,3 +246,62 @@
       0 0 40px 12px color-mix(in oklch, var(--primary) 30%, transparent);
   }
 }
+
+/* Global neon glow on hover/focus for every interactive option.
+   Applies to buttons, links, selects, tabs, menu items, cards, etc.
+   Uses --primary so it stays vivid in both light and dark themes. */
+@layer utilities {
+  button,
+  a,
+  select,
+  summary,
+  [role="button"],
+  [role="link"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"],
+  [role="checkbox"],
+  [role="radio"],
+  [role="switch"],
+  [data-slot="trigger"],
+  [data-radix-collection-item] {
+    transition:
+      border-color 220ms ease,
+      box-shadow 220ms ease,
+      color 220ms ease,
+      transform 220ms ease;
+  }
+
+  button:not(:disabled):not([aria-disabled="true"]):hover,
+  button:not(:disabled):not([aria-disabled="true"]):focus-visible,
+  a:not([aria-disabled="true"]):hover,
+  a:not([aria-disabled="true"]):focus-visible,
+  select:not(:disabled):hover,
+  select:not(:disabled):focus-visible,
+  summary:hover,
+  summary:focus-visible,
+  [role="button"]:not([aria-disabled="true"]):hover,
+  [role="button"]:not([aria-disabled="true"]):focus-visible,
+  [role="link"]:hover,
+  [role="link"]:focus-visible,
+  [role="tab"]:not([aria-disabled="true"]):hover,
+  [role="tab"]:not([aria-disabled="true"]):focus-visible,
+  [role="menuitem"]:not([aria-disabled="true"]):hover,
+  [role="menuitem"]:not([aria-disabled="true"]):focus-visible,
+  [role="option"]:not([aria-disabled="true"]):hover,
+  [role="option"]:not([aria-disabled="true"]):focus-visible,
+  [role="checkbox"]:not([aria-disabled="true"]):hover,
+  [role="checkbox"]:not([aria-disabled="true"]):focus-visible,
+  [role="radio"]:not([aria-disabled="true"]):hover,
+  [role="radio"]:not([aria-disabled="true"]):focus-visible,
+  [role="switch"]:not([aria-disabled="true"]):hover,
+  [role="switch"]:not([aria-disabled="true"]):focus-visible {
+    outline: none;
+    border-color: color-mix(in oklch, var(--primary) 90%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--primary) 85%, transparent),
+      0 0 8px 1px color-mix(in oklch, var(--primary) 75%, transparent),
+      0 0 22px 6px color-mix(in oklch, var(--primary) 55%, transparent),
+      0 0 40px 12px color-mix(in oklch, var(--primary) 30%, transparent);
+  }
+}
