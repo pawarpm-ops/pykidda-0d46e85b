@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, Home, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -8,18 +8,26 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { useIsAdmin } from "@/lib/role";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; tour?: string; authOnly?: boolean; iconOnly?: boolean };
+type NavItem = {
+  to: string;
+  label: string;
+  tour?: string;
+  authOnly?: boolean;
+  iconOnly?: boolean;
+  icon?: LucideIcon;
+};
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/", label: "Dashboard" },
+  { to: "/", label: "Dashboard", iconOnly: true, icon: Home },
   { to: "/practice", label: "Practice", tour: "nav-practice" },
   { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock" },
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard" },
   { to: "/assignments", label: "Homework", authOnly: true },
   { to: "/teacher-comments", label: "Teacher Comments", authOnly: true },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true },
-  { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, iconOnly: true },
+  { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, iconOnly: true, icon: User },
 ];
+
 
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
