@@ -226,3 +226,27 @@
     box-shadow: none;
   }
 }
+
+/* Glowing border on hover — for nav options, buttons, chips.
+   Uses accent color for a soft ring + bloom without shifting layout. */
+@utility hover-glow {
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    color 220ms ease;
+
+  &:hover {
+    border-color: color-mix(in oklch, var(--accent) 75%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--accent) 55%, transparent),
+      0 0 14px 2px color-mix(in oklch, var(--accent) 40%, transparent);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: color-mix(in oklch, var(--accent) 80%, transparent);
+    box-shadow:
+      0 0 0 2px color-mix(in oklch, var(--accent) 60%, transparent),
+      0 0 16px 3px color-mix(in oklch, var(--accent) 45%, transparent);
+  }
+}

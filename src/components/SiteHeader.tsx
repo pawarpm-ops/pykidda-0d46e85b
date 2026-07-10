@@ -50,10 +50,10 @@ export function SiteHeader() {
 
   const linkCls = (to: string) =>
     cn(
-      "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+      "px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap border border-transparent hover-glow",
       isActive(to)
-        ? "bg-primary/15 text-primary ring-1 ring-primary/30"
-        : "text-foreground/70 hover:text-foreground hover:bg-secondary",
+        ? "bg-primary/15 text-primary border-primary/30"
+        : "text-foreground/70 hover:text-foreground",
     );
 
   async function handleSignOut() {
@@ -91,8 +91,8 @@ export function SiteHeader() {
             <Link
               to="/admin"
               className={cn(
-                "px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-opacity ml-1",
-                "bg-primary text-primary-foreground hover:opacity-90",
+                "px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap ml-1 border border-transparent hover-glow",
+                "bg-primary text-primary-foreground",
               )}
             >
               Admin
@@ -118,7 +118,7 @@ export function SiteHeader() {
               </span>
               <button
                 onClick={handleSignOut}
-                className="hidden sm:inline-flex rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition-colors whitespace-nowrap"
+                className="hidden sm:inline-flex rounded-md border border-border bg-background px-3 py-1.5 text-sm whitespace-nowrap hover-glow"
               >
                 Sign out
               </button>
@@ -139,7 +139,7 @@ export function SiteHeader() {
             onClick={() => setMenuOpen((v) => !v)}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
-            className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:border-accent transition-colors"
+            className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover-glow"
           >
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -156,10 +156,10 @@ export function SiteHeader() {
                 to={item.to}
                 data-tour={item.tour}
                 className={cn(
-                  "px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
+                  "px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 border border-transparent hover-glow",
                   isActive(item.to)
                     ? "bg-primary/15 text-primary"
-                    : "text-foreground/80 hover:bg-secondary",
+                    : "text-foreground/80",
                 )}
               >
                 {item.iconOnly && <User size={16} />}
