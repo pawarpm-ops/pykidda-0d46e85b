@@ -138,7 +138,7 @@ function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework">("overview");
-  const [overviewSubTab, setOverviewSubTab] = useState<"complete" | "mocks">("complete");
+  const [overviewSubTab, setOverviewSubTab] = useState<"menu" | "complete" | "mocks">("menu");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileInfo>>({});
