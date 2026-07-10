@@ -62,9 +62,8 @@ function AssignmentDetailPage() {
   const submission = data?.submission ?? null;
   const isReviewed = submission?.status === "reviewed";
   const overdue = data ? new Date(data.assignment.due_at) < new Date() : false;
-  const canSubmit = data
-    ? !isReviewed && (!overdue || data.assignment.allow_late_submission)
-    : false;
+  // Late submissions are always allowed — student can submit even after due date.
+  const canSubmit = data ? !isReviewed : false;
   const readOnly = isReviewed;
 
   // autosave draft
@@ -180,6 +179,18 @@ function AssignmentDetailPage() {
           )}
         </div>
 
+        {overdue && !isReviewed && (
+          <div className="mt-4 flex items-start gap-3 rounded-xl border-2 border-[oklch(0.72_0.16_60)]/60 bg-[oklch(0.72_0.16_60)]/10 p-4">
+            <span className="text-2xl leading-none">⚠️</span>
+            <div className="text-sm">
+              <p className="font-bold text-[oklch(0.55_0.18_45)]">This homework deadline is over.</p>
+              <p className="mt-1 text-muted-foreground">
+                You can still submit it, but your submission will be marked as <span className="font-semibold text-[oklch(0.55_0.18_45)]">Late</span>.
+              </p>
+            </div>
+          </div>
+        )}
+
         {a.description && (
           <div className="mt-5 rounded-xl border border-border bg-card p-4 text-sm whitespace-pre-wrap leading-relaxed">
             {a.description}
@@ -280,14 +291,13 @@ function AssignmentDetailPage() {
           {!readOnly && canSubmit && (
             <button
               onClick={() => setConfirmOpen(true)}
-              className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-              style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              className={`rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] ${overdue ? "" : ""}`}
+              style={{ backgroundImage: overdue
+                ? "linear-gradient(135deg, oklch(0.72 0.16 60), oklch(0.55 0.22 25))"
+                : "var(--gradient-sunrise)" }}
             >
-              Submit assignment
+              {overdue ? "Submit late" : "Submit assignment"}
             </button>
-          )}
-          {!readOnly && !canSubmit && overdue && (
-            <span className="text-sm text-destructive font-semibold">Deadline passed — late submissions not allowed.</span>
           )}
           <span className="text-xs text-muted-foreground">
             {saving ? "Saving draft…" : savedAt ? `Draft saved at ${savedAt}` : readOnly ? "Reviewed — read-only" : "Autosaves as you type"}

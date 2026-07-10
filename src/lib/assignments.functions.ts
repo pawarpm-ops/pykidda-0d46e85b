@@ -127,7 +127,7 @@ export const submitAssignment = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: a, error: aErr } = await supabase
       .from("assignments")
-      .select("id, due_at, allow_late_submission, status")
+      .select("id, due_at, status")
       .eq("id", data.assignment_id)
       .in("status", ["published", "closed"])
       .maybeSingle();
@@ -137,9 +137,7 @@ export const submitAssignment = createServerFn({ method: "POST" })
     const now = new Date();
     const due = new Date(a.due_at);
     const isLate = now > due;
-    if (isLate && !a.allow_late_submission) {
-      throw new Error("Deadline passed — late submissions not allowed");
-    }
+    // Late submissions are always allowed — they are just flagged as late.
 
     const payload = {
       answer_text: data.answer_text ?? null,
