@@ -8,7 +8,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { useIsAdmin } from "@/lib/role";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; tour?: string; authOnly?: boolean };
+type NavItem = { to: string; label: string; tour?: string; authOnly?: boolean; iconOnly?: boolean };
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard" },
@@ -17,7 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard" },
   { to: "/assignments", label: "Homework", authOnly: true },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true },
-  { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true },
+  { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, iconOnly: true },
 ];
 
 export function SiteHeader() {
