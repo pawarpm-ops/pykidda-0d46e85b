@@ -567,14 +567,15 @@ export const listAiMockTests = createServerFn({ method: "POST" })
       await assertAdmin(context);
       const { data: rows, error } = await supabaseAdmin
         .from("ai_mock_tests")
-        .select("id,title,description,status,duration_sec,total_marks,question_count,created_at,published_at")
+        .select("id,title,description,status,duration_sec,total_marks,question_count,created_at,published_at,test_kind,scheduled_start_at,scheduled_end_at,schedule_instructions,results_visibility")
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return rows ?? [];
     }
     const { data: rows, error } = await supabaseAdmin
       .from("ai_mock_tests")
-      .select("id,title,description,status,duration_sec,total_marks,question_count,published_at")
+      .select("id,title,description,status,duration_sec,total_marks,question_count,published_at,test_kind,scheduled_start_at,scheduled_end_at,schedule_instructions,results_visibility")
+
       .eq("status", "published")
       .order("published_at", { ascending: false });
     if (error) throw new Error(error.message);
