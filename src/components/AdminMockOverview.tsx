@@ -402,7 +402,7 @@ function NormalTestDetail({
                           <td className="py-2 pr-1"></td>
                           <td className="py-2 pr-3">
                             <p className="text-xs text-muted-foreground pl-4">
-                              ↳ Attempt #{list.length - idx - 1 + 1 === list.length ? "lowest" : idx + 2}
+                              ↳ Attempt #{idx + 2}{idx === list.length - 2 ? " · lowest" : ""}
                             </p>
                           </td>
                           <td className="py-2 pr-3">
