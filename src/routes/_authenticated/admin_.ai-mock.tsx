@@ -118,6 +118,8 @@ function Editor() {
   const getFn = useServerFn(getAdminAiTest);
   const listFn = useServerFn(listAiMockTests);
   const refineFn = useServerFn(refineAiMockTest);
+  const updateScheduleFn = useServerFn(updateAiMockSchedule);
+
 
   const [tests, setTests] = useState<TestRow[]>([]);
   const [loadingTests, setLoadingTests] = useState(true);
