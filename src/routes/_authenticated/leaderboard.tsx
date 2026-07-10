@@ -71,6 +71,8 @@ function LeaderboardPage() {
   const [me, setMe] = useState<string | null>(null);
   const [tab, setTab] = useState<"score" | "streak">("score");
   const [streakRows, setStreakRows] = useState<StreakLeaderRow[] | null>(null);
+  const [directory, setDirectory] = useState<Directory>(new Map());
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +83,8 @@ function LeaderboardPage() {
         await syncMyScore();
         const list = await fetchLeaderboard(100);
         if (!cancelled) setRows(list);
+        const dir = await loadDirectory(list.map((r) => r.user_id));
+        if (!cancelled) setDirectory((prev) => new Map([...prev, ...dir]));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load leaderboard");
       }
@@ -93,14 +97,46 @@ function LeaderboardPage() {
   useEffect(() => {
     if (tab !== "streak" || streakRows) return;
     let cancelled = false;
-    fetchStreakLeaderboard(100).then((rows) => !cancelled && setStreakRows(rows));
+    (async () => {
+      const list = await fetchStreakLeaderboard(100);
+      if (cancelled) return;
+      setStreakRows(list);
+      const missing = list.map((r) => r.user_id).filter((id) => !directory.has(id));
+      if (missing.length > 0) {
+        const dir = await loadDirectory(missing);
+        if (!cancelled) setDirectory((prev) => new Map([...prev, ...dir]));
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [tab, streakRows]);
+  }, [tab, streakRows, directory]);
 
-  const top3 = rows?.slice(0, 3) ?? [];
-  const rest = rows?.slice(3) ?? [];
+  const q = query.trim().toLowerCase();
+
+  const filteredRows = useMemo(() => {
+    if (!rows) return null;
+    if (!q) return rows;
+    return rows.filter((r) => {
+      const name = (r.display_name || "").toLowerCase();
+      const sid = (directory.get(r.user_id)?.student_unique_id || "").toLowerCase();
+      return name.includes(q) || sid.includes(q);
+    });
+  }, [rows, q, directory]);
+
+  const filteredStreakRows = useMemo(() => {
+    if (!streakRows) return null;
+    if (!q) return streakRows;
+    return streakRows.filter((r) => {
+      const name = (r.display_name || "").toLowerCase();
+      const sid = (directory.get(r.user_id)?.student_unique_id || "").toLowerCase();
+      return name.includes(q) || sid.includes(q);
+    });
+  }, [streakRows, q, directory]);
+
+  const searching = q.length > 0;
+  const top3 = !searching ? filteredRows?.slice(0, 3) ?? [] : [];
+  const rest = searching ? filteredRows ?? [] : filteredRows?.slice(3) ?? [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -112,7 +148,7 @@ function LeaderboardPage() {
         </header>
 
         {/* Tabs */}
-        <div className="mb-8 flex justify-center">
+        <div className="mb-6 flex justify-center">
           <div className="inline-flex rounded-xl border border-border bg-card p-1">
             {(["score", "streak"] as const).map((t) => (
               <button
@@ -130,81 +166,134 @@ function LeaderboardPage() {
           </div>
         </div>
 
+        {/* Search bar */}
+        <div className="mx-auto mb-8 max-w-xl">
+          <div className="group relative flex items-center rounded-full border border-border bg-card px-4 py-2.5 shadow-sm transition-all focus-within:border-accent focus-within:shadow-[0_0_0_4px_color-mix(in_oklch,var(--accent)_20%,transparent)]">
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value.slice(0, 60))}
+              placeholder="Search by student name or ID…"
+              className="ml-3 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              aria-label="Search students"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
         {tab === "streak" ? (
-          <StreakLeaderboard rows={streakRows} meId={me} />
+          <StreakLeaderboard
+            rows={filteredStreakRows}
+            allRows={streakRows}
+            meId={me}
+            directory={directory}
+            searching={searching}
+          />
         ) : (
-        <>
+          <>
+            {error && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
+            {!rows && !error && (
+              <div className="py-16 text-center text-muted-foreground">Loading the rankings…</div>
+            )}
 
-        {error && (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        )}
+            {rows && rows.length === 0 && (
+              <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
+                No scores yet — solve your first practice question to claim rank #1!
+              </div>
+            )}
 
-        {!rows && !error && (
-          <div className="py-16 text-center text-muted-foreground">Loading the rankings…</div>
-        )}
+            {searching && filteredRows && filteredRows.length === 0 && (
+              <EmptySearch />
+            )}
 
-        {rows && rows.length === 0 && (
-          <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
-            No scores yet — solve your first practice question to claim rank #1!
-          </div>
-        )}
+            {top3.length > 0 && <Podium top3={top3} meId={me} directory={directory} />}
 
-        {top3.length > 0 && <Podium top3={top3} meId={me} />}
-
-        {rest.length > 0 && (
-          <div className="mt-10 overflow-hidden rounded-xl border border-border bg-card">
-            <table className="w-full text-sm">
-              <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 text-left">Rank</th>
-                  <th className="px-4 py-3 text-left">Student</th>
-                  <th className="px-4 py-3 text-right">Solved</th>
-                  <th className="px-4 py-3 text-right">Best Mock</th>
-                  <th className="px-4 py-3 text-right">Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rest.map((r, i) => {
-                  const rank = i + 4;
-                  const isMe = r.user_id === me;
-                  return (
-                    <tr
-                      key={r.user_id}
-                      className={`border-t border-border/60 ${isMe ? "bg-accent/10" : ""}`}
-                    >
-                      <td className="px-4 py-3 font-mono text-muted-foreground">#{rank}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar row={r} size={32} />
-                          <span className="font-medium">
-                            {r.display_name || "Anonymous"}
-                            {isMe && (
-                              <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
-                                you
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">{r.solved_count}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{r.mock_best}%</td>
-                      <td className="px-4 py-3 text-right font-semibold tabular-nums">{r.score}</td>
+            {rest.length > 0 && (
+              <div className="mt-10 overflow-hidden rounded-xl border border-border bg-card">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Rank</th>
+                      <th className="px-4 py-3 text-left">Student</th>
+                      <th className="px-4 py-3 text-left">ID</th>
+                      <th className="px-4 py-3 text-right">Solved</th>
+                      <th className="px-4 py-3 text-right">Best Mock</th>
+                      <th className="px-4 py-3 text-right">Score</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-        </>
+                  </thead>
+                  <tbody>
+                    {rest.map((r, i) => {
+                      const originalIdx = rows?.findIndex((x) => x.user_id === r.user_id) ?? -1;
+                      const rank = originalIdx >= 0 ? originalIdx + 1 : i + 1;
+                      const isMe = r.user_id === me;
+                      return (
+                        <tr
+                          key={r.user_id}
+                          className={`border-t border-border/60 ${isMe ? "bg-accent/10" : ""}`}
+                        >
+                          <td className="px-4 py-3 font-mono text-muted-foreground">#{rank}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <Avatar row={r} size={32} />
+                              <span className="font-medium">
+                                {r.display_name || "Anonymous"}
+                                {isMe && (
+                                  <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                                    you
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <StudentIdChip entry={directory.get(r.user_id)} />
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums">{r.solved_count}</td>
+                          <td className="px-4 py-3 text-right tabular-nums">{r.mock_best}%</td>
+                          <td className="px-4 py-3 text-right font-semibold tabular-nums">{r.score}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
   );
 }
+
+function EmptySearch() {
+  return (
+    <div className="rounded-xl border border-dashed border-border bg-card/60 p-10 text-center">
+      <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 text-3xl">
+        🐍
+      </div>
+      <p className="text-base font-semibold">No student found.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Try a different name or Student ID (e.g. PYK-0001).
+      </p>
+    </div>
+  );
+}
+
 
 function StreakLeaderboard({ rows, meId }: { rows: StreakLeaderRow[] | null; meId: string | null }) {
   if (!rows) return <div className="py-16 text-center text-muted-foreground">Loading streak leaders…</div>;
