@@ -856,6 +856,57 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
               </table>
             )}
 
+            {(() => {
+              // Unique practice questions this student has solved (solved=true)
+              const solvedMap = new Map<string, { unit: number; solved_at: string }>();
+              for (const p of selPractice) {
+                if (!p.solved) continue;
+                const prev = solvedMap.get(p.question_id);
+                if (!prev || new Date(p.attempted_at).getTime() < new Date(prev.solved_at).getTime()) {
+                  solvedMap.set(p.question_id, { unit: p.unit, solved_at: p.attempted_at });
+                }
+              }
+              const solvedList = Array.from(solvedMap.entries())
+                .map(([qid, meta]) => ({ qid, ...meta, title: getQuestion(qid)?.title ?? null }))
+                .sort((a, b) => (a.unit - b.unit) || a.qid.localeCompare(b.qid));
+              return (
+                <>
+                  <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+                    Solved questions ({solvedList.length})
+                  </h3>
+                  {solvedList.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted-foreground">No practice questions solved yet.</p>
+                  ) : (
+                    <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                      {solvedList.map((q) => (
+                        <li
+                          key={q.qid}
+                          className="rounded-md border border-[oklch(0.65_0.16_145)]/30 bg-[oklch(0.65_0.16_145)]/5 px-3 py-2"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold truncate">
+                                {q.title ?? q.qid}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground font-mono truncate">
+                                {q.qid} · Unit {q.unit}
+                              </p>
+                            </div>
+                            <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-[oklch(0.4_0.16_145)]">
+                              ✓ solved
+                            </span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            First solved {new Date(q.solved_at).toLocaleString()}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              );
+            })()}
+
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Recent practice</h3>
             {selPractice.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">None.</p>
