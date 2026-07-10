@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, User, Home, TrendingUp, Trophy, type LucideIcon } from "lucide-react";
+import { Menu, X, User, Home, TrendingUp, Trophy, MessageCircleMore, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -23,7 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock" },
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard", iconOnly: true, icon: Trophy },
   { to: "/assignments", label: "Homework", authOnly: true },
-  { to: "/teacher-comments", label: "Teacher Comments", authOnly: true },
+  { to: "/teacher-comments", label: "Teacher Comments", authOnly: true, iconOnly: true, icon: MessageCircleMore },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true, iconOnly: true, icon: TrendingUp },
   { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, iconOnly: true, icon: User },
 ];
