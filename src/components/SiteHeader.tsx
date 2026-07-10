@@ -156,12 +156,13 @@ export function SiteHeader() {
                 to={item.to}
                 data-tour={item.tour}
                 className={cn(
-                  "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  "px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
                   isActive(item.to)
                     ? "bg-primary/15 text-primary"
                     : "text-foreground/80 hover:bg-secondary",
                 )}
               >
+                {item.iconOnly && <User size={16} />}
                 {item.label}
               </Link>
             ))}
