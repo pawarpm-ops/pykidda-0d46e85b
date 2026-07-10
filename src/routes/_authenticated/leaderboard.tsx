@@ -77,6 +77,7 @@ function NameLink({
     );
   }
   return <span className={className}>{children}</span>;
+}
 
 
 
