@@ -1,7 +1,7 @@
 // Admin → Overview → Mock Test Overview
 // Drill-down: Normal / Scheduled mock tests → per-test student list →
 // per-student analysis with PDF download and teacher comment.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_TESTS } from "@/lib/questions";
 
@@ -234,16 +234,29 @@ function NormalTestDetail({
 }) {
   const [query, setQuery] = useState("");
   const [selectedAttempt, setSelectedAttempt] = useState<NormalAttempt | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const filtered = useMemo(() => {
+  const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = [...attempts].sort(
-      (a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime(),
-    );
-    if (!q) return list;
-    return list.filter((a) => {
-      const name = (a.student_name || profiles[a.user_id]?.display_name || "").toLowerCase();
-      return name.includes(q) || a.user_id.toLowerCase().includes(q);
+    const byUser = new Map<string, NormalAttempt[]>();
+    for (const a of attempts) {
+      if (!byUser.has(a.user_id)) byUser.set(a.user_id, []);
+      byUser.get(a.user_id)!.push(a);
+    }
+    const rows = Array.from(byUser.entries()).map(([uid, list]) => {
+      // Sort attempts by score descending (best first, lowest last)
+      const sorted = [...list].sort((a, b) => {
+        if (b.percentage !== a.percentage) return b.percentage - a.percentage;
+        return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime();
+      });
+      return { uid, attempts: sorted };
+    });
+    // Sort students by their best attempt (highest percentage first)
+    rows.sort((a, b) => b.attempts[0].percentage - a.attempts[0].percentage);
+    if (!q) return rows;
+    return rows.filter(({ uid, attempts: list }) => {
+      const name = (list[0].student_name || profiles[uid]?.display_name || "").toLowerCase();
+      return name.includes(q) || uid.toLowerCase().includes(q);
     });
   }, [attempts, profiles, query]);
 
@@ -273,6 +286,15 @@ function NormalTestDetail({
     );
   }
 
+  const toggleExpand = (uid: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -287,7 +309,9 @@ function NormalTestDetail({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold">{testName}</h2>
-            <p className="text-sm text-muted-foreground">{attempts.length} student attempts</p>
+            <p className="text-sm text-muted-foreground">
+              {grouped.length} student{grouped.length === 1 ? "" : "s"} · {attempts.length} total attempt{attempts.length === 1 ? "" : "s"}
+            </p>
           </div>
           <input
             type="search"
@@ -298,7 +322,7 @@ function NormalTestDetail({
           />
         </div>
 
-        {filtered.length === 0 ? (
+        {grouped.length === 0 ? (
           <p className="mt-6 text-sm text-muted-foreground text-center py-6">
             {attempts.length === 0 ? "No students have attempted this test yet." : "No student matched."}
           </p>
@@ -307,48 +331,107 @@ function NormalTestDetail({
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-muted-foreground border-b border-border">
                 <tr>
+                  <th className="py-2 pr-3 w-8"></th>
                   <th className="py-2 pr-3">Student</th>
                   <th className="py-2 pr-3">Grade</th>
-                  <th className="py-2 pr-3 text-right">Score</th>
+                  <th className="py-2 pr-3 text-right">Best Score</th>
                   <th className="py-2 pr-3">Attempted</th>
                   <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filtered.map((a) => {
-                  const name = a.student_name || profiles[a.user_id]?.display_name || a.user_id.slice(0, 8);
+                {grouped.map(({ uid, attempts: list }) => {
+                  const best = list[0];
+                  const name = best.student_name || profiles[uid]?.display_name || uid.slice(0, 8);
+                  const hasMore = list.length > 1;
+                  const isOpen = expanded.has(uid);
                   return (
-                    <tr key={a.id} className="hover:bg-accent/5 transition-colors">
-                      <td className="py-2 pr-3">
-                        <p className="font-medium">{name}</p>
-                        <p className="text-[11px] text-muted-foreground font-mono">{a.user_id.slice(0, 12)}…</p>
-                      </td>
-                      <td className="py-2 pr-3">
-                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${gradeTone(a.percentage)}`}>
-                          {a.grade}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-3 text-right font-semibold tabular-nums">
-                        {a.marks_obtained}/{a.total_marks} · {a.percentage}%
-                      </td>
-                      <td className="py-2 pr-3 text-xs text-muted-foreground">{fmtDate(a.submitted_at)}</td>
-                      <td className="py-2 pr-3">
-                        {a.submission_type === "auto-violation" ? (
-                          <span className="text-destructive text-xs" title={a.violation_reason ?? ""}>⚠ Auto</span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Normal</span>
-                        )}
-                      </td>
-                      <td className="py-2 pr-3 text-right">
-                        <button
-                          onClick={() => setSelectedAttempt(a)}
-                          className="rounded-md border border-border bg-background px-3 py-1 text-xs font-semibold hover:border-accent hover:bg-accent/10 transition"
-                        >
-                          Analyze →
-                        </button>
-                      </td>
-                    </tr>
+                    <Fragment key={uid}>
+                      <tr key={uid} className="hover:bg-accent/5 transition-colors">
+                        <td className="py-2 pr-1 text-center">
+                          {hasMore ? (
+                            <button
+                              onClick={() => toggleExpand(uid)}
+                              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-border bg-background text-xs font-bold hover:border-accent hover:bg-accent/10 transition"
+                              aria-label={isOpen ? "Hide attempts" : "Show attempts"}
+                              title={`${list.length} attempts`}
+                            >
+                              {isOpen ? "▾" : "▸"}
+                            </button>
+                          ) : null}
+                        </td>
+                        <td className="py-2 pr-3">
+                          <p className="font-medium">
+                            {name}
+                            {hasMore && (
+                              <span className="ml-2 inline-flex items-center rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
+                                {list.length} attempts
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground font-mono">{uid.slice(0, 12)}…</p>
+                        </td>
+                        <td className="py-2 pr-3">
+                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${gradeTone(best.percentage)}`}>
+                            {best.grade}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-3 text-right font-semibold tabular-nums">
+                          {best.marks_obtained}/{best.total_marks} · {best.percentage}%
+                        </td>
+                        <td className="py-2 pr-3 text-xs text-muted-foreground">{fmtDate(best.submitted_at)}</td>
+                        <td className="py-2 pr-3">
+                          {best.submission_type === "auto-violation" ? (
+                            <span className="text-destructive text-xs" title={best.violation_reason ?? ""}>⚠ Auto</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Normal</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-3 text-right">
+                          <button
+                            onClick={() => setSelectedAttempt(best)}
+                            className="rounded-md border border-border bg-background px-3 py-1 text-xs font-semibold hover:border-accent hover:bg-accent/10 transition"
+                          >
+                            Analyze →
+                          </button>
+                        </td>
+                      </tr>
+                      {hasMore && isOpen && list.slice(1).map((a, idx) => (
+                        <tr key={a.id} className="bg-secondary/30 hover:bg-accent/5 transition-colors">
+                          <td className="py-2 pr-1"></td>
+                          <td className="py-2 pr-3">
+                            <p className="text-xs text-muted-foreground pl-4">
+                              ↳ Attempt #{idx + 2}{idx === list.length - 2 ? " · lowest" : ""}
+                            </p>
+                          </td>
+                          <td className="py-2 pr-3">
+                            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${gradeTone(a.percentage)}`}>
+                              {a.grade}
+                            </span>
+                          </td>
+                          <td className="py-2 pr-3 text-right font-semibold tabular-nums">
+                            {a.marks_obtained}/{a.total_marks} · {a.percentage}%
+                          </td>
+                          <td className="py-2 pr-3 text-xs text-muted-foreground">{fmtDate(a.submitted_at)}</td>
+                          <td className="py-2 pr-3">
+                            {a.submission_type === "auto-violation" ? (
+                              <span className="text-destructive text-xs" title={a.violation_reason ?? ""}>⚠ Auto</span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Normal</span>
+                            )}
+                          </td>
+                          <td className="py-2 pr-3 text-right">
+                            <button
+                              onClick={() => setSelectedAttempt(a)}
+                              className="rounded-md border border-border bg-background px-3 py-1 text-xs font-semibold hover:border-accent hover:bg-accent/10 transition"
+                            >
+                              Analyze →
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -359,6 +442,7 @@ function NormalTestDetail({
     </div>
   );
 }
+
 
 // ---------- Scheduled ----------
 
