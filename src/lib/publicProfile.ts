@@ -22,6 +22,7 @@ export const DEFAULT_PUBLIC_SETTINGS: PublicProfileSettings = {
 
 export type PublicProfilePayload = {
   public_profile_id: string;
+  student_unique_id?: string | null;
   display_name: string;
   bio?: string | null;
   settings: PublicProfileSettings;
