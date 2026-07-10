@@ -172,8 +172,9 @@ export function SiteHeader() {
                     : "text-foreground/80",
                 )}
               >
-                {item.iconOnly && (() => { const Icon = item.icon ?? User; return <Icon size={16} />; })()}
-                {!item.iconOnly && item.label}
+                {item.icon && (() => { const Icon = item.icon; return <Icon size={16} />; })()}
+                {item.label}
+
 
               </Link>
             ))}
