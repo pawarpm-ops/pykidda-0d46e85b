@@ -33,11 +33,14 @@ function fmtWhen(due: string) {
 
 function statusBadge(row: Row) {
   const sub = row.submission;
-  if (sub?.status === "reviewed") return { text: `Reviewed · ${sub.marks_obtained ?? 0}/${row.total_marks}`, cls: "bg-[oklch(0.65_0.16_145)]/15 text-[oklch(0.45_0.16_145)] border-[oklch(0.65_0.16_145)]/40" };
-  if (sub?.status === "late") return { text: "Submitted (Late)", cls: "bg-destructive/10 text-destructive border-destructive/40" };
+  if (sub?.status === "reviewed") {
+    const late = sub.is_late ? " · Late" : "";
+    return { text: `Reviewed · ${sub.marks_obtained ?? 0}/${row.total_marks}${late}`, cls: "bg-[oklch(0.65_0.16_145)]/15 text-[oklch(0.45_0.16_145)] border-[oklch(0.65_0.16_145)]/40" };
+  }
+  if (sub?.status === "late") return { text: "Submitted Late", cls: "bg-[oklch(0.72_0.16_60)]/15 text-[oklch(0.55_0.18_45)] border-[oklch(0.72_0.16_60)]/50" };
   if (sub?.status === "submitted") return { text: "Submitted", cls: "bg-accent/15 text-accent-foreground border-accent/40" };
   const overdue = new Date(row.due_at) < new Date();
-  if (overdue) return { text: "Overdue", cls: "bg-destructive/10 text-destructive border-destructive/40" };
+  if (overdue) return { text: "Overdue — submit late", cls: "bg-destructive/10 text-destructive border-destructive/40" };
   return { text: "Pending", cls: "bg-secondary text-secondary-foreground border-border" };
 }
 
