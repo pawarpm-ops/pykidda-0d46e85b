@@ -62,7 +62,7 @@ export const generateAiMockTest = createServerFn({ method: "POST" })
     const totalRequested = data.counts.mcq + data.counts.tf + data.counts.fill + data.counts.short + data.counts.code;
     if (totalRequested === 0) throw new Error("Ask for at least 1 question");
     if (data.syllabusText.trim().length < 20 && data.customInstructions.trim().length < 20) {
-      throw new Error("Provide a syllabus PDF or write custom instructions (min ~20 chars).");
+      throw new Error("Upload a syllabus PDF (or write custom instructions ~20+ chars) so the AI has something to build the test from.");
     }
 
     const sys = `You are an expert Python examiner creating a mock test for college students.
