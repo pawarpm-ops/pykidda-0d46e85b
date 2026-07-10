@@ -531,12 +531,21 @@ function SubmissionRow({ sub, totalMarks, onReview }: { sub: any; totalMarks: nu
     <li className="rounded-md border border-border bg-card p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <p className="font-semibold">{name}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold">{name}</p>
+            {sub.is_late && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.72_0.16_60)]/60 bg-[oklch(0.72_0.16_60)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[oklch(0.55_0.18_45)]">
+                ⚠️ Late Submission
+              </span>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground">{sub.profile?.college_name ?? ""}</p>
         </div>
-        <div className="text-xs">
-          <span className={`font-semibold ${statusCls}`}>{sub.status.toUpperCase()}</span>
-          {sub.submitted_at && <span className="ml-2 text-muted-foreground">{new Date(sub.submitted_at).toLocaleString()}</span>}
+        <div className="text-right text-xs">
+          <div>
+            <span className={`font-semibold ${statusCls}`}>{sub.status.toUpperCase()}</span>
+            {sub.submitted_at && <span className="ml-2 text-muted-foreground">Submitted {new Date(sub.submitted_at).toLocaleString()}</span>}
+          </div>
         </div>
       </div>
       {sub.answer_text && (
