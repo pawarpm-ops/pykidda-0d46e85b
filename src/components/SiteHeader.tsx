@@ -16,6 +16,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock" },
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard" },
   { to: "/assignments", label: "Homework", authOnly: true },
+  { to: "/teacher-comments", label: "Teacher Comments", authOnly: true },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true },
   { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, iconOnly: true },
 ];
