@@ -604,7 +604,7 @@ function TakeAiMock() {
 
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
           <span>
-            <Kbd>Alt</Kbd>+<Kbd>P</Kbd> Prev · <Kbd>Alt</Kbd>+<Kbd>N</Kbd> Next · <Kbd>Alt</Kbd>+<Kbd>E</Kbd> Focus answer
+            <Kbd>←</Kbd>/<Kbd>Alt</Kbd>+<Kbd>P</Kbd> Prev · <Kbd>→</Kbd>/<Kbd>Alt</Kbd>+<Kbd>N</Kbd> Next · <Kbd>Alt</Kbd>+<Kbd>E</Kbd> Focus answer
           </span>
           <span>
             <Kbd>Alt</Kbd>+<Kbd>S</Kbd> then <Kbd>Ctrl</Kbd>+<Kbd>Enter</Kbd> to submit
