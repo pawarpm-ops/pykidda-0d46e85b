@@ -326,6 +326,7 @@ function StreakLeaderboard({
           <tr>
             <th className="px-4 py-3 text-left">Rank</th>
             <th className="px-4 py-3 text-left">Student</th>
+            <th className="px-4 py-3 text-left">ID</th>
             <th className="px-4 py-3 text-left">Title</th>
             <th className="px-4 py-3 text-right">🔥 Current</th>
             <th className="px-4 py-3 text-right">🏆 Longest</th>
@@ -334,7 +335,8 @@ function StreakLeaderboard({
         </thead>
         <tbody>
           {rows.map((r, i) => {
-            const rank = i + 1;
+            const originalIdx = allRows?.findIndex((x) => x.user_id === r.user_id) ?? -1;
+            const rank = originalIdx >= 0 ? originalIdx + 1 : i + 1;
             const isMe = r.user_id === meId;
             const alive = r.last_activity_date === today;
             const title = getCurrentRank(r.current_streak);
@@ -350,7 +352,7 @@ function StreakLeaderboard({
             return (
               <tr
                 key={r.user_id}
-                className={`border-t border-border/60 ${isMe ? "bg-accent/10" : ""} ${rank === 1 ? "bg-gradient-to-r from-amber-500/10 to-transparent" : ""}`}
+                className={`border-t border-border/60 ${isMe ? "bg-accent/10" : ""} ${rank === 1 && !searching ? "bg-gradient-to-r from-amber-500/10 to-transparent" : ""}`}
               >
                 <td className="px-4 py-3 font-bold text-lg">{medal}</td>
                 <td className="px-4 py-3">
@@ -367,6 +369,9 @@ function StreakLeaderboard({
                       </span>
                     )}
                   </span>
+                </td>
+                <td className="px-4 py-3">
+                  <StudentIdChip entry={directory.get(r.user_id)} />
                 </td>
                 <td className="px-4 py-3 text-xs">
                   <span className="inline-flex items-center gap-1">
@@ -387,6 +392,7 @@ function StreakLeaderboard({
               </tr>
             );
           })}
+
         </tbody>
       </table>
     </div>
