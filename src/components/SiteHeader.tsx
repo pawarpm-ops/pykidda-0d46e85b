@@ -91,8 +91,8 @@ export function SiteHeader() {
             <Link
               to="/admin"
               className={cn(
-                "px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-opacity ml-1",
-                "bg-primary text-primary-foreground hover:opacity-90",
+                "px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap ml-1 border border-transparent hover-glow",
+                "bg-primary text-primary-foreground",
               )}
             >
               Admin
