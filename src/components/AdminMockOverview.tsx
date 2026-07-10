@@ -487,14 +487,21 @@ function AiMockList({
       setAttemptsByTest(grouped);
       setLoading(false);
     })();
-  }, []);
+  }, [kind]);
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading scheduled mock tests…</p>;
+  const label = kind === "scheduled" ? "📅 Scheduled" : "🤖 AI Normal";
+  const loadingText = kind === "scheduled" ? "Loading scheduled mock tests…" : "Loading AI mock tests…";
+  const emptyText = kind === "scheduled"
+    ? "No scheduled mock tests yet. Use the AI Mock Creator to add one."
+    : "No AI-generated normal mock tests yet.";
+
+  if (loading) return <p className="text-sm text-muted-foreground">{loadingText}</p>;
 
   if (selectedTestId) {
     const t = tests.find((x) => x.id === selectedTestId);
     return (
       <ScheduledTestDetail
+        kind={kind}
         test={t!}
         attempts={attemptsByTest[selectedTestId] ?? []}
         profiles={profiles}
@@ -517,7 +524,7 @@ function AiMockList({
             className="card-glow group rounded-2xl border border-border bg-card p-5 text-left shadow-sm"
           >
             <div className="flex items-center gap-2">
-              <p className="text-xs uppercase tracking-widest text-accent font-semibold">📅 Scheduled</p>
+              <p className="text-xs uppercase tracking-widest text-accent font-semibold">{label}</p>
               <span className={`text-[10px] px-2 py-0.5 rounded-full ${
                 t.status === "published" ? "bg-[oklch(0.65_0.16_145)]/20 text-[oklch(0.4_0.16_145)]" : "bg-muted text-muted-foreground"
               }`}>
@@ -547,7 +554,7 @@ function AiMockList({
         );
       })}
       {tests.length === 0 && (
-        <p className="text-sm text-muted-foreground">No scheduled mock tests yet. Use the AI Mock Creator to add one.</p>
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
       )}
     </div>
   );
