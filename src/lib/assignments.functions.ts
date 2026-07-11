@@ -127,7 +127,7 @@ export const submitAssignment = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: a, error: aErr } = await supabase
       .from("assignments")
-      .select("id, due_at, status")
+      .select("id, due_at, status, assignment_type, total_marks, expected_output, sample_input, sample_output, title, description")
       .eq("id", data.assignment_id)
       .in("status", ["published", "closed"])
       .maybeSingle();
@@ -159,26 +159,156 @@ export const submitAssignment = createServerFn({ method: "POST" })
       throw new Error("Submission already reviewed");
     }
 
+    let submissionId: string;
     if (existing) {
       const { error } = await supabase
         .from("assignment_submissions")
         .update(payload)
         .eq("id", existing.id);
       if (error) throw new Error(error.message);
-      return { id: existing.id, is_late: isLate };
+      submissionId = existing.id;
+    } else {
+      const { data: inserted, error } = await supabase
+        .from("assignment_submissions")
+        .insert({
+          assignment_id: data.assignment_id,
+          student_id: userId,
+          ...payload,
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      submissionId = inserted.id;
     }
-    const { data: inserted, error } = await supabase
-      .from("assignment_submissions")
-      .insert({
-        assignment_id: data.assignment_id,
-        student_id: userId,
-        ...payload,
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return { id: inserted.id, is_late: isLate };
+
+    // ---------- Auto-grade coding submissions ----------
+    // Grade against the teacher's expected output using the AI gateway.
+    // Bucket correctness into 0 / 25 / 50 / 75 / 100 %, then award marks
+    // = round((pct/100) * total_marks * 2) / 2  (nearest 0.5 mark).
+    // Never blocks the submission — failures are logged and ignored.
+    const auto = await autoGradeCoding({
+      assignment: a as any,
+      code_answer: data.code_answer ?? null,
+      code_output: data.code_output ?? null,
+    }).catch((e) => {
+      console.error("autoGradeCoding failed", e);
+      return null;
+    });
+    if (auto) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin
+          .from("assignment_submissions")
+          .update({
+            marks_obtained: auto.marks,
+            status: "reviewed",
+            reviewed_at: new Date().toISOString(),
+            teacher_feedback: `Auto-graded by AI (${auto.pct}% correct). ${auto.reason}`.slice(0, 2000),
+          })
+          .eq("id", submissionId);
+      } catch (e) {
+        console.error("auto-grade write failed", e);
+      }
+    }
+
+    return { id: submissionId, is_late: isLate, auto_graded: auto ? auto.marks : null };
   });
+
+// -----------------------------------------------------------------------------
+// AI auto-grader for coding homework submissions.
+// -----------------------------------------------------------------------------
+async function autoGradeCoding(input: {
+  assignment: {
+    assignment_type?: string | null;
+    total_marks?: number | null;
+    expected_output?: string | null;
+    sample_input?: string | null;
+    sample_output?: string | null;
+    title?: string | null;
+    description?: string | null;
+  };
+  code_answer: string | null;
+  code_output: string | null;
+}): Promise<{ marks: number; pct: number; reason: string } | null> {
+  const a = input.assignment;
+  const type = (a.assignment_type ?? "").toLowerCase();
+  if (type !== "coding" && type !== "mixed") return null;
+  const total = Number(a.total_marks ?? 0);
+  if (!total || total <= 0) return null;
+  const code = (input.code_answer ?? "").trim();
+  if (!code) return null;
+  const expected = (a.expected_output ?? a.sample_output ?? "").trim();
+
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) return null;
+
+  const sys = `You are an experienced Python programming teacher grading a student's coding homework.
+Judge how correct the student's SOLUTION is with respect to the PROBLEM and the EXPECTED OUTPUT / REFERENCE SOLUTION.
+Return ONLY a JSON object with this exact shape:
+{ "percent": 0 | 25 | 50 | 75 | 100, "reason": "one short sentence" }
+
+Bucketing rules:
+- 0   → empty, off-topic, or fundamentally wrong.
+- 25  → attempted but mostly wrong; some relevant idea.
+- 50  → about half correct; core logic partially works.
+- 75  → mostly correct; small bug, off-by-one, or minor missing case.
+- 100 → fully correct, matches the expected behaviour.
+
+Be encouraging but honest. If the student's code visibly tries to solve the right problem, do NOT return 0.
+No markdown, no code fences, just JSON.`;
+
+  const user = `PROBLEM TITLE:
+${a.title ?? ""}
+
+PROBLEM DESCRIPTION:
+${(a.description ?? "").slice(0, 4000)}
+
+SAMPLE INPUT (stdin, may be empty):
+${(a.sample_input ?? "").slice(0, 2000)}
+
+EXPECTED OUTPUT / REFERENCE ANSWER (teacher-provided):
+${expected.slice(0, 4000)}
+
+STUDENT CODE:
+\`\`\`python
+${code.slice(0, 8000)}
+\`\`\`
+
+STUDENT PROGRAM STDOUT (from their last run, may be empty):
+${(input.code_output ?? "").slice(0, 2000)}
+`;
+
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", "Lovable-API-Key": key },
+    body: JSON.stringify({
+      model: "openai/gpt-5-mini",
+      messages: [
+        { role: "system", content: sys },
+        { role: "user", content: user },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  const content = json.choices?.[0]?.message?.content ?? "";
+  let parsed: { percent?: number; reason?: string };
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return null;
+  }
+  const allowed = [0, 25, 50, 75, 100];
+  let pct = Number(parsed.percent);
+  if (!allowed.includes(pct)) {
+    // snap to nearest allowed bucket
+    pct = allowed.reduce((best, v) => (Math.abs(v - pct) < Math.abs(best - pct) ? v : best), 0);
+  }
+  const marks = Math.round((pct / 100) * total * 2) / 2;
+  return { marks, pct, reason: (parsed.reason ?? "").toString().slice(0, 300) };
+}
+
 
 // ---------- Admin ----------
 
