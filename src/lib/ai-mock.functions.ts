@@ -494,7 +494,9 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
         const reportedTotal = a?.code_total ?? 0;
         if (total > 0 && reportedTotal === total) {
           const ratio = passed / total;
-          awarded = Math.min(q.marks, Math.round(ratio * q.marks));
+          // Round to nearest 0.5 mark so students get partial credit
+          // for partially-correct solutions.
+          awarded = Math.min(q.marks, Math.round(ratio * q.marks * 2) / 2);
           correct = passed === total;
         }
       } else if (q.type === "mcq" || q.type === "tf" || q.type === "fill") {
