@@ -358,8 +358,11 @@ function AdminPage() {
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-3 py-1.5 rounded transition ${
-                  tab === t ? "bg-accent text-accent-foreground font-semibold" : "hover:bg-secondary"
+                  tab === t
+                    ? "font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                    : "hover:bg-secondary"
                 }`}
+                style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
               >
                 {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : "📚 Homework"}
               </button>
