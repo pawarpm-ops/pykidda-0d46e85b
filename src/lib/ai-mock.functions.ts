@@ -484,17 +484,18 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
       let awarded = 0;
       let correct = false;
       if (q.type === "code") {
-        // Code is executed client-side (Pyodide). Validate the client-
-        // reported pass counts against the actual number of hidden tests
-        // stored on the question, and only award full marks when every
-        // test passed. Mirrors practice-question grading.
+        // Code is executed client-side (Pyodide). Award partial marks
+        // proportional to the fraction of hidden tests passed, rounded
+        // to the nearest whole mark. Full marks only when every test
+        // passes; correctness flag stays true only for a full pass.
         const tests = Array.isArray((q as any).code_tests) ? (q as any).code_tests : [];
         const total = tests.length;
-        const passed = Math.min(a?.code_passed ?? 0, total);
+        const passed = Math.min(Math.max(a?.code_passed ?? 0, 0), total);
         const reportedTotal = a?.code_total ?? 0;
-        if (total > 0 && reportedTotal === total && passed === total) {
-          awarded = q.marks;
-          correct = true;
+        if (total > 0 && reportedTotal === total) {
+          const ratio = passed / total;
+          awarded = Math.min(q.marks, Math.round(ratio * q.marks));
+          correct = passed === total;
         }
       } else if (q.type === "mcq" || q.type === "tf" || q.type === "fill") {
         if (normalizeAnswer(response) === normalizeAnswer(q.correct_answer)) {
