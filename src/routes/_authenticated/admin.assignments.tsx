@@ -433,9 +433,10 @@ function HomeworkAdminSection({
               {!showDraft && (
                 <button
                   onClick={() => { setShowDraft(true); setBulkMsg(null); }}
-                  className="rounded-md border border-accent bg-accent/10 px-3 py-1.5 text-sm font-semibold text-accent"
+                  className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] transition-transform hover:-translate-y-0.5"
+                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
                 >
-                  + Add question
+                  <span className="text-base leading-none">＋</span> Add question
                 </button>
               )}
             </div>
