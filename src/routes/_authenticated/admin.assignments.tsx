@@ -345,9 +345,10 @@ function HomeworkAdminSection({
   // Multi-question queue (manual create mode only)
   const createFn = useServerFn(adminCreateAssignment);
   const qc = useQueryClient();
-  const [queue, setQueue] = useState<Array<{ question: string; answer: string }>>([]);
+  const [queue, setQueue] = useState<Array<{ question: string; answer: string; marks: number }>>([]);
   const [draftQ, setDraftQ] = useState("");
   const [draftA, setDraftA] = useState("");
+  const [draftMarks, setDraftMarks] = useState("10");
   const [showDraft, setShowDraft] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
@@ -355,9 +356,11 @@ function HomeworkAdminSection({
   function confirmDraft() {
     const q = draftQ.trim();
     const a = draftA.trim();
+    const m = Math.max(1, Math.min(1000, parseInt(draftMarks, 10) || 0));
     if (!q || !a) { setBulkMsg("Both question and answer are required"); return; }
-    setQueue([...queue, { question: q, answer: a }]);
-    setDraftQ(""); setDraftA(""); setShowDraft(false); setBulkMsg(null);
+    if (!m) { setBulkMsg("Marks must be at least 1"); return; }
+    setQueue([...queue, { question: q, answer: a, marks: m }]);
+    setDraftQ(""); setDraftA(""); setDraftMarks("10"); setShowDraft(false); setBulkMsg(null);
   }
 
   async function saveAllQueued(publish: "published" | "draft") {
@@ -371,7 +374,6 @@ function HomeworkAdminSection({
         topic: form.topic || null,
         difficulty: form.difficulty,
         assignment_type: form.assignment_type,
-        total_marks: Number(form.total_marks) || 10,
         due_at: form.submission_mode === "self_solve" ? null : (form.due_at ? toISO(form.due_at) : null),
         allow_late_submission: form.allow_late_submission,
         status: publish,
@@ -388,6 +390,7 @@ function HomeworkAdminSection({
           title: queue.length > 1 ? `${baseTitle} — Q${i + 1}` : baseTitle,
           description: item.question,
           expected_output: item.answer,
+          total_marks: item.marks,
         } });
       }
       setBulkMsg(`Saved ${queue.length} question${queue.length > 1 ? "s" : ""} ✓`);
@@ -422,109 +425,6 @@ function HomeworkAdminSection({
             ← Close form
           </button>
         </div>
-
-        {!form.id && (
-          <div className="mt-5 rounded-lg border border-dashed border-accent/50 bg-accent/5 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 className="text-sm font-bold">Questions ({queue.length})</h3>
-                <p className="text-xs text-muted-foreground">Add each question with its answer. Shared settings below (title, topic, marks, mode, due date…) apply to every question.</p>
-              </div>
-              {!showDraft && (
-                <button
-                  onClick={() => { setShowDraft(true); setBulkMsg(null); }}
-                  className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] transition-transform hover:-translate-y-0.5"
-                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                >
-                  <span className="text-base leading-none">＋</span> Add question
-                </button>
-              )}
-            </div>
-
-            {queue.length > 0 && (
-              <ul className="mt-3 space-y-2">
-                {queue.map((q, i) => (
-                  <li key={i} className="rounded-md border border-border bg-card p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Q{i + 1}</p>
-                        <p className="mt-1 whitespace-pre-wrap break-words text-sm font-medium">{q.question}</p>
-                        <p className="mt-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Answer</p>
-                        <p className="mt-1 whitespace-pre-wrap break-words text-sm text-muted-foreground">{q.answer}</p>
-                      </div>
-                      <button
-                        onClick={() => setQueue(queue.filter((_, idx) => idx !== i))}
-                        className="shrink-0 rounded-md border border-destructive/50 bg-destructive/10 px-2 py-1 text-xs text-destructive"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {showDraft && (
-              <div className="mt-3 grid gap-3 rounded-md border border-border bg-background p-3 md:grid-cols-2">
-                <Field label={`Question ${queue.length + 1}`} full>
-                  <textarea
-                    rows={4}
-                    value={draftQ}
-                    onChange={(e) => setDraftQ(e.target.value)}
-                    className={inputCls}
-                    placeholder="Write the question the student will see…"
-                    autoFocus
-                  />
-                </Field>
-                <Field label="Answer" full>
-                  <textarea
-                    rows={4}
-                    value={draftA}
-                    onChange={(e) => setDraftA(e.target.value)}
-                    className={inputCls}
-                    placeholder="Write the correct answer (used for grading / answer key)…"
-                  />
-                </Field>
-                <div className="md:col-span-2 flex flex-wrap gap-2">
-                  <button
-                    onClick={confirmDraft}
-                    className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-                    style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                  >
-                    ✓ Confirm question
-                  </button>
-                  <button
-                    onClick={() => { setShowDraft(false); setDraftQ(""); setDraftA(""); setBulkMsg(null); }}
-                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {queue.length > 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                <button
-                  onClick={() => saveAllQueued("draft")}
-                  disabled={bulkBusy}
-                  className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
-                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                >
-                  Save all as drafts ({queue.length})
-                </button>
-                <button
-                  onClick={() => saveAllQueued("published")}
-                  disabled={bulkBusy}
-                  className="rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold disabled:opacity-50"
-                >
-                  Save all & publish ({queue.length})
-                </button>
-              </div>
-            )}
-            {bulkMsg && <p className="mt-2 text-sm text-muted-foreground">{bulkMsg}</p>}
-          </div>
-        )}
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <Field label="Title *">
@@ -583,6 +483,123 @@ function HomeworkAdminSection({
             </Field>
           )}
         </div>
+
+        {!form.id && (
+          <div className="mt-5 rounded-lg border border-dashed border-accent/50 bg-accent/5 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold">Questions ({queue.length})</h3>
+                <p className="text-xs text-muted-foreground">Add each question with its own answer and marks. Shared settings above (title, topic, mode, due date…) apply to every question.</p>
+              </div>
+              {!showDraft && (
+                <button
+                  onClick={() => { setShowDraft(true); setBulkMsg(null); }}
+                  className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] transition-transform hover:-translate-y-0.5"
+                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                >
+                  <span className="text-base leading-none">＋</span> Add question
+                </button>
+              )}
+            </div>
+
+            {queue.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {queue.map((q, i) => (
+                  <li key={i} className="rounded-md border border-border bg-card p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Q{i + 1}</p>
+                          <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">{q.marks} {q.marks === 1 ? "mark" : "marks"}</span>
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap break-words text-sm font-medium">{q.question}</p>
+                        <p className="mt-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Answer</p>
+                        <p className="mt-1 whitespace-pre-wrap break-words text-sm text-muted-foreground">{q.answer}</p>
+                      </div>
+                      <button
+                        onClick={() => setQueue(queue.filter((_, idx) => idx !== i))}
+                        className="shrink-0 rounded-md border border-destructive/50 bg-destructive/10 px-2 py-1 text-xs text-destructive"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {showDraft && (
+              <div className="mt-3 grid gap-3 rounded-md border border-border bg-background p-3 md:grid-cols-2">
+                <Field label={`Question ${queue.length + 1}`} full>
+                  <textarea
+                    rows={4}
+                    value={draftQ}
+                    onChange={(e) => setDraftQ(e.target.value)}
+                    className={inputCls}
+                    placeholder="Write the question the student will see…"
+                    autoFocus
+                  />
+                </Field>
+                <Field label="Answer" full>
+                  <textarea
+                    rows={4}
+                    value={draftA}
+                    onChange={(e) => setDraftA(e.target.value)}
+                    className={inputCls}
+                    placeholder="Write the correct answer (used for grading / answer key)…"
+                  />
+                </Field>
+                <Field label="Marks for this question">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={draftMarks}
+                    onChange={(e) => setDraftMarks(e.target.value.replace(/[^0-9]/g, ""))}
+                    className={inputCls}
+                    placeholder="e.g. 2"
+                  />
+                </Field>
+                <div className="md:col-span-2 flex flex-wrap gap-2">
+                  <button
+                    onClick={confirmDraft}
+                    className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                    style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                  >
+                    ✓ Confirm question
+                  </button>
+                  <button
+                    onClick={() => { setShowDraft(false); setDraftQ(""); setDraftA(""); setDraftMarks("10"); setBulkMsg(null); }}
+                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {queue.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+                <button
+                  onClick={() => saveAllQueued("draft")}
+                  disabled={bulkBusy}
+                  className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
+                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                >
+                  Save all as drafts ({queue.length})
+                </button>
+                <button
+                  onClick={() => saveAllQueued("published")}
+                  disabled={bulkBusy}
+                  className="rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold disabled:opacity-50"
+                >
+                  Save all & publish ({queue.length})
+                </button>
+              </div>
+            )}
+            {bulkMsg && <p className="mt-2 text-sm text-muted-foreground">{bulkMsg}</p>}
+          </div>
+        )}
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button onClick={() => save()} disabled={busy} className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50" style={{ backgroundImage: "var(--gradient-sunrise)" }}>
             {form.id ? "Save changes" : "Save draft"}
