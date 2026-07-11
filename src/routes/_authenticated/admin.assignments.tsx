@@ -582,18 +582,6 @@ function HomeworkAdminSection({
               </label>
             </Field>
           )}
-          <Field label="Sample input">
-            <textarea rows={3} value={form.sample_input} onChange={(e) => setForm({ ...form, sample_input: e.target.value })} className={inputCls + " font-mono text-xs"} />
-          </Field>
-          <Field label="Sample output">
-            <textarea rows={3} value={form.sample_output} onChange={(e) => setForm({ ...form, sample_output: e.target.value })} className={inputCls + " font-mono text-xs"} />
-          </Field>
-          <Field label="Expected output (internal)">
-            <textarea rows={3} value={form.expected_output} onChange={(e) => setForm({ ...form, expected_output: e.target.value })} className={inputCls + " font-mono text-xs"} />
-          </Field>
-          <Field label="Starter code">
-            <textarea rows={3} value={form.starter_code} onChange={(e) => setForm({ ...form, starter_code: e.target.value })} className={inputCls + " font-mono text-xs"} />
-          </Field>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <button onClick={() => save()} disabled={busy} className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50" style={{ backgroundImage: "var(--gradient-sunrise)" }}>
