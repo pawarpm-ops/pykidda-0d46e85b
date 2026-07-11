@@ -19,7 +19,12 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
 const AI_ENDPOINT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-2.5-flash";
 
-async function callAi(system: string, user: string): Promise<string> {
+type UserBlock =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } }
+  | { type: "file"; file: { filename: string; file_data: string } };
+
+async function callAi(system: string, user: string | UserBlock[]): Promise<string> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("AI is not configured on this project (missing LOVABLE_API_KEY).");
   const res = await fetch(AI_ENDPOINT, {
@@ -53,6 +58,13 @@ function parseJsonLoose<T = unknown>(s: string): T {
 
 // -------- Generate --------
 
+const ReferenceFileSchema = z.object({
+  name: z.string().min(1).max(200),
+  mime: z.string().min(1).max(120),
+  // base64-encoded file content, max ~8 MB after encoding
+  data_base64: z.string().min(1).max(12_000_000),
+});
+
 const GenerateInput = z.object({
   topic: z.string().trim().min(1).max(200),
   difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
@@ -60,6 +72,7 @@ const GenerateInput = z.object({
   marks_per_question: z.number().int().min(1).max(100).default(10),
   question_type: z.enum(["coding", "written", "mixed"]).default("coding"),
   instructions: z.string().max(4000).default(""),
+  reference_file: ReferenceFileSchema.nullable().optional(),
 });
 
 const AiQuestionSchema = z.object({
@@ -108,9 +121,22 @@ Rules:
 - Question type preference: "${data.question_type}" (coding = require Python code, written = conceptual, mixed = either).
 - All Python must run on plain CPython / Pyodide: no file I/O, no plotting, no pandas, no tkinter.
 - Sample input/output must be exactly what a student would see/type.`;
-    const user = `Topic: ${data.topic}
-${data.instructions.trim() ? `Extra teacher instructions:\n"""\n${data.instructions.slice(0, 4000)}\n"""` : ""}`;
-    const content = await callAi(sys, user);
+    const promptText = `Topic: ${data.topic}
+${data.instructions.trim() ? `Extra teacher instructions:\n"""\n${data.instructions.slice(0, 4000)}\n"""\n` : ""}${data.reference_file ? `\nA reference file (${data.reference_file.name}) is attached. Base the questions on the syllabus / topics / example questions found in it. Match its style and scope, but write ORIGINAL questions — do not copy verbatim.` : ""}`;
+
+    let userMessage: string | UserBlock[] = promptText;
+    if (data.reference_file) {
+      const { mime, data_base64, name } = data.reference_file;
+      const dataUrl = `data:${mime};base64,${data_base64}`;
+      const blocks: UserBlock[] = [{ type: "text", text: promptText }];
+      if (mime.startsWith("image/")) {
+        blocks.push({ type: "image_url", image_url: { url: dataUrl } });
+      } else {
+        blocks.push({ type: "file", file: { filename: name, file_data: dataUrl } });
+      }
+      userMessage = blocks;
+    }
+    const content = await callAi(sys, userMessage);
     const parsed = parseJsonLoose<{ questions: unknown[] }>(content);
     const raw = Array.isArray(parsed.questions) ? parsed.questions : [];
     const questions: AiQuestion[] = raw.map((q) => {

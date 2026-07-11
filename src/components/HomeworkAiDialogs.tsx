@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { X, Sparkles, Loader2, Check, RefreshCcw, Pencil } from "lucide-react";
+import { X, Sparkles, Loader2, Check, RefreshCcw, Pencil, Paperclip, FileText } from "lucide-react";
 import { DueDateTimePicker } from "@/components/DueDateTimePicker";
 import {
   generateHomeworkQuestions,
@@ -52,13 +52,44 @@ export function GenerateAiDialog({ onClose, onSaved }: { onClose: () => void; on
   const [instructions, setInstructions] = useState("");
   const [dueAt, setDueAt] = useState("");
   const [mode, setMode] = useState<"submit" | "self_solve">("submit");
+  const [refFile, setRefFile] = useState<{ name: string; mime: string; data_base64: string; size: number } | null>(null);
+  const [fileErr, setFileErr] = useState<string | null>(null);
+
+  const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+  const ACCEPTED = ".pdf,.txt,.md,.markdown,image/*";
+
+  async function handleFilePick(f: File | null) {
+    setFileErr(null);
+    if (!f) { setRefFile(null); return; }
+    if (f.size > MAX_BYTES) { setFileErr("File is larger than 8 MB. Please upload a smaller file."); return; }
+    const okMime =
+      f.type === "application/pdf" ||
+      f.type.startsWith("text/") ||
+      f.type.startsWith("image/") ||
+      /\.(md|markdown|txt)$/i.test(f.name);
+    if (!okMime) { setFileErr("Only PDF, text/markdown, or image files are supported."); return; }
+    const buf = await f.arrayBuffer();
+    // base64 encode without blowing the stack for large files
+    let bin = "";
+    const bytes = new Uint8Array(buf);
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
+    }
+    const b64 = btoa(bin);
+    const mime = f.type || (/\.pdf$/i.test(f.name) ? "application/pdf" : "text/plain");
+    setRefFile({ name: f.name, mime, data_base64: b64, size: f.size });
+  }
 
   async function handleGenerate() {
     if (!topic.trim()) { setErr("Topic is required."); return; }
     setBusy(true); setErr(null);
     try {
       const res = await generateFn({
-        data: { topic: topic.trim(), difficulty, count, marks_per_question: marks, question_type: type, instructions },
+        data: {
+          topic: topic.trim(), difficulty, count, marks_per_question: marks, question_type: type, instructions,
+          reference_file: refFile ? { name: refFile.name, mime: refFile.mime, data_base64: refFile.data_base64 } : null,
+        },
       });
       setDrafts(res.questions);
       setStep("preview");
@@ -117,6 +148,45 @@ export function GenerateAiDialog({ onClose, onSaved }: { onClose: () => void; on
           <div className="md:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Instructions for AI (optional)</label>
             <textarea rows={3} value={instructions} onChange={(e) => setInstructions(e.target.value)} className={inputCls + " mt-1"} placeholder="e.g. Focus on real-world examples; include I/O for each question" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Reference file (optional)</label>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Upload a syllabus, unit plan, question paper or image (PDF, TXT, MD or image, max 8 MB). AI will base questions on it.
+            </p>
+            {!refFile ? (
+              <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-border bg-background px-3 py-3 text-sm hover:border-accent">
+                <Paperclip size={16} className="text-accent" />
+                <span className="text-muted-foreground">Click to attach a file</span>
+                <input
+                  type="file"
+                  accept={ACCEPTED}
+                  className="hidden"
+                  onChange={(e) => void handleFilePick(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            ) : (
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-md border border-accent/40 bg-accent/5 px-3 py-2 text-sm">
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText size={16} className="shrink-0 text-accent" />
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{refFile.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {(refFile.size / 1024).toFixed(refFile.size > 1024 * 1024 ? 0 : 1)}{" "}
+                      {refFile.size > 1024 * 1024 ? `KB · ${(refFile.size / 1024 / 1024).toFixed(2)} MB` : "KB"} · {refFile.mime}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setRefFile(null)}
+                  className="shrink-0 rounded-md border border-border bg-background px-2 py-1 text-xs"
+                  type="button"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+            {fileErr && <p className="mt-1 text-xs text-destructive">{fileErr}</p>}
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Mode</label>
