@@ -80,7 +80,8 @@ function MyAssignmentsPage() {
 
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
           {data?.map((row) => {
-            const when = fmtWhen(row.due_at);
+            const isSelfSolve = (row as { submission_mode?: string }).submission_mode === "self_solve" || !row.due_at;
+            const when = fmtWhen(row.due_at, isSelfSolve);
             const badge = statusBadge(row);
             return (
               <li
