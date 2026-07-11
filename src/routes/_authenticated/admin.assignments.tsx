@@ -341,6 +341,64 @@ function HomeworkAdminSection({
   const [showAi, setShowAi] = useState(false);
   const [refiningId, setRefiningId] = useState<string | null>(null);
   const formOpen = showManual || !!form.id;
+
+  // Multi-question queue (manual create mode only)
+  const createFn = useServerFn(adminCreateAssignment);
+  const qc = useQueryClient();
+  const [queue, setQueue] = useState<Array<{ question: string; answer: string }>>([]);
+  const [draftQ, setDraftQ] = useState("");
+  const [draftA, setDraftA] = useState("");
+  const [showDraft, setShowDraft] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null);
+
+  function confirmDraft() {
+    const q = draftQ.trim();
+    const a = draftA.trim();
+    if (!q || !a) { setBulkMsg("Both question and answer are required"); return; }
+    setQueue([...queue, { question: q, answer: a }]);
+    setDraftQ(""); setDraftA(""); setShowDraft(false); setBulkMsg(null);
+  }
+
+  async function saveAllQueued(publish: "published" | "draft") {
+    if (queue.length === 0) return;
+    if (!form.title.trim()) { setBulkMsg("Set a Title (shared for all questions) first"); return; }
+    if (form.submission_mode === "submit" && !form.due_at) { setBulkMsg("Due date required for submit-mode homework"); return; }
+    setBulkBusy(true); setBulkMsg(null);
+    try {
+      const base = {
+        unit: form.unit ? Number(form.unit) : null,
+        topic: form.topic || null,
+        difficulty: form.difficulty,
+        assignment_type: form.assignment_type,
+        total_marks: Number(form.total_marks) || 10,
+        due_at: form.submission_mode === "self_solve" ? null : (form.due_at ? toISO(form.due_at) : null),
+        allow_late_submission: form.allow_late_submission,
+        status: publish,
+        sample_input: form.sample_input || null,
+        sample_output: form.sample_output || null,
+        starter_code: form.starter_code || null,
+        submission_mode: form.submission_mode,
+      };
+      const baseTitle = form.title.trim();
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        await createFn({ data: {
+          ...base,
+          title: queue.length > 1 ? `${baseTitle} — Q${i + 1}` : baseTitle,
+          description: item.question,
+          expected_output: item.answer,
+        } });
+      }
+      setBulkMsg(`Saved ${queue.length} question${queue.length > 1 ? "s" : ""} ✓`);
+      setQueue([]);
+      qc.invalidateQueries({ queryKey: ["admin-assignments"] });
+    } catch (e) {
+      setBulkMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBulkBusy(false);
+    }
+  }
   return (
     <>
       {!formOpen && (
