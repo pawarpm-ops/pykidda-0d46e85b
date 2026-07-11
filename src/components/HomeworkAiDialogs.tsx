@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { X, Sparkles, Loader2, Check, RefreshCcw, Pencil } from "lucide-react";
+import { X, Sparkles, Loader2, Check, RefreshCcw, Pencil, Paperclip, FileText } from "lucide-react";
 import { DueDateTimePicker } from "@/components/DueDateTimePicker";
 import {
   generateHomeworkQuestions,
