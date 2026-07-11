@@ -121,9 +121,22 @@ Rules:
 - Question type preference: "${data.question_type}" (coding = require Python code, written = conceptual, mixed = either).
 - All Python must run on plain CPython / Pyodide: no file I/O, no plotting, no pandas, no tkinter.
 - Sample input/output must be exactly what a student would see/type.`;
-    const user = `Topic: ${data.topic}
-${data.instructions.trim() ? `Extra teacher instructions:\n"""\n${data.instructions.slice(0, 4000)}\n"""` : ""}`;
-    const content = await callAi(sys, user);
+    const promptText = `Topic: ${data.topic}
+${data.instructions.trim() ? `Extra teacher instructions:\n"""\n${data.instructions.slice(0, 4000)}\n"""\n` : ""}${data.reference_file ? `\nA reference file (${data.reference_file.name}) is attached. Base the questions on the syllabus / topics / example questions found in it. Match its style and scope, but write ORIGINAL questions — do not copy verbatim.` : ""}`;
+
+    let userMessage: string | UserBlock[] = promptText;
+    if (data.reference_file) {
+      const { mime, data_base64, name } = data.reference_file;
+      const dataUrl = `data:${mime};base64,${data_base64}`;
+      const blocks: UserBlock[] = [{ type: "text", text: promptText }];
+      if (mime.startsWith("image/")) {
+        blocks.push({ type: "image_url", image_url: { url: dataUrl } });
+      } else {
+        blocks.push({ type: "file", file: { filename: name, file_data: dataUrl } });
+      }
+      userMessage = blocks;
+    }
+    const content = await callAi(sys, userMessage);
     const parsed = parseJsonLoose<{ questions: unknown[] }>(content);
     const raw = Array.isArray(parsed.questions) ? parsed.questions : [];
     const questions: AiQuestion[] = raw.map((q) => {
