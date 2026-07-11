@@ -374,7 +374,6 @@ function HomeworkAdminSection({
         topic: form.topic || null,
         difficulty: form.difficulty,
         assignment_type: form.assignment_type,
-        total_marks: Number(form.total_marks) || 10,
         due_at: form.submission_mode === "self_solve" ? null : (form.due_at ? toISO(form.due_at) : null),
         allow_late_submission: form.allow_late_submission,
         status: publish,
@@ -391,6 +390,7 @@ function HomeworkAdminSection({
           title: queue.length > 1 ? `${baseTitle} — Q${i + 1}` : baseTitle,
           description: item.question,
           expected_output: item.answer,
+          total_marks: item.marks,
         } });
       }
       setBulkMsg(`Saved ${queue.length} question${queue.length > 1 ? "s" : ""} ✓`);
