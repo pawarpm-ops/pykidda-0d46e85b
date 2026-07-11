@@ -86,7 +86,10 @@ export function GenerateAiDialog({ onClose, onSaved }: { onClose: () => void; on
     setBusy(true); setErr(null);
     try {
       const res = await generateFn({
-        data: { topic: topic.trim(), difficulty, count, marks_per_question: marks, question_type: type, instructions },
+        data: {
+          topic: topic.trim(), difficulty, count, marks_per_question: marks, question_type: type, instructions,
+          reference_file: refFile ? { name: refFile.name, mime: refFile.mime, data_base64: refFile.data_base64 } : null,
+        },
       });
       setDrafts(res.questions);
       setStep("preview");
