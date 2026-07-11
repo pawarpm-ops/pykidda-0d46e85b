@@ -19,7 +19,12 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
 const AI_ENDPOINT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-2.5-flash";
 
-async function callAi(system: string, user: string): Promise<string> {
+type UserBlock =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } }
+  | { type: "file"; file: { filename: string; file_data: string } };
+
+async function callAi(system: string, user: string | UserBlock[]): Promise<string> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("AI is not configured on this project (missing LOVABLE_API_KEY).");
   const res = await fetch(AI_ENDPOINT, {
@@ -53,6 +58,13 @@ function parseJsonLoose<T = unknown>(s: string): T {
 
 // -------- Generate --------
 
+const ReferenceFileSchema = z.object({
+  name: z.string().min(1).max(200),
+  mime: z.string().min(1).max(120),
+  // base64-encoded file content, max ~8 MB after encoding
+  data_base64: z.string().min(1).max(12_000_000),
+});
+
 const GenerateInput = z.object({
   topic: z.string().trim().min(1).max(200),
   difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
@@ -60,6 +72,7 @@ const GenerateInput = z.object({
   marks_per_question: z.number().int().min(1).max(100).default(10),
   question_type: z.enum(["coding", "written", "mixed"]).default("coding"),
   instructions: z.string().max(4000).default(""),
+  reference_file: ReferenceFileSchema.nullable().optional(),
 });
 
 const AiQuestionSchema = z.object({
