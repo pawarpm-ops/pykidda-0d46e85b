@@ -345,9 +345,10 @@ function HomeworkAdminSection({
   // Multi-question queue (manual create mode only)
   const createFn = useServerFn(adminCreateAssignment);
   const qc = useQueryClient();
-  const [queue, setQueue] = useState<Array<{ question: string; answer: string }>>([]);
+  const [queue, setQueue] = useState<Array<{ question: string; answer: string; marks: number }>>([]);
   const [draftQ, setDraftQ] = useState("");
   const [draftA, setDraftA] = useState("");
+  const [draftMarks, setDraftMarks] = useState("10");
   const [showDraft, setShowDraft] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkMsg, setBulkMsg] = useState<string | null>(null);
@@ -355,9 +356,11 @@ function HomeworkAdminSection({
   function confirmDraft() {
     const q = draftQ.trim();
     const a = draftA.trim();
+    const m = Math.max(1, Math.min(1000, parseInt(draftMarks, 10) || 0));
     if (!q || !a) { setBulkMsg("Both question and answer are required"); return; }
-    setQueue([...queue, { question: q, answer: a }]);
-    setDraftQ(""); setDraftA(""); setShowDraft(false); setBulkMsg(null);
+    if (!m) { setBulkMsg("Marks must be at least 1"); return; }
+    setQueue([...queue, { question: q, answer: a, marks: m }]);
+    setDraftQ(""); setDraftA(""); setDraftMarks("10"); setShowDraft(false); setBulkMsg(null);
   }
 
   async function saveAllQueued(publish: "published" | "draft") {
