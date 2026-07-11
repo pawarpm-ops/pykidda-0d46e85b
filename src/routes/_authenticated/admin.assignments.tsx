@@ -428,7 +428,7 @@ function HomeworkAdminSection({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold">Questions ({queue.length})</h3>
-                <p className="text-xs text-muted-foreground">Add each question with its answer. Shared settings above apply to all.</p>
+                <p className="text-xs text-muted-foreground">Add each question with its answer. Shared settings below (title, topic, marks, mode, due date…) apply to every question.</p>
               </div>
               {!showDraft && (
                 <button
