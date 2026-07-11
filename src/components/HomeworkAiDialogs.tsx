@@ -149,6 +149,45 @@ export function GenerateAiDialog({ onClose, onSaved }: { onClose: () => void; on
             <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Instructions for AI (optional)</label>
             <textarea rows={3} value={instructions} onChange={(e) => setInstructions(e.target.value)} className={inputCls + " mt-1"} placeholder="e.g. Focus on real-world examples; include I/O for each question" />
           </div>
+          <div className="md:col-span-2">
+            <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Reference file (optional)</label>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Upload a syllabus, unit plan, question paper or image (PDF, TXT, MD or image, max 8 MB). AI will base questions on it.
+            </p>
+            {!refFile ? (
+              <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-border bg-background px-3 py-3 text-sm hover:border-accent">
+                <Paperclip size={16} className="text-accent" />
+                <span className="text-muted-foreground">Click to attach a file</span>
+                <input
+                  type="file"
+                  accept={ACCEPTED}
+                  className="hidden"
+                  onChange={(e) => void handleFilePick(e.target.files?.[0] ?? null)}
+                />
+              </label>
+            ) : (
+              <div className="mt-2 flex items-center justify-between gap-3 rounded-md border border-accent/40 bg-accent/5 px-3 py-2 text-sm">
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText size={16} className="shrink-0 text-accent" />
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{refFile.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {(refFile.size / 1024).toFixed(refFile.size > 1024 * 1024 ? 0 : 1)}{" "}
+                      {refFile.size > 1024 * 1024 ? `KB · ${(refFile.size / 1024 / 1024).toFixed(2)} MB` : "KB"} · {refFile.mime}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setRefFile(null)}
+                  className="shrink-0 rounded-md border border-border bg-background px-2 py-1 text-xs"
+                  type="button"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+            {fileErr && <p className="mt-1 text-xs text-destructive">{fileErr}</p>}
+          </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Mode</label>
             <select value={mode} onChange={(e) => setMode(e.target.value as "submit" | "self_solve")} className={inputCls + " mt-1"}>
