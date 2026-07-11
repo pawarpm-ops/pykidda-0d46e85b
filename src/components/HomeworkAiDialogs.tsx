@@ -52,6 +52,34 @@ export function GenerateAiDialog({ onClose, onSaved }: { onClose: () => void; on
   const [instructions, setInstructions] = useState("");
   const [dueAt, setDueAt] = useState("");
   const [mode, setMode] = useState<"submit" | "self_solve">("submit");
+  const [refFile, setRefFile] = useState<{ name: string; mime: string; data_base64: string; size: number } | null>(null);
+  const [fileErr, setFileErr] = useState<string | null>(null);
+
+  const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+  const ACCEPTED = ".pdf,.txt,.md,.markdown,image/*";
+
+  async function handleFilePick(f: File | null) {
+    setFileErr(null);
+    if (!f) { setRefFile(null); return; }
+    if (f.size > MAX_BYTES) { setFileErr("File is larger than 8 MB. Please upload a smaller file."); return; }
+    const okMime =
+      f.type === "application/pdf" ||
+      f.type.startsWith("text/") ||
+      f.type.startsWith("image/") ||
+      /\.(md|markdown|txt)$/i.test(f.name);
+    if (!okMime) { setFileErr("Only PDF, text/markdown, or image files are supported."); return; }
+    const buf = await f.arrayBuffer();
+    // base64 encode without blowing the stack for large files
+    let bin = "";
+    const bytes = new Uint8Array(buf);
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
+    }
+    const b64 = btoa(bin);
+    const mime = f.type || (/\.pdf$/i.test(f.name) ? "application/pdf" : "text/plain");
+    setRefFile({ name: f.name, mime, data_base64: b64, size: f.size });
+  }
 
   async function handleGenerate() {
     if (!topic.trim()) { setErr("Topic is required."); return; }
