@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.enforce_submission_timestamps() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.protect_submission_grade_fields() FROM PUBLIC, anon, authenticated;
