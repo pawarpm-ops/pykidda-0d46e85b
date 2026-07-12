@@ -181,45 +181,9 @@ export const submitAssignment = createServerFn({ method: "POST" })
       submissionId = inserted.id;
     }
 
-    // ---------- Auto-grade coding submissions ----------
-    // Grade against the teacher's expected output using the AI gateway.
-    // Bucket correctness into 0 / 25 / 50 / 75 / 100 %, then award marks
-    // = round((pct/100) * total_marks * 2) / 2  (nearest 0.5 mark).
-    // NEVER marks the submission as "reviewed" — that stays a teacher action
-    // via adminReviewSubmission — so students can keep iterating until the
-    // deadline. Auto-grade only writes marks_obtained + a note. Bounded by a
-    // short timeout so a slow AI call never blocks the submission response.
-    const auto = await Promise.race<
-      Awaited<ReturnType<typeof autoGradeCoding>> | null
-    >([
-      autoGradeCoding({
-        assignment: a as any,
-        code_answer: data.code_answer ?? null,
-        code_output: data.code_output ?? null,
-      }).catch((e) => {
-        console.error("autoGradeCoding failed", e);
-        return null;
-      }),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
-    ]);
-    if (auto) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin
-          .from("assignment_submissions")
-          .update({
-            marks_obtained: auto.marks,
-            teacher_feedback: `Auto-graded by AI (${auto.pct}% correct). ${auto.reason}\n\nYou can still edit and resubmit before the deadline.`.slice(0, 2000),
-          })
-          .eq("id", submissionId);
-      } catch (e) {
-        console.error("auto-grade write failed", e);
-      }
-    }
-
-    return { id: submissionId, is_late: isLate, auto_graded: auto ? auto.marks : null };
-
+    return { id: submissionId, is_late: isLate };
   });
+
 
 // -----------------------------------------------------------------------------
 // AI auto-grader for coding homework submissions.
