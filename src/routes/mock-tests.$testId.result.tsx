@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { getMockTest, getQuestion } from "@/lib/questions";
-import { loadResult, type AttemptResult } from "@/lib/test-session";
+import { loadResult, type AttemptResult, type QuestionAttempt } from "@/lib/test-session";
 
 export const Route = createFileRoute("/mock-tests/$testId/result")({
   head: () => ({
@@ -40,6 +40,10 @@ function ResultPage() {
   const auto = r.submissionType === "auto-violation";
   const mins = Math.floor(r.timeTakenSec / 60);
   const secs = r.timeTakenSec % 60;
+
+  const isFullyCorrect = (a: QuestionAttempt) => a.total > 0 && a.passed === a.total;
+  const correct = r.attempts.filter(isFullyCorrect);
+  const incorrect = r.attempts.filter((a) => !isFullyCorrect(a));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -85,110 +89,7 @@ function ResultPage() {
           </div>
         </div>
 
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold">Per-question breakdown</h2>
-          <ol className="mt-4 space-y-3">
-            {r.attempts.map((a, idx) => {
-              const q = getQuestion(a.questionId);
-              const allPassed = a.passed === a.total && a.total > 0;
-              return (
-                <li key={a.questionId} className="rounded-lg border border-border bg-card p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-medium">
-                        <span className="text-muted-foreground mr-2">Q{idx + 1}.</span>
-                        {q?.title ?? a.questionId}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Tests passed: <strong className="text-foreground">{a.passed}/{a.total}</strong> · Marks:{" "}
-                        <strong className="text-foreground">{a.marksObtained}/{a.marksTotal}</strong>
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
-                        allPassed
-                          ? "bg-[oklch(0.65_0.15_145)]/15 text-[oklch(0.4_0.15_145)]"
-                          : a.passed > 0
-                            ? "bg-accent/20 text-accent-foreground"
-                            : "bg-destructive/15 text-destructive"
-                      }`}
-                    >
-                      {allPassed ? "All pass" : a.passed > 0 ? "Partial" : "Failed"}
-                    </span>
-                  </div>
-
-                  <details className="mt-3">
-                    <summary className="cursor-pointer text-sm text-muted-foreground hover:text-accent">
-                      Show your code
-                    </summary>
-                    <pre className="mt-2 overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
-{a.code}
-                    </pre>
-                    <div className="mt-3 space-y-2">
-                      {a.results.map((tr, i) => (
-                        <div
-                          key={i}
-                          className={`rounded border p-2 text-xs ${
-                            tr.passed
-                              ? "border-[oklch(0.65_0.15_145)]/40 bg-[oklch(0.65_0.15_145)]/5"
-                              : "border-destructive/40 bg-destructive/5"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between font-medium">
-                            <span>Test {i + 1}</span>
-                            <span>{tr.passed ? "PASS" : "FAIL"}</span>
-                          </div>
-                          {!tr.passed && (
-                            <div className="mt-1 font-mono">
-                              <div><span className="text-muted-foreground">expected:</span> <pre className="inline whitespace-pre-wrap">{tr.expected}</pre></div>
-                              <div><span className="text-muted-foreground">got:</span> <pre className="inline whitespace-pre-wrap">{tr.actual}</pre></div>
-                              {tr.stderr && (
-                                <div className="text-destructive"><span className="text-muted-foreground">stderr:</span> <pre className="inline whitespace-pre-wrap">{tr.stderr}</pre></div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-
-                  {q && (
-                    <details className="group mt-4 rounded-xl border-2 border-accent/60 bg-accent/10 p-4 shadow-[var(--shadow-warm)]">
-                      <summary className="flex cursor-pointer items-center justify-between gap-3 list-none [&::-webkit-details-marker]:hidden">
-                        <span className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-extrabold uppercase tracking-wider text-[oklch(0.18_0.02_250)] shadow-[var(--shadow-warm)] transition hover:opacity-95"
-                          style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                        >
-                          <span aria-hidden>🔑</span> Show answer key
-                        </span>
-                        <span className="text-xs font-semibold text-yellow-400 dark:text-yellow-300 transition group-open:rotate-180">▼</span>
-                      </summary>
-                      <div className="mt-4 space-y-3">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Problem</p>
-                          <p className="mt-1 text-sm whitespace-pre-wrap">{q.prompt}</p>
-                        </div>
-                        {q.hint && (
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Hint</p>
-                            <p className="mt-1 text-sm whitespace-pre-wrap">{q.hint}</p>
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Reference solution</p>
-                          <pre className="mt-1 overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
-{q.solution}
-                          </pre>
-                        </div>
-                      </div>
-                    </details>
-                  )}
-
-
-                </li>
-              );
-            })}
-          </ol>
-        </section>
+        <AnswerTabs correct={correct} incorrect={incorrect} all={r.attempts} />
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
@@ -207,5 +108,149 @@ function ResultPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+type TabKey = "correct" | "incorrect" | "key";
+
+function AnswerTabs({ correct, incorrect, all }: { correct: QuestionAttempt[]; incorrect: QuestionAttempt[]; all: QuestionAttempt[] }) {
+  const [tab, setTab] = useState<TabKey>("correct");
+
+  const tabs: { key: TabKey; label: string; count: number }[] = [
+    { key: "correct", label: "Correct Questions", count: correct.length },
+    { key: "incorrect", label: "Incorrect Questions", count: incorrect.length },
+    { key: "key", label: "Answer Key", count: all.length },
+  ];
+
+  const list = tab === "correct" ? correct : tab === "incorrect" ? incorrect : all;
+
+  return (
+    <section className="mt-8">
+      <div className="flex flex-wrap gap-2 border-b border-border">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-2 text-sm font-semibold rounded-t-md border-b-2 transition ${
+              tab === t.key
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label} <span className="ml-1 text-xs opacity-70">({t.count})</span>
+          </button>
+        ))}
+      </div>
+
+      {list.length === 0 ? (
+        <p className="mt-6 text-sm text-muted-foreground text-center py-8">
+          {tab === "correct" ? "No fully-correct answers yet." : tab === "incorrect" ? "No incorrect answers — great job!" : "No questions."}
+        </p>
+      ) : (
+        <ol className="mt-4 space-y-4">
+          {list.map((a) => {
+            const origIdx = all.indexOf(a);
+            return <AttemptCard key={a.questionId} attempt={a} index={origIdx} tab={tab} />;
+          })}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+function AttemptCard({ attempt: a, index, tab }: { attempt: QuestionAttempt; index: number; tab: TabKey }) {
+  const q = getQuestion(a.questionId);
+  const allPassed = a.total > 0 && a.passed === a.total;
+
+  return (
+    <li
+      className={`rounded-xl border-l-4 border border-border bg-card p-4 ${
+        tab === "key"
+          ? "border-l-primary"
+          : allPassed
+            ? "border-l-[oklch(0.65_0.16_145)]"
+            : "border-l-destructive"
+      }`}
+    >
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="font-semibold text-sm">
+          Q{index + 1}
+          <span className="ml-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">CODE</span>
+          <span className="ml-2 text-muted-foreground font-normal">
+            · {a.marksObtained}/{a.marksTotal} marks · {a.passed}/{a.total} tests
+          </span>
+        </p>
+        <span className={`text-xs font-bold ${allPassed ? "text-[oklch(0.55_0.16_145)]" : a.passed > 0 ? "text-accent-foreground" : "text-destructive"}`}>
+          {allPassed ? "✓ Correct" : a.passed > 0 ? "◐ Partial" : "✗ Incorrect"}
+        </span>
+      </div>
+
+      {/* Question */}
+      <div className="mt-3">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Question</p>
+        <p className="mt-1 text-sm font-medium">{q?.title ?? a.questionId}</p>
+        {q?.prompt && (
+          <p className="mt-1 text-sm whitespace-pre-wrap leading-relaxed text-muted-foreground">{q.prompt}</p>
+        )}
+      </div>
+
+      {/* Your code */}
+      <div className="mt-3">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Your code</p>
+        <pre className="mt-1 overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
+{a.code || "(no code submitted)"}
+        </pre>
+      </div>
+
+      {/* Test case results */}
+      {a.results.length > 0 && (
+        <div className="mt-3 space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Test cases</p>
+          {a.results.map((tr, i) => (
+            <div
+              key={i}
+              className={`rounded border p-2 text-xs ${
+                tr.passed
+                  ? "border-[oklch(0.65_0.15_145)]/40 bg-[oklch(0.65_0.15_145)]/5"
+                  : "border-destructive/40 bg-destructive/5"
+              }`}
+            >
+              <div className="flex items-center justify-between font-medium">
+                <span>Test {i + 1}</span>
+                <span>{tr.passed ? "PASS" : "FAIL"}</span>
+              </div>
+              {!tr.passed && (
+                <div className="mt-1 font-mono">
+                  <div><span className="text-muted-foreground">expected:</span> <pre className="inline whitespace-pre-wrap">{tr.expected}</pre></div>
+                  <div><span className="text-muted-foreground">got:</span> <pre className="inline whitespace-pre-wrap">{tr.actual}</pre></div>
+                  {tr.stderr && (
+                    <div className="text-destructive"><span className="text-muted-foreground">stderr:</span> <pre className="inline whitespace-pre-wrap">{tr.stderr}</pre></div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Answer key (hint + reference solution) */}
+      {q && (tab === "key" || !allPassed) && (
+        <div className="mt-4 rounded-md border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/5 p-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[oklch(0.55_0.16_145)]">🔑 Answer key</p>
+          {q.hint && (
+            <div className="mt-2">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Hint</p>
+              <p className="mt-1 text-xs whitespace-pre-wrap">{q.hint}</p>
+            </div>
+          )}
+          <div className="mt-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Reference solution</p>
+            <pre className="mt-1 overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
+{q.solution}
+            </pre>
+          </div>
+        </div>
+      )}
+    </li>
   );
 }
