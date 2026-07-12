@@ -585,6 +585,37 @@ export const listAiMockTests = createServerFn({ method: "POST" })
     return rows ?? [];
   });
 
+// ----------- Get attempt result with full questions (for result page) -----------
+
+export const getAiMockAttemptResult = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ attempt_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
+    const { data: attempt, error: aErr } = await supabaseAdmin
+      .from("ai_mock_attempts")
+      .select("id,user_id,test_id,marks_obtained,total_marks,percentage,grade,answers,submission_type,violation_reason,time_taken_sec")
+      .eq("id", data.attempt_id)
+      .single();
+    if (aErr) throw new Error(aErr.message);
+    if (attempt.user_id !== context.userId) {
+      const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+      if (!isAdmin) throw new Error("Not authorized");
+    }
+    const { data: test } = await supabaseAdmin
+      .from("ai_mock_tests")
+      .select("id,title")
+      .eq("id", attempt.test_id)
+      .single();
+    const { data: questions, error: qErr } = await supabaseAdmin
+      .from("ai_mock_questions")
+      .select("id,prompt,type,options,correct_answer,explanation,order_index")
+      .eq("test_id", attempt.test_id)
+      .order("order_index");
+    if (qErr) throw new Error(qErr.message);
+    return { attempt, test, questions: questions ?? [] };
+  });
+
 // ----------- Refine existing draft with AI chat instruction -----------
 
 const RefineInput = z.object({
