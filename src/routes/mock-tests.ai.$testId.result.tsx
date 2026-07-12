@@ -42,6 +42,7 @@ type QuestionRow = {
   type: string;
   options: unknown;
   correct_answer: string;
+  starter_code: string | null;
   explanation: string;
   order_index: number;
 };
