@@ -763,9 +763,8 @@ function SubmissionsPanel({ assignmentId, totalMarks }: { assignmentId: string; 
           <SubmissionRow
             key={s.id}
             sub={s}
-            totalMarks={totalMarks}
-            onReview={async (marks, feedback) => {
-              await reviewFn({ data: { submission_id: s.id, marks_obtained: marks, teacher_feedback: feedback } });
+            onReview={async (feedback) => {
+              await reviewFn({ data: { submission_id: s.id, teacher_feedback: feedback } });
               qc.invalidateQueries({ queryKey: ["admin-submissions", assignmentId] });
               qc.invalidateQueries({ queryKey: ["admin-assignments"] });
               refetch();
@@ -773,9 +772,14 @@ function SubmissionsPanel({ assignmentId, totalMarks }: { assignmentId: string; 
           />
         ))}
       </ul>
+      <p className="mt-3 text-xs text-muted-foreground">
+        {counts.total} student{counts.total === 1 ? "" : "s"} have solved this homework
+        {" "}({counts.onTime} on time · {counts.late} late).
+      </p>
     </div>
   );
 }
+
 
 function SubmissionRow({ sub, totalMarks, onReview }: { sub: any; totalMarks: number; onReview: (m: number, f: string) => Promise<void> }) {
   const [marks, setMarks] = useState<string>(sub.marks_obtained != null ? String(sub.marks_obtained) : "");
