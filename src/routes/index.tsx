@@ -193,11 +193,6 @@ function Index() {
               </Link>
             </div>
 
-            <div className="mt-10 flex flex-wrap gap-3">
-              
-              
-              <Badge>📊 Smart Analytics</Badge>
-            </div>
           </div>
         </section>
 
