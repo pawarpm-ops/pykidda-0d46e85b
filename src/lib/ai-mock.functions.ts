@@ -73,7 +73,7 @@ Return ONLY a JSON object with this exact shape:
       "type": "mcq" | "tf" | "fill" | "short" | "code",
       "prompt": "string",
       "options": ["A","B","C","D"],
-      "correct_answer": "string (for mcq: the exact option text; for tf: 'True' or 'False'; for fill/short: the accepted answer; for code: leave empty)",
+      "correct_answer": "string (for mcq: the exact option text; for tf: 'True' or 'False'; for fill/short: the accepted answer; for code: a complete, correct reference Python solution that passes ALL the code_tests)",
       "starter_code": "string (only for code type; a short Python skeleton with a TODO comment)",
       "code_tests": [{"stdin":"...","expected":"..."}],
       "marks": integer,
@@ -88,7 +88,7 @@ Rules:
 - tf: options empty; correct_answer is "True" or "False".
 - fill: options empty; correct_answer is the concise expected fill-in.
 - short: options empty; correct_answer is a short model answer.
-- code: options empty; correct_answer empty; starter_code provided; 2-4 deterministic hidden test cases with exact expected stdout (no trailing newline).
+- code: options empty; starter_code provided; 2-4 deterministic hidden test cases with exact expected stdout (no trailing newline); correct_answer MUST be a complete runnable Python program (the reference solution) that passes every listed code_test — no markdown fences, just raw Python source.
 - All Python code must run on plain CPython (Pyodide). No file I/O, no plotting, no tkinter, no pandas, no seaborn, no matplotlib, no external files.
 - Marks: mcq/tf/fill=1, short=2, code=5 (adjust up to 10 for harder code).
 - If a syllabus is provided, questions must be answerable from that syllabus content.
@@ -609,7 +609,7 @@ export const getAiMockAttemptResult = createServerFn({ method: "POST" })
       .single();
     const { data: questions, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
-      .select("id,prompt,type,options,correct_answer,explanation,order_index")
+      .select("id,prompt,type,options,correct_answer,starter_code,explanation,order_index")
       .eq("test_id", attempt.test_id)
       .order("order_index");
     if (qErr) throw new Error(qErr.message);
@@ -642,7 +642,7 @@ Rules:
 - Apply the teacher's instruction faithfully (add / remove / rewrite / change difficulty / swap topics / fix answers / etc.).
 - Preserve unrelated questions unchanged.
 - Keep answer keys consistent with prompts. Never expose answers inside prompts.
-- Code questions: runnable on Pyodide (no file I/O, no matplotlib, no pandas). Deterministic hidden test cases with exact expected stdout.
+- Code questions: runnable on Pyodide (no file I/O, no matplotlib, no pandas). Deterministic hidden test cases with exact expected stdout. correct_answer MUST be a complete runnable Python reference solution that passes every code_test (raw source, no markdown fences).
 - Return the FULL updated question list, not just the diff. No markdown fences. No prose.`;
 
     const user = `Test title: ${data.title}

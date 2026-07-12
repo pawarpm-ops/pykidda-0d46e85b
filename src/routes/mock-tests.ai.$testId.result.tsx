@@ -42,6 +42,7 @@ type QuestionRow = {
   type: string;
   options: unknown;
   correct_answer: string;
+  starter_code: string | null;
   explanation: string;
   order_index: number;
 };
@@ -255,21 +256,15 @@ function AnswerCard({ answer: a, question: q, index, tab }: { answer: GradedAnsw
             <pre className={`mt-1 whitespace-pre-wrap font-mono text-xs ${a.correct ? "text-[oklch(0.45_0.16_145)]" : "text-destructive"}`}>{userAns || "(blank)"}</pre>
           </div>
           <div className="rounded-md border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/5 p-3">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[oklch(0.55_0.16_145)]">
-              {(q?.type ?? "").toLowerCase() === "code" ? "Grading" : "Correct answer"}
-            </p>
-            {(q?.type ?? "").toLowerCase() === "code" ? (
-              <div className="mt-1 space-y-1 text-xs">
-                <p>
-                  Passed <b>{a.code_passed ?? 0}</b> of <b>{a.code_total ?? 0}</b> hidden test cases.
-                </p>
-                <p className="text-muted-foreground">
-                  Code questions are graded automatically by running your program against hidden inputs — see the explanation below for the intended approach.
-                </p>
-              </div>
-            ) : (
-              <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{correctAns || "(not provided)"}</pre>
-            )}
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[oklch(0.55_0.16_145)]">Correct answer</p>
+            {(() => {
+              const isCode = (q?.type ?? "").toLowerCase() === "code";
+              const codeSolution = correctAns || q?.starter_code || "";
+              if (isCode && codeSolution) {
+                return <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{codeSolution}</pre>;
+              }
+              return <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{correctAns || "(not provided)"}</pre>;
+            })()}
           </div>
         </div>
       )}
