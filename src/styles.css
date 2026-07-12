@@ -143,6 +143,12 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+
+  @media (min-width: 1024px) {
+    body {
+      padding-left: 15rem;
+    }
+  }
 }
 
 /* Global clickable cursor — matches header/navbar link behavior across the app */
