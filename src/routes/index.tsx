@@ -195,7 +195,7 @@ function Index() {
 
             <div className="mt-10 flex flex-wrap gap-3">
               
-              <Badge>⏱ Timed Mock Tests</Badge>
+              
               <Badge>📊 Smart Analytics</Badge>
             </div>
           </div>
