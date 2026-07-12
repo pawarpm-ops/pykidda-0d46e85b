@@ -221,11 +221,7 @@ function Index() {
               >
                 Practice
               </span>
-              <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <p className="text-3xl font-black tabular-nums text-white">{totalQ} questions</p>
-                  <p className="text-sm text-white/65">{totalMarks} marks total · straight from the syllabus</p>
-                </div>
+              <div className="mt-4 flex flex-wrap items-end justify-end gap-4">
                 <p className="text-sm font-semibold text-yellow-300 group-hover:translate-x-1 transition-transform">Open the question list →</p>
               </div>
             </div>
