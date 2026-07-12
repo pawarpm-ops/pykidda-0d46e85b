@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MOCK_TESTS, UNITS, QUESTIONS } from "@/lib/questions";
 import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
+import meenakshiPhoto from "@/assets/meenakshi.png.asset.json";
+import prashantPhoto from "@/assets/prashant.png.asset.json";
+import vaishnaviPhoto from "@/assets/vaishnavi.jpg.asset.json";
 import { StreakCard } from "@/components/StreakCard";
 import {
   Dialog,
@@ -113,6 +116,35 @@ function Index() {
                       <p className="font-semibold text-foreground">Siddharth Prashant Pawar</p>
                       <p className="text-muted-foreground">Contact: <a href="tel:9172504205" className="font-bold text-yellow-500 dark:text-yellow-300 hover:underline">9172504205</a></p>
                     </div>
+                    <Dialog>
+                      <DialogTrigger className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-border bg-muted/40 px-3 py-2 text-xs font-semibold text-yellow-600 dark:text-yellow-300 hover:bg-muted transition">
+                        Thanks to
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle className="text-yellow-500 dark:text-yellow-300">Thanks to</DialogTitle>
+                          <DialogDescription>
+                            People whose support made PY Kidda possible.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="mt-2 space-y-3">
+                          {[
+                            { name: "Dr. Meenakshi Mukund Pawar", post: "Vice Principal, SVERI College", help: "Testing and funding", img: meenakshiPhoto.url },
+                            { name: "Dr. Prashant Maruti Pawar", post: "Professor, SVERI College", help: "Testing and funding", img: prashantPhoto.url },
+                            { name: "Vaishnavi Jadhav", post: "Lab Assistant", help: "Testing and Developing", img: vaishnaviPhoto.url },
+                          ].map((p) => (
+                            <div key={p.name} className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
+                              <img src={p.img} alt={p.name} className="h-14 w-14 rounded-full object-cover border-2 border-amber-400 shrink-0" loading="lazy" />
+                              <div className="min-w-0">
+                                <p className="font-semibold text-foreground truncate">{p.name}</p>
+                                <p className="text-xs text-muted-foreground">{p.post}</p>
+                                <p className="text-xs text-yellow-600 dark:text-yellow-300">Help: {p.help}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </DialogContent>
                 </Dialog>
               </div>
