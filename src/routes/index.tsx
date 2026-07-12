@@ -206,27 +206,6 @@ function Index() {
           <StreakCard />
         </section>
 
-        {/* Practice highlight card */}
-        <section className="mx-auto max-w-6xl px-6 pb-12">
-          <Link to="/practice" className="block group">
-            <div className="relative rounded-2xl border border-white/15 bg-white/[0.06] backdrop-blur-2xl p-8 shadow-2xl transition hover:border-amber-400/40 hover:bg-white/[0.09]">
-              <div
-                className="absolute -inset-0.5 rounded-2xl blur-2xl opacity-0 group-hover:opacity-60 transition -z-10"
-                style={{ background: "linear-gradient(135deg,#f59e0b,#ec4899,#8b5cf6)" }}
-                aria-hidden
-              />
-              <span
-                className="inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest text-slate-900"
-                style={{ background: "linear-gradient(90deg,#fde047,#f59e0b)" }}
-              >
-                Practice
-              </span>
-              <div className="mt-4 flex flex-wrap items-end justify-end gap-4">
-                <p className="text-sm font-semibold text-yellow-300 group-hover:translate-x-1 transition-transform">Open the question list →</p>
-              </div>
-            </div>
-          </Link>
-        </section>
 
         {/* Units */}
         <section id="units" className="mx-auto max-w-6xl px-6 py-12">
