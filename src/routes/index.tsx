@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
-import { MOCK_TESTS, UNITS, QUESTIONS } from "@/lib/questions";
+import { MOCK_TESTS, QUESTIONS } from "@/lib/questions";
 import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
 import meenakshiPhoto from "@/assets/meenakshi.png.asset.json";
 import prashantPhoto from "@/assets/prashant.png.asset.json";
