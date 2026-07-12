@@ -116,6 +116,11 @@ export function SiteHeader() {
     setMenuOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    document.body.classList.add("has-sidebar");
+    return () => document.body.classList.remove("has-sidebar");
+  }, []);
+
   const items = NAV_ITEMS.filter((i) => !i.authOnly || email);
 
   const isActive = (to: string) =>

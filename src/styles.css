@@ -145,7 +145,7 @@
   }
 
   @media (min-width: 1024px) {
-    body {
+    body.has-sidebar {
       padding-left: 15rem;
     }
   }
