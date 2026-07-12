@@ -1,7 +1,7 @@
 // AI mock test — result page. Reads from sessionStorage (immediate) or fetches
 // the attempt from server if the user navigates back later.
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -35,11 +35,22 @@ type Result = {
   answers: GradedAnswer[];
 };
 
+type QuestionRow = {
+  id: string;
+  prompt: string;
+  type: string;
+  options: unknown;
+  correct_answer: string;
+  explanation: string;
+  order_index: number;
+};
+
 function ResultPage() {
   const { testId } = Route.useParams();
   const { attempt } = Route.useSearch();
   const [result, setResult] = useState<Result | null>(null);
   const [testTitle, setTestTitle] = useState("");
+  const [questions, setQuestions] = useState<Record<string, QuestionRow>>({});
 
   useEffect(() => {
     (async () => {
@@ -55,6 +66,16 @@ function ResultPage() {
       }
       const { data: t } = await supabase.from("ai_mock_tests" as never).select("title").eq("id", testId).maybeSingle();
       if (t) setTestTitle((t as { title: string }).title);
+
+      const { data: qs } = await supabase
+        .from("ai_mock_questions" as never)
+        .select("id,prompt,type,options,correct_answer,explanation,order_index")
+        .eq("test_id", testId);
+      if (qs) {
+        const map: Record<string, QuestionRow> = {};
+        for (const q of qs as unknown as QuestionRow[]) map[q.id] = q;
+        setQuestions(map);
+      }
     })();
   }, [attempt, testId]);
 
@@ -80,7 +101,7 @@ function ResultPage() {
           <p className="mt-2 text-lg">Grade <b>{result.grade}</b> · {result.marks_obtained} / {result.total_marks} marks</p>
         </div>
 
-        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} />
+        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} />
 
         <div className="mt-8 flex gap-3">
           <Link to="/mock-tests" className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground">Back to tests</Link>
@@ -93,7 +114,7 @@ function ResultPage() {
 
 type TabKey = "correct" | "incorrect" | "key";
 
-function AnswerTabs({ correct, incorrect, all }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[] }) {
+function AnswerTabs({ correct, incorrect, all, questions }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow> }) {
   const [tab, setTab] = useState<TabKey>("correct");
 
   const tabs: { key: TabKey; label: string; count: number }[] = [
@@ -127,73 +148,142 @@ function AnswerTabs({ correct, incorrect, all }: { correct: GradedAnswer[]; inco
           {tab === "correct" ? "No correct answers yet." : tab === "incorrect" ? "No incorrect answers — great job!" : "No questions."}
         </p>
       ) : (
-        <ol className="mt-4 space-y-3">
+        <ol className="mt-4 space-y-4">
           {list.map((a) => {
             const origIdx = all.indexOf(a);
+            const q = questions[a.question_id];
             return (
-              <li
+              <AnswerCard
                 key={a.question_id}
-                className={`rounded-xl border-l-4 border border-border bg-card p-4 ${
-                  tab === "key"
-                    ? "border-l-primary"
-                    : a.correct
-                      ? "border-l-[oklch(0.65_0.16_145)]"
-                      : "border-l-destructive"
-                }`}
-              >
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <p className="font-semibold text-sm">Q{origIdx + 1} · {a.marks_awarded}/{a.marks_total} marks</p>
-                  {tab !== "key" && (
-                    <span className={`text-xs font-bold ${a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"}`}>
-                      {a.correct ? "✓ Correct" : "✗ Incorrect"}
-                      {a.code_total !== null ? ` · ${a.code_passed}/${a.code_total} tests` : ""}
-                    </span>
-                  )}
-                </div>
-
-                {tab === "correct" && (
-                  <p className="mt-2 text-sm">
-                    <span className="text-muted-foreground">Your answer: </span>
-                    <span className="font-mono whitespace-pre-wrap">{a.response || "(blank)"}</span>
-                  </p>
-                )}
-
-                {tab === "incorrect" && (
-                  <>
-                    <p className="mt-2 text-sm">
-                      <span className="text-muted-foreground">Your answer: </span>
-                      <span className="font-mono whitespace-pre-wrap text-destructive">{a.response || "(blank)"}</span>
-                    </p>
-                    {a.correct_answer && (
-                      <div className="mt-3 rounded-md border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/5 p-3">
-                        <p className="text-xs font-bold uppercase tracking-widest text-[oklch(0.55_0.16_145)]">✨ AI Correct Solution</p>
-                        <p className="mt-1 text-sm font-mono whitespace-pre-wrap">{a.correct_answer}</p>
-                        {a.explanation && (
-                          <p className="mt-2 text-xs text-muted-foreground italic">💡 {a.explanation}</p>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {tab === "key" && (
-                  <div className="mt-2 space-y-2">
-                    {a.correct_answer && (
-                      <p className="text-sm">
-                        <span className="text-muted-foreground">Correct answer: </span>
-                        <span className="font-mono whitespace-pre-wrap">{a.correct_answer}</span>
-                      </p>
-                    )}
-                    {a.explanation && (
-                      <p className="text-xs text-muted-foreground italic">💡 {a.explanation}</p>
-                    )}
-                  </div>
-                )}
-              </li>
+                answer={a}
+                question={q}
+                index={origIdx}
+                tab={tab}
+              />
             );
           })}
         </ol>
       )}
     </section>
+  );
+}
+
+function AnswerCard({ answer: a, question: q, index, tab }: { answer: GradedAnswer; question: QuestionRow | undefined; index: number; tab: TabKey }) {
+  const isMcq = (q?.type ?? "").toLowerCase() === "mcq";
+  const options = useMemo(() => {
+    if (!q) return [] as string[];
+    const raw = q.options;
+    if (Array.isArray(raw)) return raw.map((o) => String(o));
+    return [];
+  }, [q]);
+
+  const norm = (s: string) => s.trim().toLowerCase();
+  const userAns = a.response ?? "";
+  const correctAns = a.correct_answer ?? q?.correct_answer ?? "";
+
+  return (
+    <li
+      className={`rounded-xl border-l-4 border border-border bg-card p-4 ${
+        tab === "key"
+          ? "border-l-primary"
+          : a.correct
+            ? "border-l-[oklch(0.65_0.16_145)]"
+            : "border-l-destructive"
+      }`}
+    >
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="font-semibold text-sm">
+          Q{index + 1}
+          {q?.type ? <span className="ml-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">{q.type}</span> : null}
+          <span className="ml-2 text-muted-foreground font-normal">· {a.marks_awarded}/{a.marks_total} marks</span>
+        </p>
+        <span
+          className={`text-xs font-bold ${
+            a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"
+          }`}
+        >
+          {a.correct ? "✓ Correct" : "✗ Incorrect"}
+          {a.code_total !== null ? ` · ${a.code_passed}/${a.code_total} tests` : ""}
+        </span>
+      </div>
+
+      {/* Full question text */}
+      <div className="mt-3">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Question</p>
+        <p className="mt-1 text-sm whitespace-pre-wrap leading-relaxed">
+          {q?.prompt ?? <span className="italic text-muted-foreground">(question not available)</span>}
+        </p>
+      </div>
+
+      {/* MCQ options */}
+      {isMcq && options.length > 0 && (
+        <div className="mt-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Options</p>
+          <ul className="mt-2 space-y-1.5">
+            {options.map((opt, i) => {
+              const isUser = norm(opt) === norm(userAns);
+              const isCorrect = norm(opt) === norm(correctAns);
+              const cls = isCorrect
+                ? "border-[oklch(0.55_0.16_145)] bg-[oklch(0.65_0.16_145)]/10"
+                : isUser
+                  ? "border-destructive bg-destructive/10"
+                  : "border-border bg-background";
+              return (
+                <li key={i} className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${cls}`}>
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border bg-card text-[11px] font-bold">
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  <span className="flex-1 whitespace-pre-wrap">{opt}</span>
+                  <span className="ml-2 flex shrink-0 flex-wrap items-center justify-end gap-1">
+                    {isUser && (
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${isCorrect ? "bg-[oklch(0.55_0.16_145)] text-white" : "bg-destructive text-destructive-foreground"}`}>
+                        Your pick
+                      </span>
+                    )}
+                    {isCorrect && (
+                      <span className="rounded bg-[oklch(0.55_0.16_145)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                        Correct
+                      </span>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* Non-MCQ user answer + correct answer */}
+      {!isMcq && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-md border border-border bg-secondary/30 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Your answer</p>
+            <pre className={`mt-1 whitespace-pre-wrap font-mono text-xs ${a.correct ? "text-[oklch(0.45_0.16_145)]" : "text-destructive"}`}>{userAns || "(blank)"}</pre>
+          </div>
+          <div className="rounded-md border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/5 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[oklch(0.55_0.16_145)]">Correct answer</p>
+            <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{correctAns || "(not provided)"}</pre>
+          </div>
+        </div>
+      )}
+
+      {/* MCQ still show a plain summary line for accessibility */}
+      {isMcq && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">Your answer:</span>{" "}
+          <span className={a.correct ? "text-[oklch(0.45_0.16_145)]" : "text-destructive"}>{userAns || "(blank)"}</span>
+          {" · "}
+          <span className="font-semibold text-foreground">Correct:</span>{" "}
+          <span className="text-[oklch(0.45_0.16_145)]">{correctAns || "(n/a)"}</span>
+        </p>
+      )}
+
+      {(a.explanation || q?.explanation) && (
+        <div className="mt-3 rounded-md border border-border bg-secondary/30 p-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">💡 Explanation</p>
+          <p className="mt-1 text-xs whitespace-pre-wrap">{a.explanation || q?.explanation}</p>
+        </div>
+      )}
+    </li>
   );
 }
