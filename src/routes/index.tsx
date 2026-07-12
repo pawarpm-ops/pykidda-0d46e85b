@@ -207,39 +207,6 @@ function Index() {
         </section>
 
 
-        {/* Units */}
-        <section id="units" className="mx-auto max-w-6xl px-6 py-12">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white">Six units, end-to-end</h2>
-            <p className="text-white/65 mt-2">Aligned with the Python syllabus.</p>
-          </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {UNITS.map((u, i) => (
-              <div
-                key={u.id}
-                className="group relative rounded-2xl border border-white/15 bg-white/[0.05] backdrop-blur-xl p-5 transition hover:border-white/30 hover:bg-white/[0.08] hover:-translate-y-1"
-              >
-                <div
-                  className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-40 blur-md transition -z-10"
-                  style={{
-                    background: [
-                      "linear-gradient(135deg,#fbbf24,#fb7185)",
-                      "linear-gradient(135deg,#a78bfa,#22d3ee)",
-                      "linear-gradient(135deg,#34d399,#60a5fa)",
-                      "linear-gradient(135deg,#f472b6,#facc15)",
-                      "linear-gradient(135deg,#60a5fa,#c084fc)",
-                      "linear-gradient(135deg,#fb923c,#f43f5e)",
-                    ][i % 6],
-                  }}
-                  aria-hidden
-                />
-                <div className="text-xs font-bold tracking-widest text-yellow-300 uppercase">Unit {u.id}</div>
-                <h3 className="mt-2 font-bold text-lg text-white">{u.title}</h3>
-                <p className="mt-2 text-sm text-white/65 leading-relaxed">{u.blurb}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* Mock tests */}
         <section className="mx-auto max-w-6xl px-6 pb-24">
