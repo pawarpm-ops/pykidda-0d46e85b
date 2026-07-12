@@ -609,7 +609,7 @@ export const getAiMockAttemptResult = createServerFn({ method: "POST" })
       .single();
     const { data: questions, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
-      .select("id,prompt,type,options,correct_answer,explanation,order_index")
+      .select("id,prompt,type,options,correct_answer,starter_code,explanation,order_index")
       .eq("test_id", attempt.test_id)
       .order("order_index");
     if (qErr) throw new Error(qErr.message);
