@@ -642,7 +642,7 @@ Rules:
 - Apply the teacher's instruction faithfully (add / remove / rewrite / change difficulty / swap topics / fix answers / etc.).
 - Preserve unrelated questions unchanged.
 - Keep answer keys consistent with prompts. Never expose answers inside prompts.
-- Code questions: runnable on Pyodide (no file I/O, no matplotlib, no pandas). Deterministic hidden test cases with exact expected stdout.
+- Code questions: runnable on Pyodide (no file I/O, no matplotlib, no pandas). Deterministic hidden test cases with exact expected stdout. correct_answer MUST be a complete runnable Python reference solution that passes every code_test (raw source, no markdown fences).
 - Return the FULL updated question list, not just the diff. No markdown fences. No prose.`;
 
     const user = `Test title: ${data.title}
