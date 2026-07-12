@@ -763,9 +763,8 @@ function SubmissionsPanel({ assignmentId, totalMarks }: { assignmentId: string; 
           <SubmissionRow
             key={s.id}
             sub={s}
-            totalMarks={totalMarks}
-            onReview={async (marks, feedback) => {
-              await reviewFn({ data: { submission_id: s.id, marks_obtained: marks, teacher_feedback: feedback } });
+            onReview={async (feedback) => {
+              await reviewFn({ data: { submission_id: s.id, teacher_feedback: feedback } });
               qc.invalidateQueries({ queryKey: ["admin-submissions", assignmentId] });
               qc.invalidateQueries({ queryKey: ["admin-assignments"] });
               refetch();
@@ -773,12 +772,16 @@ function SubmissionsPanel({ assignmentId, totalMarks }: { assignmentId: string; 
           />
         ))}
       </ul>
+      <p className="mt-3 text-xs text-muted-foreground">
+        {counts.total} student{counts.total === 1 ? "" : "s"} have solved this homework
+        {" "}({counts.onTime} on time · {counts.late} late).
+      </p>
     </div>
   );
 }
 
-function SubmissionRow({ sub, totalMarks, onReview }: { sub: any; totalMarks: number; onReview: (m: number, f: string) => Promise<void> }) {
-  const [marks, setMarks] = useState<string>(sub.marks_obtained != null ? String(sub.marks_obtained) : "");
+
+function SubmissionRow({ sub, onReview }: { sub: any; onReview: (f: string) => Promise<void> }) {
   const [feedback, setFeedback] = useState<string>(sub.teacher_feedback ?? "");
   const [saving, setSaving] = useState(false);
   const name = sub.profile?.full_name || sub.profile?.display_name || "Student";
@@ -823,21 +826,13 @@ function SubmissionRow({ sub, totalMarks, onReview }: { sub: any; totalMarks: nu
           <pre className="mt-1 max-h-32 overflow-auto rounded border border-border bg-secondary/40 p-2 text-xs">{sub.code_output}</pre>
         </div>
       )}
-      <div className="mt-3 grid gap-2 sm:grid-cols-[120px_1fr_auto] sm:items-end">
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
         <div>
-          <label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Marks / {totalMarks}</label>
-          <input
-            value={marks}
-            onChange={(e) => setMarks(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-accent"
-            placeholder="0"
-          />
-        </div>
-        <div>
-          <label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Feedback</label>
-          <input
+          <label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Teacher comment</label>
+          <textarea
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
+            rows={2}
             className="mt-1 block w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-accent"
             placeholder="Great work / needs improvement…"
           />
@@ -845,17 +840,16 @@ function SubmissionRow({ sub, totalMarks, onReview }: { sub: any; totalMarks: nu
         <button
           disabled={saving}
           onClick={async () => {
-            const n = Number(marks);
-            if (Number.isNaN(n)) return;
             setSaving(true);
-            try { await onReview(n, feedback); } finally { setSaving(false); }
+            try { await onReview(feedback); } finally { setSaving(false); }
           }}
           className="rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
           style={{ backgroundImage: "var(--gradient-sunrise)" }}
         >
-          {sub.status === "reviewed" ? "Update review" : "Mark reviewed"}
+          {sub.status === "reviewed" ? "Update comment" : "Mark reviewed"}
         </button>
       </div>
     </li>
   );
 }
+

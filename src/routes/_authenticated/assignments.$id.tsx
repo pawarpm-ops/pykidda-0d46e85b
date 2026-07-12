@@ -311,15 +311,11 @@ function AssignmentDetailPage() {
 
         {submission?.status === "reviewed" && (
           <div className="mt-8 rounded-xl border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/10 p-5">
-            <p className="text-lg font-bold">Teacher review</p>
-            <p className="mt-2 text-2xl font-bold tabular-nums">
-              {submission.marks_obtained ?? 0} <span className="text-base font-medium text-muted-foreground">/ {a.total_marks}</span>
-            </p>
-            {submission.teacher_feedback && (
-              <div className="mt-3">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Feedback</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm">{submission.teacher_feedback}</p>
-              </div>
+            <p className="text-lg font-bold">Teacher's comment</p>
+            {submission.teacher_feedback ? (
+              <p className="mt-2 whitespace-pre-wrap text-sm">{submission.teacher_feedback}</p>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">Reviewed by your teacher — no comment left.</p>
             )}
           </div>
         )}

@@ -181,150 +181,15 @@ export const submitAssignment = createServerFn({ method: "POST" })
       submissionId = inserted.id;
     }
 
-    // ---------- Auto-grade coding submissions ----------
-    // Grade against the teacher's expected output using the AI gateway.
-    // Bucket correctness into 0 / 25 / 50 / 75 / 100 %, then award marks
-    // = round((pct/100) * total_marks * 2) / 2  (nearest 0.5 mark).
-    // NEVER marks the submission as "reviewed" — that stays a teacher action
-    // via adminReviewSubmission — so students can keep iterating until the
-    // deadline. Auto-grade only writes marks_obtained + a note. Bounded by a
-    // short timeout so a slow AI call never blocks the submission response.
-    const auto = await Promise.race<
-      Awaited<ReturnType<typeof autoGradeCoding>> | null
-    >([
-      autoGradeCoding({
-        assignment: a as any,
-        code_answer: data.code_answer ?? null,
-        code_output: data.code_output ?? null,
-      }).catch((e) => {
-        console.error("autoGradeCoding failed", e);
-        return null;
-      }),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
-    ]);
-    if (auto) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin
-          .from("assignment_submissions")
-          .update({
-            marks_obtained: auto.marks,
-            teacher_feedback: `Auto-graded by AI (${auto.pct}% correct). ${auto.reason}\n\nYou can still edit and resubmit before the deadline.`.slice(0, 2000),
-          })
-          .eq("id", submissionId);
-      } catch (e) {
-        console.error("auto-grade write failed", e);
-      }
-    }
-
-    return { id: submissionId, is_late: isLate, auto_graded: auto ? auto.marks : null };
-
+    return { id: submissionId, is_late: isLate };
   });
 
+
 // -----------------------------------------------------------------------------
-// AI auto-grader for coding homework submissions.
+// (Auto-grader removed — homework has no automated grading. Teachers review
+// submissions manually and leave a comment via adminReviewSubmission.)
 // -----------------------------------------------------------------------------
-async function autoGradeCoding(input: {
-  assignment: {
-    assignment_type?: string | null;
-    total_marks?: number | null;
-    expected_output?: string | null;
-    sample_input?: string | null;
-    sample_output?: string | null;
-    title?: string | null;
-    description?: string | null;
-  };
-  code_answer: string | null;
-  code_output: string | null;
-}): Promise<{ marks: number; pct: number; reason: string } | null> {
-  const a = input.assignment;
-  const type = (a.assignment_type ?? "").toLowerCase();
-  if (type !== "coding" && type !== "mixed") return null;
-  const total = Number(a.total_marks ?? 0);
-  if (!total || total <= 0) return null;
-  const code = (input.code_answer ?? "").trim();
-  if (!code) return null;
-  const expected = (a.expected_output ?? a.sample_output ?? "").trim();
 
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) return null;
-
-  const sys = `You are an experienced Python programming teacher grading a student's coding homework.
-Judge how correct the student's SOLUTION is with respect to the PROBLEM and the EXPECTED OUTPUT / REFERENCE SOLUTION.
-Return ONLY a JSON object with this exact shape:
-{ "percent": 0 | 25 | 50 | 75 | 100, "reason": "one short sentence" }
-
-Bucketing rules:
-- 0   → empty, off-topic, or fundamentally wrong.
-- 25  → attempted but mostly wrong; some relevant idea.
-- 50  → about half correct; core logic partially works.
-- 75  → mostly correct; small bug, off-by-one, or minor missing case.
-- 100 → fully correct, matches the expected behaviour.
-
-Be encouraging but honest. If the student's code visibly tries to solve the right problem, do NOT return 0.
-No markdown, no code fences, just JSON.`;
-
-  const user = `PROBLEM TITLE:
-${a.title ?? ""}
-
-PROBLEM DESCRIPTION:
-${(a.description ?? "").slice(0, 4000)}
-
-SAMPLE INPUT (stdin, may be empty):
-${(a.sample_input ?? "").slice(0, 2000)}
-
-EXPECTED OUTPUT / REFERENCE ANSWER (teacher-provided):
-${expected.slice(0, 4000)}
-
-STUDENT CODE:
-\`\`\`python
-${code.slice(0, 8000)}
-\`\`\`
-
-STUDENT PROGRAM STDOUT (from their last run, may be empty):
-${(input.code_output ?? "").slice(0, 2000)}
-`;
-
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 7000);
-  let res: Response;
-  try {
-    res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", "Lovable-API-Key": key },
-      body: JSON.stringify({
-        model: "openai/gpt-5-mini",
-        messages: [
-          { role: "system", content: sys },
-          { role: "user", content: user },
-        ],
-        response_format: { type: "json_object" },
-      }),
-      signal: ctrl.signal,
-    });
-  } catch {
-    clearTimeout(t);
-    return null;
-  }
-  clearTimeout(t);
-  if (!res.ok) return null;
-  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  const content = json.choices?.[0]?.message?.content ?? "";
-  let parsed: { percent?: number; reason?: string };
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    return null;
-  }
-  const allowed = [0, 25, 50, 75, 100];
-  let pct = Number(parsed.percent);
-  if (!allowed.includes(pct)) {
-    // snap to nearest allowed bucket
-    pct = allowed.reduce((best, v) => (Math.abs(v - pct) < Math.abs(best - pct) ? v : best), 0);
-  }
-  const marks = Math.round((pct / 100) * total * 2) / 2;
-  return { marks, pct, reason: (parsed.reason ?? "").toString().slice(0, 300) };
-}
 
 
 // ---------- Admin ----------
@@ -474,7 +339,6 @@ export const adminListSubmissions = createServerFn({ method: "GET" })
 
 const ReviewSchema = z.object({
   submission_id: z.string().uuid(),
-  marks_obtained: z.number().min(0).max(1000),
   teacher_feedback: z.string().max(5000).optional().nullable(),
 });
 
@@ -498,10 +362,13 @@ export const adminReviewSubmission = createServerFn({ method: "POST" })
       .eq("id", sub.assignment_id)
       .maybeSingle();
 
+    // Homework has no grading — reviewing only saves the teacher's comment
+    // and marks the submission as reviewed. marks_obtained is forced to 0
+    // so any stale value from the removed auto-grader is cleared.
     const { error } = await supabase
       .from("assignment_submissions")
       .update({
-        marks_obtained: data.marks_obtained,
+        marks_obtained: 0,
         teacher_feedback: data.teacher_feedback ?? null,
         status: "reviewed",
         reviewed_at: new Date().toISOString(),
@@ -512,11 +379,12 @@ export const adminReviewSubmission = createServerFn({ method: "POST" })
 
     await supabase.from("announcements").insert({
       author_id: userId,
-      title: "Assignment reviewed",
-      body: `Your assignment "${a?.title ?? ""}" has been reviewed. Marks: ${data.marks_obtained}.`,
+      title: "Homework reviewed",
+      body: `Your homework "${a?.title ?? ""}" has been reviewed. Open Homework to read the teacher's comment.`,
       priority: "normal",
       target_user_id: sub.student_id,
     });
 
     return { ok: true };
   });
+
