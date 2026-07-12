@@ -55,27 +55,20 @@ function ResultPage() {
 
   useEffect(() => {
     (async () => {
-      if (attempt) {
-        const cached = sessionStorage.getItem(`pykidda:ai-mock-result:${attempt}`);
-        if (cached) {
-          try {
-            setResult(JSON.parse(cached));
-          } catch { /* ignore */ }
-        }
-        const { data } = await supabase.from("ai_mock_attempts" as never).select("marks_obtained,total_marks,percentage,grade,answers").eq("id", attempt).maybeSingle();
-        if (data) setResult(data as unknown as Result);
+      if (!attempt) return;
+      const cached = sessionStorage.getItem(`pykidda:ai-mock-result:${attempt}`);
+      if (cached) {
+        try { setResult(JSON.parse(cached)); } catch { /* ignore */ }
       }
-      const { data: t } = await supabase.from("ai_mock_tests" as never).select("title").eq("id", testId).maybeSingle();
-      if (t) setTestTitle((t as { title: string }).title);
-
-      const { data: qs } = await supabase
-        .from("ai_mock_questions" as never)
-        .select("id,prompt,type,options,correct_answer,explanation,order_index")
-        .eq("test_id", testId);
-      if (qs) {
+      try {
+        const res = await getAiMockAttemptResult({ data: { attempt_id: attempt } });
+        setResult(res.attempt as unknown as Result);
+        if (res.test) setTestTitle((res.test as { title: string }).title);
         const map: Record<string, QuestionRow> = {};
-        for (const q of qs as unknown as QuestionRow[]) map[q.id] = q;
+        for (const q of res.questions as unknown as QuestionRow[]) map[q.id] = q;
         setQuestions(map);
+      } catch (e) {
+        console.error("Failed to load result", e);
       }
     })();
   }, [attempt, testId]);
