@@ -339,7 +339,6 @@ export const adminListSubmissions = createServerFn({ method: "GET" })
 
 const ReviewSchema = z.object({
   submission_id: z.string().uuid(),
-  marks_obtained: z.number().min(0).max(1000),
   teacher_feedback: z.string().max(5000).optional().nullable(),
 });
 
@@ -363,10 +362,13 @@ export const adminReviewSubmission = createServerFn({ method: "POST" })
       .eq("id", sub.assignment_id)
       .maybeSingle();
 
+    // Homework has no grading — reviewing only saves the teacher's comment
+    // and marks the submission as reviewed. marks_obtained is forced to 0
+    // so any stale value from the removed auto-grader is cleared.
     const { error } = await supabase
       .from("assignment_submissions")
       .update({
-        marks_obtained: data.marks_obtained,
+        marks_obtained: 0,
         teacher_feedback: data.teacher_feedback ?? null,
         status: "reviewed",
         reviewed_at: new Date().toISOString(),
@@ -377,11 +379,12 @@ export const adminReviewSubmission = createServerFn({ method: "POST" })
 
     await supabase.from("announcements").insert({
       author_id: userId,
-      title: "Assignment reviewed",
-      body: `Your assignment "${a?.title ?? ""}" has been reviewed. Marks: ${data.marks_obtained}.`,
+      title: "Homework reviewed",
+      body: `Your homework "${a?.title ?? ""}" has been reviewed. Open Homework to read the teacher's comment.`,
       priority: "normal",
       target_user_id: sub.student_id,
     });
 
     return { ok: true };
   });
+
