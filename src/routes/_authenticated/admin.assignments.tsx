@@ -484,6 +484,29 @@ function HomeworkAdminSection({
           )}
         </div>
 
+        {(form.assignment_type === "coding" || form.assignment_type === "mixed") && (
+          <div className="mt-5 rounded-lg border border-border bg-background/40 p-4">
+            <h3 className="text-sm font-bold">Coding details</h3>
+            <p className="text-xs text-muted-foreground">Sample I/O is shown to students. Expected output and starter code are used internally (auto-grader / editor pre-fill).</p>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <Field label="Sample input (stdin)" full>
+                <textarea rows={3} value={form.sample_input} onChange={(e) => setForm({ ...form, sample_input: e.target.value })} className={inputCls} placeholder="Optional — shown to students" />
+              </Field>
+              <Field label="Sample output" full>
+                <textarea rows={3} value={form.sample_output} onChange={(e) => setForm({ ...form, sample_output: e.target.value })} className={inputCls} placeholder="Optional — shown to students" />
+              </Field>
+              <Field label="Expected output (internal, for grading)" full>
+                <textarea rows={3} value={form.expected_output} onChange={(e) => setForm({ ...form, expected_output: e.target.value })} className={inputCls} placeholder="Used by the AI auto-grader as the reference answer" />
+              </Field>
+              <Field label="Starter code (pre-filled in student editor)" full>
+                <textarea rows={4} value={form.starter_code} onChange={(e) => setForm({ ...form, starter_code: e.target.value })} className={inputCls + " font-mono text-xs"} placeholder="Optional starter code…" />
+              </Field>
+            </div>
+          </div>
+        )}
+
+
+
         {!form.id && (
           <div className="mt-5 rounded-lg border border-dashed border-accent/50 bg-accent/5 p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
