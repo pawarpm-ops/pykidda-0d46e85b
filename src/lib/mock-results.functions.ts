@@ -118,18 +118,3 @@ export const getMyMockResult = createServerFn({ method: "POST" })
     if (!row) throw new Error("Attempt not found");
     return row;
   });
-
-export const listMyMockResults = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ test_id: z.string().min(1).max(200) }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin
-      .from("mock_results")
-      .select("id,submitted_at,marks_obtained,total_marks,percentage,grade,total_questions,time_taken_sec,submission_type,violation_reason")
-      .eq("test_id", data.test_id)
-      .eq("user_id", context.userId)
-      .order("submitted_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return rows ?? [];
-  });
