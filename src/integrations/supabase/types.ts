@@ -463,6 +463,42 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          badge_key: string
+          badge_name: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          rule_type: string
+          sort_order: number
+          threshold: number | null
+        }
+        Insert: {
+          badge_key: string
+          badge_name: string
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          rule_type: string
+          sort_order?: number
+          threshold?: number | null
+        }
+        Update: {
+          badge_key?: string
+          badge_name?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          rule_type?: string
+          sort_order?: number
+          threshold?: number | null
+        }
+        Relationships: []
+      }
       homework: {
         Row: {
           allow_late_submission: boolean
@@ -1037,6 +1073,44 @@ export type Database = {
         }
         Relationships: []
       }
+      student_badges: {
+        Row: {
+          badge_id: string
+          created_at: string
+          earned_at: string
+          id: string
+          source_id: string | null
+          source_type: string | null
+          student_id: string
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string
+          earned_at?: string
+          id?: string
+          source_id?: string | null
+          source_type?: string | null
+          student_id: string
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string
+          earned_at?: string
+          id?: string
+          source_id?: string | null
+          source_type?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_streaks: {
         Row: {
           created_at: string
@@ -1180,6 +1254,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      evaluate_and_award_badges: {
+        Args: { _event_type?: string }
+        Returns: {
+          badge_key: string
+          badge_name: string
+          description: string
+          earned_at: string
+          icon: string
+        }[]
+      }
       generate_public_profile_id: { Args: never; Returns: string }
       generate_student_unique_id: { Args: never; Returns: string }
       get_public_student_profile: {
@@ -1203,6 +1287,20 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      list_badges_for_student: {
+        Args: { _student_id: string }
+        Returns: {
+          badge_key: string
+          badge_name: string
+          description: string
+          earned: boolean
+          earned_at: string
+          icon: string
+          rule_type: string
+          sort_order: number
+          threshold: number
+        }[]
       }
       log_admin_activity: {
         Args: {
