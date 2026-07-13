@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { logAdminActivity } from "@/lib/audit-log.server";
 
 // Types kept intentionally loose because generated types.ts hasn't been
 // regenerated for the new homework tables yet.
@@ -370,6 +371,14 @@ export const adminCreateHomework = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    await logAdminActivity(supabase, {
+      actionType: "homework.created",
+      description: `Created homework: ${data.title}`,
+      moduleName: "homework",
+      targetId: inserted.id,
+      targetTitle: data.title,
+      newValue: { title: data.title, status: data.status ?? "draft" },
+    });
     return { id: inserted.id };
   });
 
@@ -392,11 +401,11 @@ export const adminUpdateHomework = createServerFn({ method: "POST" })
       .update(updates)
       .eq("id", id);
     if (error) throw new Error(error.message);
-    if (
-      before &&
+    const publishTransition =
+      !!before &&
       before.status !== "published" &&
-      updates.status === "published"
-    ) {
+      updates.status === "published";
+    if (publishTransition) {
       await supabase.from("announcements").insert({
         author_id: userId,
         title: "New homework assigned",
@@ -404,6 +413,18 @@ export const adminUpdateHomework = createServerFn({ method: "POST" })
         priority: "normal",
       });
     }
+    const finalTitle = updates.title ?? before?.title ?? "(untitled)";
+    await logAdminActivity(supabase, {
+      actionType: publishTransition ? "homework.published" : "homework.updated",
+      description: publishTransition
+        ? `Published homework: ${finalTitle}`
+        : `Updated homework: ${finalTitle}`,
+      moduleName: "homework",
+      targetId: id,
+      targetTitle: finalTitle,
+      oldValue: before ?? null,
+      newValue: updates,
+    });
     return { ok: true };
   });
 
@@ -412,11 +433,25 @@ export const adminDeleteHomework = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as Ctx);
-    const { error } = await (context as Ctx).supabase
+    const { supabase } = context as Ctx;
+    const { data: before } = await supabase
+      .from("homework")
+      .select("title, status")
+      .eq("id", data.id)
+      .maybeSingle();
+    const { error } = await supabase
       .from("homework")
       .delete()
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAdminActivity(supabase, {
+      actionType: "homework.deleted",
+      description: `Deleted homework: ${before?.title ?? data.id}`,
+      moduleName: "homework",
+      targetId: data.id,
+      targetTitle: before?.title ?? null,
+      oldValue: before,
+    });
     return { ok: true };
   });
 
@@ -587,7 +622,13 @@ export const adminGradeAnswer = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context as Ctx);
-    const { error } = await (context as Ctx).supabase
+    const { supabase } = context as Ctx;
+    const { data: before } = await supabase
+      .from("homework_question_answers")
+      .select("id, submission_id, marks_awarded, teacher_comment, submissions:homework_submissions(student_id, homework_id)")
+      .eq("id", data.answer_id)
+      .maybeSingle();
+    const { error } = await supabase
       .from("homework_question_answers")
       .update({
         marks_awarded: data.marks_awarded,
@@ -596,6 +637,29 @@ export const adminGradeAnswer = createServerFn({ method: "POST" })
       })
       .eq("id", data.answer_id);
     if (error) throw new Error(error.message);
+    const studentId =
+      (before as { submissions?: { student_id?: string } } | null)?.submissions
+        ?.student_id ?? null;
+    const commentChanged =
+      (before?.teacher_comment ?? null) !==
+      (data.teacher_comment ?? null);
+    await logAdminActivity(supabase, {
+      actionType: commentChanged ? "marks.comment_updated" : "marks.updated",
+      description: commentChanged
+        ? `Updated teacher comment on homework answer`
+        : `Updated marks to ${data.marks_awarded ?? "—"} on homework answer`,
+      moduleName: "marks",
+      targetId: data.answer_id,
+      relatedStudentId: studentId,
+      oldValue: {
+        marks_awarded: before?.marks_awarded ?? null,
+        teacher_comment: before?.teacher_comment ?? null,
+      },
+      newValue: {
+        marks_awarded: data.marks_awarded,
+        teacher_comment: data.teacher_comment ?? null,
+      },
+    });
     return { ok: true };
   });
 
@@ -645,6 +709,19 @@ export const adminFinalizeCheck = createServerFn({ method: "POST" })
         : `Your homework "${hw?.title ?? ""}" has been checked. Open Homework to see feedback.`,
       priority: "normal",
       target_user_id: sub.student_id,
+    });
+    await logAdminActivity(supabase, {
+      actionType: data.return_for_correction
+        ? "homework.returned_for_correction"
+        : "homework.checked",
+      description: data.return_for_correction
+        ? `Returned homework for correction: ${hw?.title ?? ""}`
+        : `Finalized homework check: ${hw?.title ?? ""}`,
+      moduleName: "homework",
+      targetId: data.submission_id,
+      targetTitle: hw?.title ?? null,
+      relatedStudentId: sub.student_id,
+      newValue: { teacher_feedback: data.teacher_feedback ?? null },
     });
     return { ok: true };
   });

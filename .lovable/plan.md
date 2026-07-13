@@ -1,105 +1,96 @@
-# Restructure Homework: Multi-Question Homework
+# Admin/Teacher Activity Audit Log
 
-Current system stores one question per `assignments` row. We'll add a new normalized structure (homework → questions → submissions → answers) with a safe migration path for existing records.
+## What we're building
 
-## Schema (new tables)
+A `admin_activity_logs` table plus a reusable `logAdminActivity()` helper that admin/teacher server functions call after successful actions. A new **Activity Logs** tab in the Admin dashboard shows the logs with summary cards, filters, search, a detailed modal, and CSV/PDF export.
 
-```text
-homework
-  id, title, description, instructions, due_at, allow_late_submission,
-  total_marks (computed cache), status ('draft'|'published'|'closed'),
-  created_by, created_at, updated_at
+## 1. Database (single migration)
 
-homework_questions
-  id, homework_id, question_order, question_type
-  ('coding'|'short_answer'|'mcq'|'descriptive'|'practice'),
-  title, description, marks, difficulty,
-  input_format, output_format, sample_input, sample_output,
-  test_cases jsonb, hints, mcq_options jsonb, mcq_correct,
-  starter_code, created_at, updated_at
+Table `public.admin_activity_logs`:
 
-homework_submissions
-  id, homework_id, student_id, submitted_at, status
-  ('not_submitted'|'submitted'|'late'|'checked'|'returned'),
-  is_late, total_marks_obtained, teacher_feedback,
-  checked_by, checked_at, created_at, updated_at
-  UNIQUE(homework_id, student_id)
+- `id` (uuid PK)
+- `actor_id` (uuid, FK-style to auth.users, indexed)
+- `actor_name`, `actor_email`, `actor_role` (text — snapshot at time of action)
+- `action_type` (text, indexed) — canonical slug, e.g. `homework.created`, `mock_test.published`, `student.roll_updated`, `notification.deleted`, `ai.homework_generated`
+- `action_description` (text) — human sentence like *"Dr. Pawar created homework: Python Loops Assignment"*
+- `module_name` (text, indexed) — one of: `homework`, `mock_test`, `announcement`, `notification`, `student`, `marks`, `report`, `settings`, `ai`
+- `target_id` (text), `target_title` (text)
+- `related_student_id` (uuid, indexed)
+- `old_value` (jsonb), `new_value` (jsonb) — nullable
+- `metadata` (jsonb) — free-form (ip, user_agent, extra ctx)
+- `status` (text, default `success`) — `success` | `failed`
+- `created_at` (timestamptz, default now(), indexed DESC)
 
-homework_question_answers
-  id, submission_id, homework_question_id,
-  student_answer, student_code, execution_output,
-  marks_awarded, teacher_comment, auto_check_result jsonb,
-  checked_status, created_at, updated_at
-  UNIQUE(submission_id, homework_question_id)
-```
+Indexes: `created_at DESC`, `(actor_id, created_at DESC)`, `(module_name, created_at DESC)`, `(action_type, created_at DESC)`, `(related_student_id, created_at DESC)`.
 
-RLS:
-- `homework`: students SELECT where `status='published'`; teachers/admins full CRUD on own rows (admins any).
-- `homework_questions`: SELECT if parent homework is visible to student; teacher/admin CRUD on their homework's questions. Sensitive fields (`test_cases`, `mcq_correct`) filtered server-side for students via sanitized server fn (never returned raw to client).
-- `homework_submissions`: student CRUD own; teacher/admin SELECT+UPDATE (for grading).
-- `homework_question_answers`: same as submissions via join.
-- Trigger to recompute `total_marks_obtained` when answers change.
-- Grading fields protected by trigger like current `protect_submission_grade_fields`.
+RLS + grants:
+- `GRANT SELECT ON ... TO authenticated; GRANT ALL ... TO service_role;` (no anon).
+- Enable RLS.
+- Policy: **admin sees all** (`has_role(auth.uid(),'admin')`).
+- Policy: teachers/authenticated users see **only their own** rows (`actor_id = auth.uid()`).
+- No INSERT/UPDATE/DELETE policies for `authenticated` — writes go through a `SECURITY DEFINER` RPC only. Service role (used by the logger server fn) bypasses RLS.
 
-## Data migration
+RPC `public.log_admin_activity(...)` (SECURITY DEFINER):
+- Validates `auth.uid()` is set.
+- Snapshots actor name/email/role from `profiles` + `user_roles`.
+- Inserts a row and returns its id.
 
-Backfill existing `assignments` → `homework` (1:1) and create one `homework_questions` row per assignment carrying its type/marks/test_cases. Existing `assignment_submissions` → `homework_submissions` + one `homework_question_answers` row. Old tables kept read-only for one release (nothing deleted).
+## 2. Server helper
 
-## Server functions (`src/lib/homework.functions.ts`)
+New file `src/lib/audit-log.server.ts` exporting `logAdminActivity({ actionType, description, moduleName, targetId?, targetTitle?, relatedStudentId?, oldValue?, newValue?, metadata?, status? }, ctx)` — takes the caller's authenticated `supabase` client (from `requireSupabaseAuth`) and calls the RPC. Wrapped in try/catch so a logging failure never breaks the primary action; logs to console on failure.
 
-- `listHomeworkForStudent`, `getHomeworkForStudent` (sanitized questions — strips `test_cases`, `mcq_correct`, `expected`)
-- `listHomeworkForTeacher`, `getHomeworkForTeacher` (full)
-- `createHomework`, `updateHomework`, `publishHomework`, `closeHomework`, `deleteHomeworkDraft`
-- `addHomeworkQuestion`, `updateHomeworkQuestion`, `deleteHomeworkQuestion`, `reorderHomeworkQuestions`
-- `startHomeworkSubmission` (creates draft submission if missing)
-- `saveHomeworkAnswer` (autosave one question)
-- `submitHomework` (finalize; server sets `is_late`, `status`, timestamps)
-- `listSubmissionsForHomework` (teacher)
-- `getSubmissionDetail` (teacher — includes student answers + question keys)
-- `gradeHomeworkAnswer` (teacher — marks + comment per question)
-- `finalizeHomeworkCheck` (teacher — overall feedback, mark `checked`)
+New server function `src/lib/audit-log.functions.ts`:
+- `listAuditLogs({ from?, to?, actorId?, module?, actionType?, studentId?, search?, limit?, offset? })` — admin only; returns `{ rows, total }`. Non-admins get their own rows only.
+- `getAuditLogSummary()` — admin-only counts for today: total, homework, mock_test, student, ai.
 
-## UI
+## 3. Wire logging into existing admin actions
 
-Student (`_authenticated/homework.*`):
-- `homework.index.tsx` — tabs: Pending / Submitted / Checked; cards with title, due badge, marks, question count, status pill.
-- `homework.$id.tsx` — sequential question view with side navigator, autosave, "Submit Homework" button; late warning banner.
+Add `logAdminActivity(...)` calls after these succeed. All these server fns already use `requireSupabaseAuth`:
 
-Teacher (`_authenticated/admin.homework.*`):
-- `admin.homework.tsx` — list with Draft / Published / Closed tabs; "New Homework" button.
-- `admin.homework.$id.tsx` — homework editor: title/desc/instructions/due, questions list with add/edit/delete/reorder, per-question marks/difficulty, coding fields incl. hidden test cases; Publish button.
-- `admin.homework.$id.submissions.tsx` — student list with status; click → grading view with per-question answer, marks input, comment, overall feedback, "Mark checked".
+- Homework: `createHomework`, `updateHomework`, `publishHomework` / `unpublish`, `deleteHomework` (in `src/lib/homework.functions.ts`)
+- Mock tests: create/publish/update-schedule/delete, plus AI-generated (`src/lib/mock-tests.functions.ts`, `src/lib/ai-mock.functions.ts`)
+- Announcements: create + schedule (`src/lib/announcements.functions.ts` or equivalent)
+- Notifications: delete one / delete all
+- Students: assign roll number, update student info
+- Marks + teacher comments: grading server fns (homework/assignment/mock)
+- Report downloads: student-report-pdf, overview-pdf
+- Settings: result visibility, attempt limit
+- AI: generate homework, generate mock test, refine question
 
-Design: matches existing dark theme, uses existing shadcn components. Cards with subtle border-highlight hover. Badges for marks/difficulty/due/late.
+For each, capture old/new values where feasible (e.g. schedule change, marks change). No log on validation-failed paths.
 
-Nav: rename existing "Homework" (`/assignments`) → new `/homework` route. Keep `/assignments` as redirect for one release so old links work.
+## 4. Admin UI
 
-## File plan
+New file `src/components/AuditLogsTab.tsx`, added as a tab in `src/routes/_authenticated/admin.tsx` (sidebar entry **📜 Activity Logs**).
 
-New:
-- migration (schema + backfill)
-- `src/lib/homework.functions.ts`
-- `src/routes/_authenticated/homework.index.tsx`
-- `src/routes/_authenticated/homework.$id.tsx`
-- `src/routes/_authenticated/admin.homework.tsx`
-- `src/routes/_authenticated/admin.homework.$id.tsx`
-- `src/routes/_authenticated/admin.homework.$id.submissions.tsx`
-- `src/components/homework/*` (QuestionEditor, QuestionRunner, SubmissionGrader)
+Layout:
+- 5 summary cards (Total today, Homework, Mock test, Student, AI).
+- Filter bar: date range (from/to), actor select (loaded from distinct actors), module select, action-type select, student search input, free-text search.
+- Table columns: Date & Time, Teacher/Admin (name + role badge), Module (icon + label), Action (badge), Target, Student (if any), Details (view button).
+- Row click → dialog modal with full details, JSON diff of old/new values, metadata block.
+- Export buttons: **CSV** (client-side from current filtered rows) and **PDF** (via existing `pdf-lib`/report util pattern; if not present, a simple `window.print()` fallback on a printable view).
+- Pagination (50/page).
 
-Edited:
-- `src/components/SiteHeader.tsx` (NAV item → `/homework`)
-- `src/routes/_authenticated/assignments.index.tsx` → redirect to `/homework`
-- `src/routes/_authenticated/admin.tsx` → link to `/admin/homework`
+Uses existing dark-theme card + table components. Badges color-mapped per module.
 
-Untouched: `assignments*` server fns kept but no longer referenced by UI; removed in a future cleanup pass once old data confirmed migrated.
+## 5. Security
+
+- All reads go through `listAuditLogs` server fn which enforces admin-vs-self.
+- All writes go through the SECURITY DEFINER RPC — no direct client writes possible.
+- No UPDATE/DELETE policies exposed to authenticated users → logs are immutable from the app.
+
+## Technical Notes
+
+- The logger is best-effort; wrap each call in `try { await logAdminActivity(...) } catch (e) { console.error("[audit]", e) }` so failures never break the real mutation.
+- For AI actions, log after the AI response is stored, not on error.
+- `metadata.ip` from `getRequestIP()` and `metadata.user_agent` from `getRequestHeader("user-agent")` inside each server fn (small helper `captureRequestContext()` in `audit-log.server.ts`).
+- PDF export uses the same library pattern as existing report PDFs (will confirm on implementation and fall back to CSV-only if the library isn't Worker-safe on the client).
+- No new npm packages expected beyond what's already installed.
 
 ## Rollout order
 
-1. Migration (schema + RLS + grants + backfill).
-2. Server functions.
-3. Teacher UI (create/edit/publish + submissions grading).
-4. Student UI (list + solve + submit).
-5. Nav + redirects.
-6. Smoke test end-to-end.
-
-Reply "go" to start with the migration (nothing else changes until you approve it), or ask for tweaks.
+1. Migration (table + RLS + RPC) — one call.
+2. `audit-log.server.ts` + `audit-log.functions.ts`.
+3. Instrument existing admin/teacher server fns with logging calls.
+4. `AuditLogsTab.tsx` + wire into admin sidebar.
+5. Verify: create homework → check log; change mock schedule → check old/new values; try as student → 403 empty; run typecheck.

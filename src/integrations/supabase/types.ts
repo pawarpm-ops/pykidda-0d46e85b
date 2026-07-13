@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action_description: string
+          action_type: string
+          actor_email: string | null
+          actor_id: string
+          actor_name: string | null
+          actor_role: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          module_name: string
+          new_value: Json | null
+          old_value: Json | null
+          related_student_id: string | null
+          status: string
+          target_id: string | null
+          target_title: string | null
+        }
+        Insert: {
+          action_description: string
+          action_type: string
+          actor_email?: string | null
+          actor_id: string
+          actor_name?: string | null
+          actor_role?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          module_name: string
+          new_value?: Json | null
+          old_value?: Json | null
+          related_student_id?: string | null
+          status?: string
+          target_id?: string | null
+          target_title?: string | null
+        }
+        Update: {
+          action_description?: string
+          action_type?: string
+          actor_email?: string | null
+          actor_id?: string
+          actor_name?: string | null
+          actor_role?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          module_name?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          related_student_id?: string | null
+          status?: string
+          target_id?: string | null
+          target_title?: string | null
+        }
+        Relationships: []
+      }
       ai_mock_attempts: {
         Row: {
           answers: Json
@@ -1146,6 +1203,21 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_admin_activity: {
+        Args: {
+          _action_description: string
+          _action_type: string
+          _metadata?: Json
+          _module_name: string
+          _new_value?: Json
+          _old_value?: Json
+          _related_student_id?: string
+          _status?: string
+          _target_id?: string
+          _target_title?: string
+        }
+        Returns: string
       }
       record_streak_activity: {
         Args: { _activity_type: string; _reference_id?: string }

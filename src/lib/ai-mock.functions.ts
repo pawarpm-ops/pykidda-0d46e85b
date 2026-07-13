@@ -2,6 +2,7 @@
 // Admin-only: generate/save/publish. Student-facing: sanitized fetch + submit.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { logAdminActivity } from "@/lib/audit-log.server";
 import { z } from "zod";
 
 const QuestionType = z.enum(["mcq", "tf", "fill", "short", "code"]);
@@ -152,6 +153,14 @@ ${data.syllabusText.trim() ? `Syllabus text (extracted from PDF):\n"""\n${data.s
       return parsedQ.data;
     });
 
+    await logAdminActivity(context.supabase, {
+      actionType: "ai.mock_generated",
+      description: `Used AI to generate mock test: ${data.title}`,
+      moduleName: "ai",
+      targetTitle: data.title,
+      metadata: { question_count: questions.length, requested: data.counts },
+    });
+
     return {
       title: data.title,
       description: data.description,
@@ -230,6 +239,17 @@ export const saveAiMockTest = createServerFn({ method: "POST" })
     const { error: qErr } = await supabaseAdmin.from("ai_mock_questions").insert(rows);
     if (qErr) throw new Error(qErr.message);
 
+    await logAdminActivity(context.supabase, {
+      actionType: data.id ? "mock_test.updated" : "mock_test.created",
+      description: data.id
+        ? `Updated mock test: ${data.title}`
+        : `Created mock test: ${data.title}`,
+      moduleName: "mock_test",
+      targetId: testId,
+      targetTitle: data.title,
+      newValue: { total_marks: totalMarks, question_count: questionCount },
+    });
+
     return { id: testId, total_marks: totalMarks, question_count: questionCount };
   });
 
@@ -302,6 +322,24 @@ export const publishAiMockTest = createServerFn({ method: "POST" })
         action_url: `/mock-tests/scheduled/${data.id}`,
       });
     }
+    const publishedTitle =
+      (updated as { title?: string } | null)?.title ?? "";
+    await logAdminActivity(context.supabase, {
+      actionType: data.publish
+        ? data.test_kind === "scheduled"
+          ? "mock_test.scheduled_published"
+          : "mock_test.published"
+        : "mock_test.unpublished",
+      description: data.publish
+        ? data.test_kind === "scheduled"
+          ? `Published scheduled mock test: ${publishedTitle}`
+          : `Published mock test: ${publishedTitle}`
+        : `Unpublished mock test: ${publishedTitle}`,
+      moduleName: "mock_test",
+      targetId: data.id,
+      targetTitle: publishedTitle,
+      newValue: patch,
+    });
     return { ok: true };
   });
 
@@ -322,6 +360,11 @@ export const updateAiMockSchedule = createServerFn({ method: "POST" })
     const start = new Date(data.scheduled_start_at).getTime();
     const end = new Date(data.scheduled_end_at).getTime();
     if (!(end > start)) throw new Error("End time must be after start time");
+    const { data: before } = await supabaseAdmin
+      .from("ai_mock_tests")
+      .select("title, scheduled_start_at, scheduled_end_at, schedule_instructions, results_visibility")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await supabaseAdmin
       .from("ai_mock_tests")
       .update({
@@ -333,6 +376,20 @@ export const updateAiMockSchedule = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAdminActivity(context.supabase, {
+      actionType: "mock_test.schedule_updated",
+      description: `Changed schedule for mock test: ${before?.title ?? data.id}`,
+      moduleName: "mock_test",
+      targetId: data.id,
+      targetTitle: before?.title ?? null,
+      oldValue: before,
+      newValue: {
+        scheduled_start_at: data.scheduled_start_at,
+        scheduled_end_at: data.scheduled_end_at,
+        schedule_instructions: data.schedule_instructions,
+        results_visibility: data.results_visibility,
+      },
+    });
     return { ok: true };
   });
 
@@ -343,8 +400,21 @@ export const deleteAiMockTest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
+    const { data: before } = await supabaseAdmin
+      .from("ai_mock_tests")
+      .select("title")
+      .eq("id", data.id)
+      .maybeSingle();
     const { error } = await supabaseAdmin.from("ai_mock_tests").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAdminActivity(context.supabase, {
+      actionType: "mock_test.deleted",
+      description: `Deleted mock test: ${before?.title ?? data.id}`,
+      moduleName: "mock_test",
+      targetId: data.id,
+      targetTitle: before?.title ?? null,
+      oldValue: before,
+    });
     return { ok: true };
   });
 
@@ -720,6 +790,13 @@ ${JSON.stringify(data.questions, null, 2).slice(0, 60000)}`;
         };
       }
       return parsedQ.data;
+    });
+    await logAdminActivity(context.supabase, {
+      actionType: "ai.mock_refined",
+      description: `Used AI to refine mock test: ${data.title}`,
+      moduleName: "ai",
+      targetTitle: data.title,
+      metadata: { instruction: data.instruction.slice(0, 500) },
     });
     return { questions };
   });

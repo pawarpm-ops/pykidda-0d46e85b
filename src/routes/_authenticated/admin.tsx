@@ -31,6 +31,8 @@ import { ViolationAnalytics } from "@/components/ViolationAnalytics";
 import { getQuestion } from "@/lib/questions";
 import { TopStudentsChart } from "@/components/TopStudentsChart";
 import { StreakDebugTab } from "@/components/StreakDebugTab";
+import { AuditLogsTab } from "@/components/AuditLogsTab";
+import { logAdminActionClient } from "@/lib/audit-log-client";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -140,7 +142,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks" | "audit">("overview");
   const [overviewSubTab, setOverviewSubTab] = useState<"complete" | "mocks">("complete");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
@@ -162,6 +164,11 @@ function AdminPage() {
         overviewRef.current,
         `overview-analytics-${new Date().toISOString().slice(0, 10)}`,
       );
+      void logAdminActionClient({
+        actionType: "report.overview_pdf_downloaded",
+        description: "Downloaded overview analytics PDF",
+        moduleName: "report",
+      });
     } catch (err) {
       console.error("Overview PDF export failed", err);
       alert("Could not generate the PDF. Please try again.");
@@ -355,7 +362,7 @@ function AdminPage() {
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "streaks", "announce", "reports", "reviews", "homework"] as const).map((t) => (
+            {(["overview", "students", "activity", "streaks", "announce", "reports", "reviews", "homework", "audit"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -366,7 +373,7 @@ function AdminPage() {
                 }`}
                 style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : "📚 Homework"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : t === "audit" ? "📜 Audit log" : "📚 Homework"}
               </button>
             ))}
             <button
@@ -525,6 +532,10 @@ function AdminPage() {
           <StreakDebugTab students={students.map((s) => ({ user_id: s.user_id, name: s.name }))} />
         )}
 
+        {tab === "audit" && (
+          <AuditLogsTab students={students.map((s) => ({ user_id: s.user_id, name: s.name }))} />
+        )}
+
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
         )}
@@ -616,6 +627,13 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
         reportRef.current,
         `student-${safeName}-${new Date().toISOString().slice(0, 10)}`,
       );
+      void logAdminActionClient({
+        actionType: "report.student_pdf_downloaded",
+        description: `Downloaded student report PDF: ${selStudent.name}`,
+        moduleName: "report",
+        relatedStudentId: selected ?? null,
+        targetTitle: selStudent.name,
+      });
     } catch (err) {
       console.error("Student PDF export failed", err);
       alert("Could not generate the PDF. Please try again.");
@@ -1143,6 +1161,16 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
         targetUserId: target || null,
         scheduledAt: iso,
       });
+      void logAdminActionClient({
+        actionType: iso ? "announcement.scheduled" : "announcement.created",
+        description: iso
+          ? `Scheduled announcement: ${title.trim()}`
+          : `Created announcement: ${title.trim()}`,
+        moduleName: "announcement",
+        targetTitle: title.trim(),
+        relatedStudentId: target || null,
+        newValue: { priority, target_user_id: target || null, scheduled_at: iso },
+      });
       setTitle("");
       setBody("");
       setPriority("normal");
@@ -1161,7 +1189,16 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
 
   async function remove(id: string) {
     if (!confirm("Delete this announcement?")) return;
+    const removed = list.find((a) => a.id === id);
     await deleteAnnouncement(id);
+    void logAdminActionClient({
+      actionType: "announcement.deleted",
+      description: `Deleted announcement: ${removed?.title ?? id}`,
+      moduleName: "announcement",
+      targetId: id,
+      targetTitle: removed?.title ?? null,
+      oldValue: removed ?? null,
+    });
     await load();
   }
 
