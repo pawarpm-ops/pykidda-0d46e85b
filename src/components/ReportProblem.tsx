@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth-cache";
 import { AlertTriangle, Bug, Loader2, Send, X } from "lucide-react";
 
 const PROBLEM_TYPES = [
