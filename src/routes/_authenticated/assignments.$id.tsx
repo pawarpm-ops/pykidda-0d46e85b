@@ -121,8 +121,10 @@ function AssignmentDetailPage() {
         },
       });
       setToast(res.is_late ? "Submitted (late) 📤" : "Submitted successfully 🎉");
+      void recordStreakActivity("homework_submitted", id);
       await refetch();
       setTimeout(() => setToast(null), 3000);
+
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Submit failed");
       setTimeout(() => setToast(null), 4000);
