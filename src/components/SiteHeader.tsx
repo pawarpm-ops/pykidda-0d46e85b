@@ -31,6 +31,7 @@ type NavItem = {
   label: string;
   tour?: string;
   authOnly?: boolean;
+  disabled?: boolean;
   icon: LucideIcon;
   badgeKey?: "notifications";
 };
@@ -40,7 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock", icon: ClipboardList },
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard", icon: Trophy },
   { to: "/assignments", label: "Homework", tour: "nav-practice", authOnly: true, icon: NotebookPen },
-  { to: "/teacher-comments", label: "Teacher Comments", authOnly: true, icon: MessageCircleMore },
+  { to: "/teacher-comments", label: "Teacher Comments", authOnly: true, icon: MessageCircleMore, disabled: true },
   { to: "/notifications", label: "Notifications", authOnly: true, icon: Bell, badgeKey: "notifications" },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true, icon: TrendingUp },
   { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, icon: User },
