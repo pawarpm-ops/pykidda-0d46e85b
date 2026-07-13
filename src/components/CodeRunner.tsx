@@ -278,6 +278,18 @@ export function CodeRunner({
                 </div>
                 {!r.passed && (
                   <div className="mt-2 grid gap-1 font-mono text-xs">
+                    {r.reason === "output_limit" && (
+                      <div className="not-italic font-sans rounded border border-orange-500/50 bg-orange-500/10 px-2 py-1 text-orange-700 dark:text-orange-300">
+                        <span className="inline-block rounded bg-orange-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white mr-2">Output Limit Exceeded</span>
+                        Your program printed too much output (limit: 200 lines / 10,000 chars). Please check your loop or reduce print statements.
+                      </div>
+                    )}
+                    {r.reason === "timeout" && (
+                      <div className="not-italic font-sans rounded border border-orange-500/50 bg-orange-500/10 px-2 py-1 text-orange-700 dark:text-orange-300">
+                        <span className="inline-block rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white mr-2">Time Limit Exceeded</span>
+                        Your code took too long to run. Check for infinite loops.
+                      </div>
+                    )}
                     <div>
                       <span className="text-muted-foreground">expected: </span>
                       <pre className="inline whitespace-pre-wrap">{r.expected || "(empty)"}</pre>
