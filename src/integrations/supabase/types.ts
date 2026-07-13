@@ -442,6 +442,7 @@ export type Database = {
       mock_results: {
         Row: {
           created_at: string
+          details: Json | null
           grade: string
           id: string
           marks_obtained: number
@@ -459,6 +460,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          details?: Json | null
           grade?: string
           id?: string
           marks_obtained?: number
@@ -476,6 +478,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          details?: Json | null
           grade?: string
           id?: string
           marks_obtained?: number
