@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import type { CodeQuestion } from "@/lib/questions";
-import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
+import {
+  cancelPython,
+  loadPyodideOnce,
+  outputsMatch,
+  runPython,
+} from "@/lib/pyodide-runner";
 import { explainAndFix } from "@/lib/ai-feedback.functions";
 import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 
@@ -66,8 +71,12 @@ export function CodeRunner({
     [onChangeCode],
   );
 
+  const stoppedRef = useRef(false);
+
+
   const runAll = useCallback(async () => {
     if (busy) return;
+    stoppedRef.current = false;
     setBusy(true);
     setOutcome(null);
     setAiResult(null);
@@ -84,8 +93,11 @@ export function CodeRunner({
     const results: RunOutcome["results"] = [];
     let passedCount = 0;
     for (const tc of question.tests) {
+      if (stoppedRef.current) break;
       // eslint-disable-next-line no-await-in-loop
-      const r = await runPython(codeRef.current, tc.stdin ?? "");
+      const r = await runPython(codeRef.current, tc.stdin ?? "", {
+        timeoutMs: 8000,
+      });
       const passed = r.ok && outputsMatch(r.stdout, tc.expected);
       if (passed) passedCount++;
       results.push({
@@ -96,6 +108,10 @@ export function CodeRunner({
         label: tc.label,
         stdin: tc.stdin ?? "",
       });
+      if (r.reason === "stopped") {
+        stoppedRef.current = true;
+        break;
+      }
     }
     const out: RunOutcome = {
       code: codeRef.current,
@@ -107,6 +123,11 @@ export function CodeRunner({
     setBusy(false);
     return out;
   }, [busy, question.tests]);
+
+  const handleStop = useCallback(() => {
+    stoppedRef.current = true;
+    cancelPython();
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     const out = await runAll();
@@ -185,6 +206,15 @@ export function CodeRunner({
             style={{ backgroundImage: "var(--gradient-sunrise)" }}
           >
             {busy ? "Working…" : submitLabel}
+          </button>
+        )}
+        {busy && (
+          <button
+            onClick={handleStop}
+            className="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20"
+          >
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive" />
+            Stop Execution
           </button>
         )}
         {allowHint && (

@@ -1,77 +1,61 @@
-// Pyodide loader + Python execution helper.
-// Loads Pyodide from the official CDN once, then exposes runPython(code, stdin).
+// Pyodide runner: runs Python inside a Web Worker so the main thread stays
+// responsive even for infinite loops / heavy code. Provides timeout, output
+// limits, and a cancel/stop API. Backwards compatible with the old surface:
+//   loadPyodideOnce, runPython, outputsMatch, pyodideReady, RunResult.
 
-const PYODIDE_VERSION = "0.26.4";
-const PYODIDE_CDN = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/pyodide.js`;
-const PYODIDE_INDEX = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
+const WORKER_URL = "/pyodide-worker.js";
 
-type PyodideInstance = {
-  setStdout: (opts: { batched: (s: string) => void }) => void;
-  setStderr: (opts: { batched: (s: string) => void }) => void;
-  setStdin: (opts: { stdin: () => string | null }) => void;
-  runPythonAsync: (code: string) => Promise<unknown>;
-  globals: { set: (k: string, v: unknown) => void };
-};
-
-declare global {
-  interface Window {
-    loadPyodide?: (opts: { indexURL: string }) => Promise<PyodideInstance>;
-  }
-}
-
-let pyodidePromise: Promise<PyodideInstance> | null = null;
-
-export function pyodideReady(): boolean {
-  return Boolean(pyodidePromise);
-}
-
-function loadScript(src: string): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = src;
-    s.async = true;
-    s.crossOrigin = "anonymous";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-    document.head.appendChild(s);
-  });
-}
-
-export async function loadPyodideOnce(): Promise<PyodideInstance> {
-  if (pyodidePromise) return pyodidePromise;
-  pyodidePromise = (async () => {
-    console.log("[pyodide] starting load…");
-    if (!window.loadPyodide) {
-      try {
-        await loadScript(PYODIDE_CDN);
-        console.log("[pyodide] script loaded from jsdelivr");
-      } catch (e) {
-        console.warn("[pyodide] jsdelivr failed, trying unpkg…", e);
-        await loadScript(`https://unpkg.com/pyodide@${PYODIDE_VERSION}/pyodide.js`);
-        console.log("[pyodide] script loaded from unpkg");
-      }
-    }
-    if (!window.loadPyodide) throw new Error("loadPyodide global missing after script load");
-    const py = await window.loadPyodide({ indexURL: PYODIDE_INDEX });
-    console.log("[pyodide] runtime ready");
-    return py;
-  })();
-  // If load fails, reset the cached promise so a retry can try again.
-  pyodidePromise.catch((e) => {
-    console.error("[pyodide] load failed", e);
-    pyodidePromise = null;
-  });
-  return pyodidePromise;
-}
+export type RunReason =
+  | "ok"
+  | "error"
+  | "syntax_error"
+  | "timeout"
+  | "output_limit"
+  | "stopped"
+  | "load_failed";
 
 export type RunResult = {
   ok: boolean;
   stdout: string;
   stderr: string;
+  reason?: RunReason;
 };
 
+export type RunOptions = {
+  /** Hard wall-clock limit for the run (ms). Default 8000. */
+  timeoutMs?: number;
+  /** Maximum combined stdout+stderr characters. Default 10_000. */
+  maxChars?: number;
+  /** Maximum number of print/newline chunks. Default 200. */
+  maxLines?: number;
+};
+
+type WorkerMsg =
+  | { type: "ready" }
+  | { type: "load_failed"; message: string }
+  | { type: "output_limit"; runId: number }
+  | {
+      type: "done";
+      runId: number;
+      ok: boolean;
+      stdout: string;
+      stderr: string;
+      reason: RunReason;
+    };
+
+let worker: Worker | null = null;
+let ready = false;
+let loadPromise: Promise<void> | null = null;
+
+type Pending = {
+  runId: number;
+  resolve: (r: RunResult) => void;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+};
+let currentRun: Pending | null = null;
+let nextRunId = 1;
+
 function normalize(s: string): string {
-  // Trim trailing whitespace per line and strip trailing newlines for fair comparison.
   return s
     .split("\n")
     .map((l) => l.replace(/\s+$/g, ""))
@@ -79,34 +63,238 @@ function normalize(s: string): string {
     .replace(/\n+$/g, "");
 }
 
-export async function runPython(code: string, stdin = ""): Promise<RunResult> {
-  const py = await loadPyodideOnce();
-  let stdout = "";
-  let stderr = "";
-  py.setStdout({ batched: (s: string) => (stdout += s + "\n") });
-  py.setStderr({ batched: (s: string) => (stderr += s + "\n") });
-
-  // Feed stdin as a buffer that Python's input() can read line by line.
-  const lines = stdin.length ? stdin.replace(/\r\n/g, "\n").split("\n") : [];
-  // If stdin string didn't end with newline, the last element is the final line; keep it.
-  let idx = 0;
-  py.setStdin({
-    stdin: () => {
-      if (idx >= lines.length) return null;
-      const line = lines[idx++];
-      return line;
-    },
-  });
-
-  try {
-    await py.runPythonAsync(code);
-  } catch (err) {
-    stderr += (err instanceof Error ? err.message : String(err)) + "\n";
-    return { ok: false, stdout: normalize(stdout), stderr: normalize(stderr) };
+function friendlyStderr(reason: RunReason, raw: string): string {
+  switch (reason) {
+    case "timeout":
+      return "Time Limit Exceeded: Your code took too long to run.";
+    case "output_limit":
+      return "Output Limit Exceeded: Your code printed too much output.";
+    case "stopped":
+      return "Execution stopped by user.";
+    case "load_failed":
+      return `Python engine failed to load. ${raw || ""}`.trim();
+    case "syntax_error":
+      return `Syntax Error: Please check your Python syntax.\n${raw}`;
+    default:
+      return raw;
   }
-  return { ok: true, stdout: normalize(stdout), stderr: normalize(stderr) };
+}
+
+function teardownWorker() {
+  if (worker) {
+    try {
+      worker.terminate();
+    } catch {
+      /* ignore */
+    }
+  }
+  worker = null;
+  ready = false;
+  loadPromise = null;
+}
+
+function finishRun(result: RunResult, terminate: boolean) {
+  if (!currentRun) return;
+  const { resolve, timeoutId } = currentRun;
+  if (timeoutId) clearTimeout(timeoutId);
+  currentRun = null;
+  if (terminate) teardownWorker();
+  resolve(result);
+}
+
+function attachWorker(w: Worker) {
+  w.onmessage = (e: MessageEvent<WorkerMsg>) => {
+    const msg = e.data;
+    if (!msg) return;
+    if (msg.type === "ready") {
+      ready = true;
+      return;
+    }
+    if (msg.type === "output_limit") {
+      if (currentRun && currentRun.runId === msg.runId) {
+        finishRun(
+          {
+            ok: false,
+            stdout: "",
+            stderr: friendlyStderr("output_limit", ""),
+            reason: "output_limit",
+          },
+          true,
+        );
+      }
+      return;
+    }
+    if (msg.type === "done") {
+      if (currentRun && currentRun.runId === msg.runId) {
+        finishRun(
+          {
+            ok: msg.ok,
+            stdout: normalize(msg.stdout || ""),
+            stderr: friendlyStderr(msg.reason, normalize(msg.stderr || "")),
+            reason: msg.reason,
+          },
+          false,
+        );
+      }
+      return;
+    }
+  };
+  w.onerror = () => {
+    if (currentRun) {
+      finishRun(
+        {
+          ok: false,
+          stdout: "",
+          stderr: "Worker crashed. Please try again.",
+          reason: "error",
+        },
+        true,
+      );
+    } else {
+      teardownWorker();
+    }
+  };
+}
+
+function spawnAndLoad(): Promise<void> {
+  const w = new Worker(WORKER_URL);
+  worker = w;
+  ready = false;
+  const p = new Promise<void>((resolve, reject) => {
+    const onMsg = (e: MessageEvent<WorkerMsg>) => {
+      const msg = e.data;
+      if (!msg) return;
+      if (msg.type === "ready") {
+        w.removeEventListener("message", onMsg);
+        resolve();
+      } else if (msg.type === "load_failed") {
+        w.removeEventListener("message", onMsg);
+        reject(new Error(msg.message || "Python engine load failed"));
+      }
+    };
+    w.addEventListener("message", onMsg);
+    attachWorker(w);
+    w.postMessage({ type: "load" });
+  });
+  loadPromise = p;
+  p.catch(() => {
+    // Reset so a retry can attempt fresh load.
+    teardownWorker();
+  });
+  return p;
+}
+
+export function pyodideReady(): boolean {
+  return ready;
+}
+
+export function isRunning(): boolean {
+  return !!currentRun;
+}
+
+export async function loadPyodideOnce(): Promise<void> {
+  if (ready) return;
+  if (loadPromise) return loadPromise;
+  return spawnAndLoad();
+}
+
+export async function runPython(
+  code: string,
+  stdin = "",
+  opts: RunOptions = {},
+): Promise<RunResult> {
+  if (currentRun) {
+    return {
+      ok: false,
+      stdout: "",
+      stderr:
+        "Another program is already running. Please wait or click Stop Execution.",
+      reason: "error",
+    };
+  }
+  try {
+    await loadPyodideOnce();
+  } catch (e) {
+    return {
+      ok: false,
+      stdout: "",
+      stderr: friendlyStderr(
+        "load_failed",
+        e instanceof Error ? e.message : String(e),
+      ),
+      reason: "load_failed",
+    };
+  }
+  if (!worker) {
+    // Very unlikely, but guard.
+    try {
+      await spawnAndLoad();
+    } catch (e) {
+      return {
+        ok: false,
+        stdout: "",
+        stderr: friendlyStderr(
+          "load_failed",
+          e instanceof Error ? e.message : String(e),
+        ),
+        reason: "load_failed",
+      };
+    }
+  }
+
+  const timeoutMs = opts.timeoutMs ?? 8000;
+  const maxChars = opts.maxChars ?? 10000;
+  const maxLines = opts.maxLines ?? 200;
+  const runId = nextRunId++;
+
+  return new Promise<RunResult>((resolve) => {
+    const timeoutId = setTimeout(() => {
+      finishRun(
+        {
+          ok: false,
+          stdout: "",
+          stderr: friendlyStderr("timeout", ""),
+          reason: "timeout",
+        },
+        true,
+      );
+    }, timeoutMs);
+    currentRun = { runId, resolve, timeoutId };
+    worker!.postMessage({
+      type: "run",
+      runId,
+      code,
+      stdin,
+      maxChars,
+      maxLines,
+    });
+  });
+}
+
+/**
+ * Stop the currently running Python program (if any). Terminates the worker
+ * and lazily spins up a fresh one on the next run. Safe to call when idle.
+ */
+export function cancelPython(): void {
+  if (!currentRun) return;
+  finishRun(
+    {
+      ok: false,
+      stdout: "",
+      stderr: friendlyStderr("stopped", ""),
+      reason: "stopped",
+    },
+    true,
+  );
 }
 
 export function outputsMatch(actual: string, expected: string): boolean {
   return normalize(actual) === normalize(expected);
+}
+
+// Best-effort cleanup on tab close.
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
+    teardownWorker();
+  });
 }

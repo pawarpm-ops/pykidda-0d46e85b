@@ -8,7 +8,7 @@ import {
   saveHomeworkAnswer,
   submitHomework,
 } from "@/lib/homework.functions";
-import { loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
+import { cancelPython, loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
 
 export const Route = createFileRoute("/_authenticated/homework/$id")({
   head: () => ({
@@ -142,7 +142,7 @@ function HomeworkDetailPage() {
     updateAnswer(q, { execution_output: "Running…" });
     try {
       await loadPyodideOnce();
-      const r = await runPython(cur.student_code, q.sample_input ?? "");
+      const r = await runPython(cur.student_code, q.sample_input ?? "", { timeoutMs: 8000 });
       const out = [r.stdout, r.stderr ? `\n--- stderr ---\n${r.stderr}` : ""].join("");
       updateAnswer(q, { execution_output: out });
     } catch (e) {
@@ -534,7 +534,7 @@ function QuestionCard({
             </pre>
           </div>
           {!readOnly && (
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 onClick={onRun}
                 disabled={running}
@@ -542,6 +542,15 @@ function QuestionCard({
               >
                 {running ? "Running…" : "▶ Run code"}
               </button>
+              {running && (
+                <button
+                  onClick={() => cancelPython()}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20"
+                >
+                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive" />
+                  Stop Execution
+                </button>
+              )}
             </div>
           )}
         </div>

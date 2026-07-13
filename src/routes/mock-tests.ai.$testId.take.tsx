@@ -145,7 +145,7 @@ function TakeAiMock() {
           const total = q.code_tests.length;
           for (const tc of q.code_tests) {
             // eslint-disable-next-line no-await-in-loop
-            const r = await runPython(response || q.starter_code, tc.stdin ?? "");
+            const r = await runPython(response || q.starter_code, tc.stdin ?? "", { timeoutMs: 5000 });
             if (r.ok && outputsMatch(r.stdout, tc.expected)) passed++;
           }
           graded.push({ question_id: q.id, response, code_passed: passed, code_total: total });
