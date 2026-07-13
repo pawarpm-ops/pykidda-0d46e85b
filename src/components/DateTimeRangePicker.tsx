@@ -8,6 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 // Reusable date + start/end time picker with the same premium look as DueDateTimePicker.
 // date: "YYYY-MM-DD"   startTime/endTime: "HH:mm"
+// When durationMinutes is provided, End Time becomes read-only and is auto-calculated
+// from Start Time + duration. Parent still receives the computed end via onEndTimeChange.
 export function DateTimeRangePicker({
   date,
   startTime,
@@ -16,6 +18,7 @@ export function DateTimeRangePicker({
   onStartTimeChange,
   onEndTimeChange,
   disablePast = true,
+  durationMinutes,
 }: {
   date: string;
   startTime: string;
@@ -24,6 +27,7 @@ export function DateTimeRangePicker({
   onStartTimeChange: (v: string) => void;
   onEndTimeChange: (v: string) => void;
   disablePast?: boolean;
+  durationMinutes?: number;
 }) {
   const parsedDate = React.useMemo(() => {
     if (!date) return undefined;
@@ -38,6 +42,26 @@ export function DateTimeRangePicker({
     onDateChange(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   };
 
+  const computeEnd = React.useCallback(
+    (start: string): string => {
+      if (!start || !durationMinutes) return "";
+      const [h, m] = start.split(":").map(Number);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) return "";
+      const total = h * 60 + m + durationMinutes;
+      const eh = Math.floor((total % (24 * 60)) / 60);
+      const em = total % 60;
+      return `${pad(eh)}:${pad(em)}`;
+    },
+    [durationMinutes],
+  );
+
+  // Keep endTime in sync when duration mode is on.
+  React.useEffect(() => {
+    if (!durationMinutes) return;
+    const next = computeEnd(startTime);
+    if (next && next !== endTime) onEndTimeChange(next);
+  }, [durationMinutes, startTime, computeEnd, endTime, onEndTimeChange]);
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -45,12 +69,15 @@ export function DateTimeRangePicker({
   const fmtTime = (t: string) =>
     t ? format(new Date(`2000-01-01T${t}`), "hh:mm a") : "—";
 
+  const effectiveEnd = durationMinutes ? computeEnd(startTime) : endTime;
   const invalidRange =
-    !!startTime && !!endTime && startTime >= endTime;
+    !durationMinutes && !!startTime && !!endTime && startTime >= endTime;
+
+  const gridCols = durationMinutes ? "sm:grid-cols-2" : "sm:grid-cols-3";
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className={cn("grid grid-cols-1 gap-2", gridCols)}>
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -88,17 +115,28 @@ export function DateTimeRangePicker({
           />
         </div>
 
-        <div className="relative">
-          <Clock className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
-          <input
-            type="time"
-            aria-label="End time"
-            value={endTime}
-            onChange={(e) => onEndTimeChange(e.target.value || "00:00")}
-            className="h-10 w-full rounded-md border border-border bg-background pl-8 pr-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-          />
-        </div>
+        {!durationMinutes && (
+          <div className="relative">
+            <Clock className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+            <input
+              type="time"
+              aria-label="End time"
+              value={endTime}
+              onChange={(e) => onEndTimeChange(e.target.value || "00:00")}
+              className="h-10 w-full rounded-md border border-border bg-background pl-8 pr-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+        )}
       </div>
+
+      {durationMinutes ? (
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs">
+          <Clock className="h-4 w-4 text-primary" />
+          <span className="text-muted-foreground">End time (auto):</span>
+          <span className="font-semibold">{effectiveEnd ? fmtTime(effectiveEnd) : "—"}</span>
+          <span className="ml-auto text-muted-foreground">Duration: {durationMinutes} min</span>
+        </div>
+      ) : null}
 
       {parsedDate ? (
         <div
@@ -115,14 +153,16 @@ export function DateTimeRangePicker({
             <span className="mx-2 text-muted-foreground">·</span>
             Start: <span className="font-medium">{fmtTime(startTime)}</span>
             <span className="mx-2 text-muted-foreground">·</span>
-            End: <span className="font-medium">{fmtTime(endTime)}</span>
+            End: <span className="font-medium">{fmtTime(effectiveEnd)}</span>
           </div>
           {invalidRange && (
             <div className="mt-1 text-destructive">End time must be after start time.</div>
           )}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">Please select date, start time and end time.</p>
+        <p className="text-xs text-muted-foreground">
+          {durationMinutes ? "Please select date and start time." : "Please select date, start time and end time."}
+        </p>
       )}
     </div>
   );
