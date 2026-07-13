@@ -375,7 +375,7 @@ function AdminPage() {
                 }`}
                 style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : t === "audit" ? "📜 Audit log" : "📚 Homework"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : t === "audit" ? "📜 Audit log" : t === "health" ? "🩺 System Health" : "📚 Homework"}
               </button>
             ))}
             <button
@@ -537,6 +537,8 @@ function AdminPage() {
         {tab === "audit" && (
           <AuditLogsTab students={students.map((s) => ({ user_id: s.user_id, name: s.name }))} />
         )}
+
+        {tab === "health" && <SystemHealthTab />}
 
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
