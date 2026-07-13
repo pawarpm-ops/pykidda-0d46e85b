@@ -5,6 +5,7 @@
 // draft, teacher accepts, then the existing admin create/update fns save.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { logAdminActivity } from "@/lib/audit-log.server";
 import { z } from "zod";
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
@@ -164,6 +165,12 @@ ${data.instructions.trim() ? `Extra teacher instructions:\n"""\n${data.instructi
     if (questions.length === 0) {
       throw new Error("AI could not generate questions right now. Please try again.");
     }
+    await logAdminActivity(context.supabase, {
+      actionType: "ai.homework_generated",
+      description: `Used AI to generate ${questions.length} homework question${questions.length === 1 ? "" : "s"}`,
+      moduleName: "ai",
+      metadata: { count: questions.length, difficulty: data.difficulty },
+    });
     return { questions };
   });
 
@@ -260,6 +267,14 @@ export const applyHomeworkRefinement = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAdminActivity(context.supabase, {
+      actionType: "ai.homework_refined",
+      description: `Used AI to refine homework question: ${data.patch.title}`,
+      moduleName: "ai",
+      targetId: data.id,
+      targetTitle: data.patch.title,
+      newValue: data.patch,
+    });
     return { ok: true };
   });
 
@@ -323,5 +338,14 @@ export const saveAiGeneratedHomework = createServerFn({ method: "POST" })
         priority: "normal",
       });
     }
+    await logAdminActivity(context.supabase, {
+      actionType: data.publish ? "homework.ai_published" : "homework.ai_created",
+      description: data.publish
+        ? `Published ${rows.length} AI-generated homework question${rows.length === 1 ? "" : "s"} on "${data.topic || "Python"}"`
+        : `Saved ${rows.length} AI-generated homework question${rows.length === 1 ? "" : "s"} as draft`,
+      moduleName: "homework",
+      targetTitle: data.topic || null,
+      newValue: { count: rows.length, publish: data.publish },
+    });
     return { ids: (inserted ?? []).map((r: { id: string }) => r.id), count: rows.length };
   });

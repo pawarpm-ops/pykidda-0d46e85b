@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { logAdminActivity } from "@/lib/audit-log.server";
 
 async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data, error } = await context.supabase.rpc("has_role", {
@@ -279,6 +280,20 @@ export const adminCreateAssignment = createServerFn({ method: "POST" })
         priority: "normal",
       });
     }
+    await logAdminActivity(supabase, {
+      actionType:
+        inserted.status === "published"
+          ? "homework.created_published"
+          : "homework.created",
+      description:
+        inserted.status === "published"
+          ? `Created & published homework: ${inserted.title}`
+          : `Created homework: ${inserted.title}`,
+      moduleName: "homework",
+      targetId: inserted.id,
+      targetTitle: inserted.title,
+      newValue: { status: inserted.status },
+    });
     return { id: inserted.id };
   });
 
@@ -303,7 +318,8 @@ export const adminUpdateAssignment = createServerFn({ method: "POST" })
     const { error } = await supabase.from("assignments").update(updates).eq("id", id);
     if (error) throw new Error(error.message);
 
-    if (before && before.status !== "published" && updates.status === "published") {
+    const publishTransition = !!before && before.status !== "published" && updates.status === "published";
+    if (publishTransition) {
       await supabase.from("announcements").insert({
         author_id: userId,
         title: "New assignment assigned",
@@ -311,6 +327,18 @@ export const adminUpdateAssignment = createServerFn({ method: "POST" })
         priority: "normal",
       });
     }
+    const finalTitle = updates.title ?? before?.title ?? "(untitled)";
+    await logAdminActivity(supabase, {
+      actionType: publishTransition ? "homework.published" : "homework.updated",
+      description: publishTransition
+        ? `Published homework: ${finalTitle}`
+        : `Updated homework: ${finalTitle}`,
+      moduleName: "homework",
+      targetId: id,
+      targetTitle: finalTitle,
+      oldValue: before ?? null,
+      newValue: updates,
+    });
     return { ok: true };
   });
 
@@ -319,8 +347,22 @@ export const adminDeleteAssignment = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error } = await context.supabase.from("assignments").delete().eq("id", data.id);
+    const { supabase } = context;
+    const { data: before } = await supabase
+      .from("assignments")
+      .select("title")
+      .eq("id", data.id)
+      .maybeSingle();
+    const { error } = await supabase.from("assignments").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAdminActivity(supabase, {
+      actionType: "homework.deleted",
+      description: `Deleted homework: ${before?.title ?? data.id}`,
+      moduleName: "homework",
+      targetId: data.id,
+      targetTitle: before?.title ?? null,
+      oldValue: before,
+    });
     return { ok: true };
   });
 
@@ -394,6 +436,16 @@ export const adminReviewSubmission = createServerFn({ method: "POST" })
       body: `Your homework "${a?.title ?? ""}" has been reviewed. Open Homework to read the teacher's comment.`,
       priority: "normal",
       target_user_id: sub.student_id,
+    });
+
+    await logAdminActivity(supabase, {
+      actionType: "homework.reviewed",
+      description: `Reviewed homework: ${a?.title ?? ""}`,
+      moduleName: "homework",
+      targetId: data.submission_id,
+      targetTitle: a?.title ?? null,
+      relatedStudentId: sub.student_id,
+      newValue: { teacher_feedback: data.teacher_feedback ?? null },
     });
 
     return { ok: true };
