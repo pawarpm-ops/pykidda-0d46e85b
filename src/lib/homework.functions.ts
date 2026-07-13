@@ -99,7 +99,7 @@ export const listStudentHomework = createServerFn({ method: "GET" })
       for (const s of sRes.data ?? []) subs[s.homework_id] = s;
     }
 
-    return (hw ?? []).map((h: { id: string }) => ({
+    return ((hw ?? []) as any[]).map((h: any) => ({
       ...h,
       question_count: questionCounts[h.id] ?? 0,
       submission: subs[h.id] ?? null,
@@ -330,7 +330,7 @@ export const adminListHomework = createServerFn({ method: "GET" })
         if (r.status === "checked") counts[r.homework_id].checked++;
       }
     }
-    return (hw ?? []).map((h: { id: string }) => ({
+    return ((hw ?? []) as any[]).map((h: any) => ({
       ...h,
       counts: counts[h.id],
     }));
