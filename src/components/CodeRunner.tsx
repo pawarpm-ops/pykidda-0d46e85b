@@ -71,13 +71,8 @@ export function CodeRunner({
     [onChangeCode],
   );
 
-  const runAll = useCallback(async () => {
-    if (busy) return;
-    setBusy(true);
-    setOutcome(null);
-    setAiResult(null);
-    setAiError(null);
   const stoppedRef = useRef(false);
+
 
   const runAll = useCallback(async () => {
     if (busy) return;
