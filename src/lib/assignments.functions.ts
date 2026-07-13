@@ -55,7 +55,7 @@ export const getStudentAssignment = createServerFn({ method: "GET" })
       .in("status", ["published", "closed"])
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!a) throw new Error("Assignment not found");
+    if (!a) throw new Error("Homework not found");
 
     const { data: sub, error: subErr } = await supabase
       .from("assignment_submissions")
@@ -132,7 +132,7 @@ export const submitAssignment = createServerFn({ method: "POST" })
       .in("status", ["published", "closed"])
       .maybeSingle();
     if (aErr) throw new Error(aErr.message);
-    if (!a) throw new Error("Assignment not found");
+    if (!a) throw new Error("Homework not found");
 
     const now = new Date();
     const isLate = a.due_at ? now > new Date(a.due_at) : false;

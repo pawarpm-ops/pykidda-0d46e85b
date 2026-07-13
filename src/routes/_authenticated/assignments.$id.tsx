@@ -15,7 +15,7 @@ import { recordStreakActivity } from "@/lib/streaks";
 export const Route = createFileRoute("/_authenticated/assignments/$id")({
   head: () => ({
     meta: [
-      { title: "Assignment · PY Kidda" },
+      { title: "Homework · PY Kidda" },
       { name: "robots", content: "noindex" },
     ],
   }),
