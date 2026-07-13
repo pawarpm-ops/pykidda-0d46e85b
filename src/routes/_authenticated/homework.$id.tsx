@@ -8,7 +8,7 @@ import {
   saveHomeworkAnswer,
   submitHomework,
 } from "@/lib/homework.functions";
-import { loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
+import { cancelPython, loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
 
 export const Route = createFileRoute("/_authenticated/homework/$id")({
   head: () => ({
