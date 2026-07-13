@@ -165,7 +165,7 @@ export const submitGradedMockAttempt = createServerFn({ method: "POST" })
           normalizeOutput(run.stdin) === normalizeOutput(tc.stdin);
         const actual = validRun ? normalizeOutput(run!.stdout) : "";
         const stderr = run ? normalizeOutput(run.stderr ?? "") : "";
-        const ok = validRun && actual === normalizeOutput(tc.expected);
+        const ok: boolean = !!validRun && actual === normalizeOutput(tc.expected);
         if (ok) passed++;
         results.push({ passed: ok, actual, stderr });
       }
