@@ -197,48 +197,27 @@
   100% { transform: translateX(400%); }
 }
 
-/* Warm hover glow used across clickable cards / list rows.
-   Adds a soft sunrise-gradient bloom and lifts the element on hover. */
+/* Consistent card hover: border highlight + slight zoom, no heavy glow.
+   Used across dashboard, homework, mock test, profile, analytics, leaderboard,
+   notification and admin cards. Disabled cards stay flat. */
 @utility card-glow {
   position: relative;
   isolation: isolate;
   transition:
-    transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 280ms ease-in-out,
-    box-shadow 280ms ease-in-out;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    padding: 1px;
-    background: var(--gradient-sunrise);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-    opacity: 0;
-    transition: opacity 280ms ease-in-out;
-    pointer-events: none;
-    z-index: 1;
-  }
+    transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 200ms ease-in-out,
+    box-shadow 200ms ease-in-out;
 
   &:hover {
-    transform: translateY(-4px) scale(1.015);
-    border-color: color-mix(in oklch, var(--accent) 70%, transparent);
-    box-shadow:
-      0 18px 40px -18px oklch(0.6 0.22 25 / 0.45),
-      0 0 0 1px color-mix(in oklch, var(--accent) 30%, transparent),
-      0 0 24px -6px oklch(0.72 0.17 55 / 0.35);
-  }
-
-  &:hover::before {
-    opacity: 1;
+    transform: translateY(-2px) scale(1.01);
+    border-color: color-mix(in oklch, var(--primary) 55%, transparent);
+    box-shadow: 0 6px 18px -10px color-mix(in oklch, var(--primary) 45%, transparent);
   }
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 70%, transparent);
+    border-color: color-mix(in oklch, var(--primary) 70%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 35%, transparent);
   }
 
   &:disabled,
@@ -254,26 +233,16 @@
     border-color: inherit;
     box-shadow: none;
   }
-
-  &:disabled:hover::before,
-  &[aria-disabled="true"]:hover::before,
-  &[data-disabled="true"]:hover::before {
-    opacity: 0;
-  }
 }
 
 @utility btn-glow {
   transition:
-    transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 260ms ease-in-out,
-    filter 260ms ease-in-out;
+    transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 200ms ease-in-out;
 
   &:hover {
-    transform: scale(1.04);
-    filter: brightness(1.08) saturate(1.1);
-    box-shadow:
-      0 10px 24px -8px oklch(0.6 0.22 25 / 0.55),
-      0 0 20px -4px oklch(0.72 0.17 55 / 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px -8px color-mix(in oklch, var(--primary) 50%, transparent);
   }
 
   &:active {
