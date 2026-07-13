@@ -86,7 +86,8 @@ export function NotificationBell() {
             <Link
               to="/notifications"
               onClick={() => setOpen(false)}
-              className="text-xs font-semibold px-2 py-1 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+              className="text-xs font-semibold px-2 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/85 hover:shadow-sm transition-colors"
+
             >
               View all
             </Link>
@@ -113,7 +114,7 @@ export function NotificationBell() {
                         <Link
                           to={n.action_url}
                           onClick={() => setOpen(false)}
-                          className="text-xs font-semibold px-2 py-1 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                          className="text-xs font-semibold px-2 py-1 rounded-md bg-primary text-primary-foreground hover:bg-primary/85 hover:shadow-sm transition-colors"
                         >
                           View
                         </Link>
