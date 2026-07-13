@@ -77,6 +77,15 @@ export function CodeRunner({
     setOutcome(null);
     setAiResult(null);
     setAiError(null);
+  const stoppedRef = useRef(false);
+
+  const runAll = useCallback(async () => {
+    if (busy) return;
+    stoppedRef.current = false;
+    setBusy(true);
+    setOutcome(null);
+    setAiResult(null);
+    setAiError(null);
     try {
       // Ensure runtime is loaded; this resolves immediately if already ready.
       await loadPyodideOnce();
@@ -89,8 +98,11 @@ export function CodeRunner({
     const results: RunOutcome["results"] = [];
     let passedCount = 0;
     for (const tc of question.tests) {
+      if (stoppedRef.current) break;
       // eslint-disable-next-line no-await-in-loop
-      const r = await runPython(codeRef.current, tc.stdin ?? "");
+      const r = await runPython(codeRef.current, tc.stdin ?? "", {
+        timeoutMs: 8000,
+      });
       const passed = r.ok && outputsMatch(r.stdout, tc.expected);
       if (passed) passedCount++;
       results.push({
@@ -101,6 +113,10 @@ export function CodeRunner({
         label: tc.label,
         stdin: tc.stdin ?? "",
       });
+      if (r.reason === "stopped") {
+        stoppedRef.current = true;
+        break;
+      }
     }
     const out: RunOutcome = {
       code: codeRef.current,
@@ -112,6 +128,11 @@ export function CodeRunner({
     setBusy(false);
     return out;
   }, [busy, question.tests]);
+
+  const handleStop = useCallback(() => {
+    stoppedRef.current = true;
+    cancelPython();
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     const out = await runAll();
