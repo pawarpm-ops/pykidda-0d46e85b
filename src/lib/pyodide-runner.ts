@@ -3,6 +3,8 @@
 // limits, and a cancel/stop API. Backwards compatible with the old surface:
 //   loadPyodideOnce, runPython, outputsMatch, pyodideReady, RunResult.
 
+import { logHealthEventClient } from "@/lib/system-health-client";
+
 const WORKER_URL = "/pyodide-worker.js";
 
 export type RunReason =
@@ -140,6 +142,12 @@ function attachWorker(w: Worker) {
     }
   };
   w.onerror = () => {
+    void logHealthEventClient({
+      category: "pyodide",
+      errorMessage: "Python worker crashed",
+      moduleName: "pyodide-runner",
+      severity: "high",
+    });
     if (currentRun) {
       finishRun(
         {
@@ -169,6 +177,12 @@ function spawnAndLoad(): Promise<void> {
         resolve();
       } else if (msg.type === "load_failed") {
         w.removeEventListener("message", onMsg);
+        void logHealthEventClient({
+          category: "pyodide",
+          errorMessage: `Pyodide failed to load: ${msg.message || "unknown"}`,
+          moduleName: "pyodide-runner",
+          severity: "critical",
+        });
         reject(new Error(msg.message || "Python engine load failed"));
       }
     };

@@ -4,6 +4,7 @@ import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { logHealthEventClient } from "@/lib/system-health-client";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -35,7 +36,16 @@ function AuthPage() {
         redirect_uri: window.location.origin + "/auth",
       });
       if (result.error) {
-        setError(result.error instanceof Error ? result.error.message : "Google login failed. Please try again.");
+        const msg = result.error instanceof Error ? result.error.message : "Google login failed. Please try again.";
+        setError(msg);
+        void logHealthEventClient({
+          category: "login",
+          errorMessage: `Google OAuth failed: ${msg}`,
+          moduleName: "auth",
+          pageRoute: "/auth",
+          severity: "high",
+          errorDetails: { method: "google" },
+        });
         setBusy(false);
         return;
       }
@@ -43,7 +53,16 @@ function AuthPage() {
       // Session already set by wrapper — AuthGate routes based on onboarding/role.
       navigate({ to: "/", replace: true });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Google login failed. Please try again.");
+      const msg = e instanceof Error ? e.message : "Google login failed. Please try again.";
+      setError(msg);
+      void logHealthEventClient({
+        category: "login",
+        errorMessage: `Google OAuth threw: ${msg}`,
+        moduleName: "auth",
+        pageRoute: "/auth",
+        severity: "high",
+        errorDetails: { method: "google" },
+      });
       setBusy(false);
     }
   }

@@ -2,7 +2,27 @@
 // Uses html-to-image (foreignObject-based) instead of html2canvas so modern
 // CSS color functions like oklch(...) and color-mix(...) render correctly.
 
+import { logHealthEventClient } from "@/lib/system-health-client";
+
 export async function exportNodeToPdf(node: HTMLElement, fileName: string) {
+  if (!node) throw new Error("Nothing to export");
+  try {
+    return await _exportNodeToPdf(node, fileName);
+  } catch (err) {
+    void logHealthEventClient({
+      category: "pdf",
+      errorMessage: err instanceof Error ? err.message : String(err),
+      moduleName: fileName,
+      severity: "high",
+      errorDetails: {
+        stack: err instanceof Error ? String(err.stack ?? "").slice(0, 2000) : null,
+      },
+    });
+    throw err;
+  }
+}
+
+async function _exportNodeToPdf(node: HTMLElement, fileName: string) {
   if (!node) throw new Error("Nothing to export");
 
   const [{ toPng }, { jsPDF }] = await Promise.all([

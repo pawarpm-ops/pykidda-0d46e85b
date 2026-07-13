@@ -23,6 +23,7 @@ import { InactivityLogout } from "@/components/InactivityLogout";
 import { BadgeToaster } from "@/components/BadgeToaster";
 import { recordStreakActivity } from "@/lib/streaks";
 import { isAdminEmail } from "@/lib/admin-emails";
+import { installGlobalErrorLogger, installSlowPageTracker } from "@/lib/system-health-client";
 
 function NotFoundComponent() {
   return (
@@ -151,6 +152,11 @@ function AuthGate({ children }: { children: ReactNode }) {
   const [authed, setAuthed] = useState(false);
   const [onboardChecked, setOnboardChecked] = useState(false);
   const [onboarded, setOnboarded] = useState(true);
+
+  useEffect(() => {
+    installGlobalErrorLogger();
+    installSlowPageTracker();
+  }, []);
 
   useEffect(() => {
     let mounted = true;

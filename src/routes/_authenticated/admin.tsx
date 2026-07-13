@@ -32,6 +32,7 @@ import { getQuestion } from "@/lib/questions";
 import { TopStudentsChart } from "@/components/TopStudentsChart";
 import { StreakDebugTab } from "@/components/StreakDebugTab";
 import { AuditLogsTab } from "@/components/AuditLogsTab";
+import { SystemHealthTab } from "@/components/SystemHealthTab";
 import { logAdminActionClient } from "@/lib/audit-log-client";
 import { BadgesGrid } from "@/components/BadgesGrid";
 
@@ -143,7 +144,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks" | "audit">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks" | "audit" | "health">("overview");
   const [overviewSubTab, setOverviewSubTab] = useState<"complete" | "mocks">("complete");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
@@ -363,7 +364,7 @@ function AdminPage() {
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "streaks", "announce", "reports", "reviews", "homework", "audit"] as const).map((t) => (
+            {(["overview", "students", "activity", "streaks", "announce", "reports", "reviews", "homework", "audit", "health"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -374,7 +375,7 @@ function AdminPage() {
                 }`}
                 style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : t === "audit" ? "📜 Audit log" : "📚 Homework"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : t === "audit" ? "📜 Audit log" : t === "health" ? "🩺 System Health" : "📚 Homework"}
               </button>
             ))}
             <button
@@ -536,6 +537,8 @@ function AdminPage() {
         {tab === "audit" && (
           <AuditLogsTab students={students.map((s) => ({ user_id: s.user_id, name: s.name }))} />
         )}
+
+        {tab === "health" && <SystemHealthTab />}
 
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
