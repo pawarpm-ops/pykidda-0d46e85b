@@ -643,7 +643,7 @@ function SubmissionsPanel({
         </div>
       )}
       <ul className="flex flex-col gap-2">
-        {(data ?? []).map((s) => {
+        {(data ?? []).map((s: any) => {
           const name = s.profile?.display_name ?? s.profile?.full_name ?? s.student_id.slice(0, 8);
           const badge = statusBadgeAdmin(s.status, s.is_late);
           return (
@@ -775,7 +775,7 @@ function GradingModal({
 
             <ul className="mt-5 flex flex-col gap-4">
               {questions.map((q, i) => {
-                const ans = data.answers.find((a) => a.homework_question_id === q.id);
+                const ans = data.answers.find((a: any) => a.homework_question_id === q.id);
                 return (
                   <li key={q.id}>
                     <GradeAnswerRow
