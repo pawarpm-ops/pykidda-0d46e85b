@@ -593,6 +593,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "homework_question_answers_homework_question_id_fkey"
+            columns: ["homework_question_id"]
+            isOneToOne: false
+            referencedRelation: "homework_questions_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "homework_question_answers_submission_id_fkey"
             columns: ["submission_id"]
             isOneToOne: false
@@ -1314,7 +1321,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      homework_questions_public: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          hints: string | null
+          homework_id: string | null
+          id: string | null
+          input_format: string | null
+          marks: number | null
+          mcq_options: Json | null
+          output_format: string | null
+          question_order: number | null
+          question_type: string | null
+          sample_input: string | null
+          sample_output: string | null
+          starter_code: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_questions_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "homework"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       evaluate_and_award_badges: {
