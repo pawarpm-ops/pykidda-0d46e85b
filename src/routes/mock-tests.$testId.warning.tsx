@@ -122,12 +122,12 @@ function Warning() {
 
   const qs = mockTestQuestions(test);
   const marks = qs.reduce((a, q) => a + q.marks, 0);
-  const ready = seconds <= 0 && name.trim().length > 0;
+  const ready = seconds <= 0;
 
 
   async function startTest() {
     if (!ready) return;
-    setStudentName(name.trim());
+    if (name.trim()) setStudentName(name.trim());
     markTestStarted(testId);
     try {
       await document.documentElement.requestFullscreen();
