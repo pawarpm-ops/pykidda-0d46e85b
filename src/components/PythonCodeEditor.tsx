@@ -233,15 +233,17 @@ export const PythonCodeEditor = React.forwardRef<HTMLTextAreaElement, PythonCode
     };
 
     return (
-      <div className={cn("relative w-full", className)} style={style}>
+      <div className={cn("pyk-code-editor relative w-full", className)} style={style}>
+        <style>{`.pyk-code-editor .pyk-pre::-webkit-scrollbar{display:none}`}</style>
         <pre
           ref={preRef}
           aria-hidden="true"
-          className="pointer-events-none block w-full overflow-hidden"
+          className="pyk-pre pointer-events-none block w-full overflow-auto"
           style={{
             ...sharedStyle,
             color: COLORS.id,
             minHeight: `calc(${rows} * 1.55em + 24px)`,
+            scrollbarWidth: "none",
           }}
         >
           <Highlighted code={value} />
@@ -257,14 +259,15 @@ export const PythonCodeEditor = React.forwardRef<HTMLTextAreaElement, PythonCode
           disabled={disabled}
           rows={rows}
           aria-label={ariaLabel}
-          className="absolute inset-0 block w-full resize-y outline-none"
+          className="absolute inset-0 block w-full outline-none"
           style={{
             ...sharedStyle,
             color: "transparent",
             caretColor: "#ffffff",
-            // Preserve textarea selection highlight visibility
             background: "transparent",
             WebkitTextFillColor: "transparent",
+            resize: "none",
+            overflow: "auto",
           }}
         />
       </div>
