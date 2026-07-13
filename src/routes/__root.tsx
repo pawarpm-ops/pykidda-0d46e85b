@@ -195,7 +195,7 @@ function AuthGate({ children }: { children: ReactNode }) {
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => {
+    getCachedSession().then(({ data }) => {
       if (!mounted) return;
       const session = data.session;
       setAuthed(!!session);
