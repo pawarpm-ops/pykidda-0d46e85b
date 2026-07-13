@@ -521,6 +521,10 @@ function AdminPage() {
           <ActivityTab authInfo={authInfo} students={students} profiles={profiles} />
         )}
 
+        {tab === "streaks" && (
+          <StreakDebugTab students={students.map((s) => ({ user_id: s.user_id, name: s.name }))} />
+        )}
+
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
         )}
