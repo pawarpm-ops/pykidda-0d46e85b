@@ -140,7 +140,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks">("overview");
   const [overviewSubTab, setOverviewSubTab] = useState<"complete" | "mocks">("complete");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
