@@ -14,6 +14,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/auth-cache";
 import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { ReportProblem } from "@/components/ReportProblem";
 import { ReviewPopup } from "@/components/ReviewPopup";
