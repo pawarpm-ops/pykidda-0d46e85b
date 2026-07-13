@@ -3,6 +3,8 @@
 // limits, and a cancel/stop API. Backwards compatible with the old surface:
 //   loadPyodideOnce, runPython, outputsMatch, pyodideReady, RunResult.
 
+import { logHealthEventClient } from "@/lib/system-health-client";
+
 const WORKER_URL = "/pyodide-worker.js";
 
 export type RunReason =
