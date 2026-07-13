@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StreakCard } from "@/components/StreakCard";
@@ -180,9 +180,21 @@ function ProfilePage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-2xl px-6 py-10">
-        <Link to="/" className="text-sm text-muted-foreground hover:text-accent">
-          ← Back to home
-        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.href = "/";
+            }
+          }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-accent hover:text-accent-foreground"
+          aria-label="Go back"
+        >
+          <span aria-hidden="true">←</span> Back
+        </button>
+
         <h1 className="mt-2 text-3xl font-bold tracking-tight">Your profile</h1>
         <p className="mt-1 text-muted-foreground">
           Customize how you appear across PY Kidda.
