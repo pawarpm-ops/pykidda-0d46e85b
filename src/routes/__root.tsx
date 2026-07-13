@@ -91,6 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "PY Kidda" },
+      { name: "application-name", content: "PY Kidda" },
       { name: "description", content: "A web portal for students to practice Python programming through tests and coding exercises." },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "PY Kidda" },
