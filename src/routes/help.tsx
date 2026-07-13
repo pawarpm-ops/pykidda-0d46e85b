@@ -175,9 +175,18 @@ const QUICK_CARDS: { title: string; desc: string; target: string; icon: React.Co
 ];
 
 function HelpPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<Category | "All">("All");
   const [openItem, setOpenItem] = useState<string | undefined>(undefined);
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      router.navigate({ to: "/" });
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
