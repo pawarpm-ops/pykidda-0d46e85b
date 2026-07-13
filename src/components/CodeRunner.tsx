@@ -158,26 +158,13 @@ export function CodeRunner({
             {pyError ? "Python: error" : pyReady ? "Python: ready" : "Python: loading… (first run ~10s)"}
           </span>
         </div>
-        <textarea
+        <PythonCodeEditor
           value={code}
-          onChange={(e) => setAndEmit(e.target.value)}
-          spellCheck={false}
-          className="block w-full resize-y bg-transparent px-4 py-3 font-mono text-sm leading-relaxed outline-none"
+          onChange={setAndEmit}
           rows={compact ? 12 : 16}
-          style={{ tabSize: 4 }}
-          onKeyDown={(e) => {
-            if (e.key === "Tab") {
-              e.preventDefault();
-              const el = e.currentTarget;
-              const s = el.selectionStart;
-              const next = code.slice(0, s) + "    " + code.slice(el.selectionEnd);
-              setAndEmit(next);
-              requestAnimationFrame(() => {
-                el.selectionStart = el.selectionEnd = s + 4;
-              });
-            }
-          }}
+          className="px-1 py-1"
         />
+
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
