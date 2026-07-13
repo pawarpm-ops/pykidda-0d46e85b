@@ -102,7 +102,7 @@ function AssignmentDetailPage() {
     setOutput("Running…");
     try {
       await loadPyodideOnce();
-      const r = await runPython(code, stdin);
+      const r = await runPython(code, stdin, { timeoutMs: 8000 });
       setOutput([r.stdout, r.stderr ? `\n--- stderr ---\n${r.stderr}` : ""].join(""));
     } catch (e) {
       setOutput(e instanceof Error ? e.message : String(e));
