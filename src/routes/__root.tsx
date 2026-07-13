@@ -247,17 +247,17 @@ function AuthGate({ children }: { children: ReactNode }) {
     }
   }, [checked, authed, isPublicRoute, isOnboardingRoute, onboardChecked, onboarded, navigate]);
 
-  if (!checked && !isAuthRoute) {
+  if (!checked && !isPublicRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
         Loading…
       </div>
     );
   }
-  if (!authed && !isAuthRoute) {
+  if (!authed && !isPublicRoute) {
     return null;
   }
-  if (authed && onboardChecked && !onboarded && !isOnboardingRoute) {
+  if (authed && onboardChecked && !onboarded && !isOnboardingRoute && !isPublicRoute) {
     return null;
   }
 
