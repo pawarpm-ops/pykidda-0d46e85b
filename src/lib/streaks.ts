@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { evaluateAndAwardBadges } from "@/lib/badges";
 
 export type StreakActivityType =
   | "login"
@@ -96,6 +97,9 @@ export async function recordStreakActivity(
       }),
     );
   }
+  // Check for new badges after every recorded activity.
+  // Fire-and-forget: badge failures must never block streak flow.
+  evaluateAndAwardBadges(activity).catch(() => {});
   return { current_streak: row.current_streak, longest_streak: row.longest_streak, is_new_day: row.is_new_day, unlocked_rank: unlocked };
 }
 
