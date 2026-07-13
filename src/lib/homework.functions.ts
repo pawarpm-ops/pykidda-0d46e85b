@@ -350,7 +350,10 @@ export const adminGetHomework = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!hw) throw new Error("Not found");
-    const { data: questions, error: qErr } = await supabase
+    // Use service role to read answer-key columns (mcq_correct, test_cases)
+    // which are hidden from the authenticated role at the column level.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: questions, error: qErr } = await supabaseAdmin
       .from("homework_questions")
       .select("*")
       .eq("homework_id", data.id)
