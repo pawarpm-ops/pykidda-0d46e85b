@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MOCK_TESTS, QUESTIONS } from "@/lib/questions";
 import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
@@ -28,6 +29,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [showAllMocks, setShowAllMocks] = useState(false);
+  const visibleMocks = showAllMocks ? MOCK_TESTS : MOCK_TESTS.slice(0, 4);
   const totalQ = QUESTIONS.length;
   const totalMarks = QUESTIONS.reduce((a, q) => a + q.marks, 0);
 
@@ -217,7 +220,7 @@ function Index() {
               against hidden test cases.
             </p>
             <ul className="mt-6 divide-y divide-white/10">
-              {MOCK_TESTS.map((t) => (
+              {visibleMocks.map((t) => (
                 <li key={t.id} className="py-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-white">{t.name}</p>
@@ -235,6 +238,17 @@ function Index() {
                 </li>
               ))}
             </ul>
+            {MOCK_TESTS.length > 4 && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAllMocks((v) => !v)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 hover:border-amber-400 transition"
+                >
+                  {showAllMocks ? "Show less" : `See more (${MOCK_TESTS.length - 4} more)`}
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
