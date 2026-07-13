@@ -29,6 +29,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [showAllMocks, setShowAllMocks] = useState(false);
+  const visibleMocks = showAllMocks ? MOCK_TESTS : MOCK_TESTS.slice(0, 4);
   const totalQ = QUESTIONS.length;
   const totalMarks = QUESTIONS.reduce((a, q) => a + q.marks, 0);
 
