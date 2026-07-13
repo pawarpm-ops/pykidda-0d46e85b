@@ -39,7 +39,7 @@ function ResultPage() {
           setR({
             testId: row.test_id,
             testName: row.test_name,
-            studentName: row.student_name,
+            studentName: row.student_name ?? "Student",
             totalQuestions: row.total_questions,
             marksObtained: row.marks_obtained,
             totalMarks: row.total_marks,
