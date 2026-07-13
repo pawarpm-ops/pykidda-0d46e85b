@@ -18,8 +18,11 @@ import {
   Search,
   LifeBuoy,
   HelpCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/help")({
   head: () => ({
