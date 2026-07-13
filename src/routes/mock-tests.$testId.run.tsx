@@ -1,24 +1,23 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getMockTest, mockTestQuestions, type CodeQuestion } from "@/lib/questions";
+import { useServerFn } from "@tanstack/react-start";
 import {
   clearTestStarted,
-  getStudentName,
   getTestStartedAt,
-  gradeFor,
   isTestStarted,
   markTestStarted,
-  saveResult,
-  type AttemptResult,
-  type QuestionAttempt,
 } from "@/lib/test-session";
-import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
-import { recordMockResult } from "@/lib/progress";
+import { loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
 import { syncMyScore } from "@/lib/leaderboard";
 import { recordStreakActivity } from "@/lib/streaks";
-import { supabase } from "@/integrations/supabase/client";
 import { PythonCodeEditor } from "@/components/PythonCodeEditor";
+import {
+  getStudentMockTest,
+  submitGradedMockAttempt,
+  type SanitizedMockTest,
+  type SanitizedMockQuestion,
+} from "@/lib/mock-secure.functions";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
   head: () => ({
@@ -60,8 +59,12 @@ function Kbd({ children }: { children: React.ReactNode }) {
 function RunTest() {
   const { testId } = Route.useParams();
   const navigate = useNavigate();
-  const test = getMockTest(testId);
-  const questions: CodeQuestion[] = useMemo(() => (test ? mockTestQuestions(test) : []), [test]);
+  const fetchTest = useServerFn(getStudentMockTest);
+  const submitAttempt = useServerFn(submitGradedMockAttempt);
+
+  const [test, setTest] = useState<SanitizedMockTest | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const questions: SanitizedMockQuestion[] = useMemo(() => test?.questions ?? [], [test]);
 
   const [allowed, setAllowed] = useState<boolean | null>(null);
   useEffect(() => {
@@ -69,8 +72,24 @@ function RunTest() {
     loadPyodideOnce().catch(() => {});
   }, [testId]);
 
+  // Fetch sanitized mock data from the server. No expected outputs or solutions
+  // enter the browser bundle — they stay in mock-questions.server.ts.
+  useEffect(() => {
+    if (allowed !== true) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const t = await fetchTest({ data: { testId } });
+        if (!cancelled) setTest(t);
+      } catch (e) {
+        if (!cancelled) setLoadError(e instanceof Error ? e.message : "Failed to load test");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [allowed, fetchTest, testId]);
+
   const startedAt = useRef<number>(Date.now());
-  const [remaining, setRemaining] = useState<number>(test?.durationSec ?? 0);
+  const [remaining, setRemaining] = useState<number>(0);
   const [currentIdx, setCurrentIdx] = useState(0);
   const currentIdxRef = useRef(0);
   currentIdxRef.current = currentIdx;
@@ -120,73 +139,63 @@ function RunTest() {
       submittedRef.current = true;
       submittingRef.current = true;
       setGrading(true);
-      setGradeMsg(submissionType === "auto-violation" ? "Auto-submitting & grading…" : "Grading your code…");
+      setGradeMsg(submissionType === "auto-violation" ? "Auto-submitting & grading…" : "Running your code…");
 
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
 
-      const attempts: QuestionAttempt[] = [];
-      let marksObtained = 0;
-      let totalMarks = 0;
+      // Run each question's server-provided stdins in Pyodide locally, then
+      // ship the outputs to the server. Server holds the expected outputs
+      // and computes marks — client never receives them.
+      const answers: {
+        questionId: string;
+        code: string;
+        runs: { stdin: string; stdout: string; stderr: string; ok: boolean }[];
+      }[] = [];
       for (let i = 0; i < questions.length; i++) {
         const q = questions[i];
         const code = codesRef.current[q.id] ?? q.starterCode;
-        totalMarks += q.marks;
-        setGradeMsg(`Grading Q${i + 1} of ${questions.length}…`);
-        const results: QuestionAttempt["results"] = [];
-        let passed = 0;
-        for (const tc of q.tests) {
+        setGradeMsg(`Running Q${i + 1} of ${questions.length}…`);
+        const runs: { stdin: string; stdout: string; stderr: string; ok: boolean }[] = [];
+        for (const stdin of q.testStdins) {
           // eslint-disable-next-line no-await-in-loop
-          const r = await runPython(code, tc.stdin ?? "");
-          const ok = r.ok && outputsMatch(r.stdout, tc.expected);
-          if (ok) passed++;
-          results.push({ passed: ok, expected: tc.expected, actual: r.stdout, stderr: r.stderr });
+          const r = await runPython(code, stdin);
+          runs.push({ stdin, stdout: r.stdout, stderr: r.stderr, ok: r.ok });
         }
-        const allPassed = passed === q.tests.length;
-        const marks = allPassed ? q.marks : 0;
-        marksObtained += marks;
-        attempts.push({
-          questionId: q.id,
-          code,
-          passed,
-          total: q.tests.length,
-          marksObtained: marks,
-          marksTotal: q.marks,
-          results,
-        });
+        answers.push({ questionId: q.id, code, runs });
       }
 
-      const percentage = totalMarks > 0 ? Math.round((marksObtained / totalMarks) * 100) : 0;
       const timeTakenSec = Math.min(test.durationSec, Math.floor((Date.now() - startedAt.current) / 1000));
-      const result: AttemptResult = {
-        testId: test.id,
-        testName: test.name,
-        studentName: getStudentName(),
-        totalQuestions: questions.length,
-        marksObtained,
-        totalMarks,
-        percentage,
-        grade: gradeFor(percentage),
-        timeTakenSec,
-        submissionType,
-        violationReason,
-        attempts,
-        submittedAt: Date.now(),
-      };
-      saveResult(result);
+
+      setGradeMsg("Grading on server…");
       try {
-        const { data } = await supabase.auth.getUser();
-        recordMockResult(data.user?.id ?? null, result);
-      } catch {
-        recordMockResult(null, result);
+        const graded = await submitAttempt({
+          data: {
+            testId: test.id,
+            timeTakenSec,
+            submissionType,
+            violationReason: violationReason ?? null,
+            submittedAt: Date.now(),
+            answers,
+          },
+        });
+        void syncMyScore();
+        void recordStreakActivity("mock_test_attempted", testId);
+        clearTestStarted(testId);
+        navigate({
+          to: "/mock-tests/$testId/result",
+          params: { testId },
+          search: { attempt: graded.attemptId },
+        });
+      } catch (e) {
+        setGrading(false);
+        submittedRef.current = false;
+        submittingRef.current = false;
+        alert(`Submission failed: ${e instanceof Error ? e.message : "unknown error"}`);
       }
-      void syncMyScore();
-      void recordStreakActivity("mock_test_attempted", testId);
-      clearTestStarted(testId);
-      navigate({ to: "/mock-tests/$testId/result", params: { testId } });
     },
-    [navigate, questions, test, testId],
+    [navigate, questions, test, testId, submitAttempt],
   );
 
   // Timer
@@ -630,8 +639,11 @@ function RunTest() {
 
 
   if (allowed === false) return <Navigate to="/mock-tests/$testId/warning" params={{ testId }} />;
+  if (loadError) {
+    return <div className="min-h-screen flex items-center justify-center p-8 text-destructive text-center">Couldn't load test: {loadError}</div>;
+  }
   if (!test || allowed === null) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading test…</div>;
   }
 
   const q = questions[currentIdx];
