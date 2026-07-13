@@ -582,8 +582,10 @@ export const adminGetSubmissionDetail = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!sub) throw new Error("Not found");
+    // Admin grading needs full question rows including answer keys.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [qRes, aRes, pRes, hRes] = await Promise.all([
-      supabase
+      supabaseAdmin
         .from("homework_questions")
         .select("*")
         .eq("homework_id", sub.homework_id)
