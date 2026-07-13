@@ -142,7 +142,7 @@ function HomeworkDetailPage() {
     updateAnswer(q, { execution_output: "Running…" });
     try {
       await loadPyodideOnce();
-      const r = await runPython(cur.student_code, q.sample_input ?? "");
+      const r = await runPython(cur.student_code, q.sample_input ?? "", { timeoutMs: 8000 });
       const out = [r.stdout, r.stderr ? `\n--- stderr ---\n${r.stderr}` : ""].join("");
       updateAnswer(q, { execution_output: out });
     } catch (e) {
