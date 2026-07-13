@@ -122,12 +122,12 @@ function Warning() {
 
   const qs = mockTestQuestions(test);
   const marks = qs.reduce((a, q) => a + q.marks, 0);
-  const ready = seconds <= 0 && name.trim().length > 0;
+  const ready = seconds <= 0;
 
 
   async function startTest() {
     if (!ready) return;
-    setStudentName(name.trim());
+    if (name.trim()) setStudentName(name.trim());
     markTestStarted(testId);
     try {
       await document.documentElement.requestFullscreen();
@@ -190,15 +190,7 @@ function Warning() {
         </div>
 
         <div className="mt-8 rounded-xl border border-border bg-card p-6">
-          <label className="block">
-            <span className="text-sm font-medium">Your full name</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="e.g., Aarav Sharma"
-            />
-          </label>
+
 
           <div className="mt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
