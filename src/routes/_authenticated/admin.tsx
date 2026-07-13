@@ -33,6 +33,7 @@ import { TopStudentsChart } from "@/components/TopStudentsChart";
 import { StreakDebugTab } from "@/components/StreakDebugTab";
 import { AuditLogsTab } from "@/components/AuditLogsTab";
 import { logAdminActionClient } from "@/lib/audit-log-client";
+import { BadgesGrid } from "@/components/BadgesGrid";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -933,6 +934,8 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                 </>
               );
             })()}
+
+            {selected && <BadgesGrid studentId={selected} title="Student badges" />}
 
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Recent practice</h3>
             {selPractice.length === 0 ? (
