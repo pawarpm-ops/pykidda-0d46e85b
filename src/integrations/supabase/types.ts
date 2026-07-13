@@ -1317,6 +1317,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_user_role: {
+        Args: {
+          _action?: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _target_user: string
+        }
+        Returns: undefined
+      }
       evaluate_and_award_badges: {
         Args: { _event_type?: string }
         Returns: {
@@ -1344,6 +1352,13 @@ export type Database = {
           student_unique_id: string
         }[]
       }
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1351,6 +1366,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       list_badges_for_student: {
         Args: { _student_id: string }
         Returns: {
@@ -1415,7 +1431,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "student"
+      app_role: "admin" | "student" | "teacher" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1543,7 +1559,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "student"],
+      app_role: ["admin", "student", "teacher", "super_admin"],
     },
   },
 } as const
