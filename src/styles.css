@@ -250,29 +250,24 @@
   }
 }
 
-/* Neon-style glowing border on hover — bright rim + soft bloom.
-   Uses --primary so it stays vivid in both light and dark themes. */
+/* Consistent focus/hover ring — subtle border highlight, no bloom. */
 @utility hover-glow {
   transition:
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    color 220ms ease;
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    color 200ms ease;
 
   &:hover,
   &:focus-visible {
     outline: none;
-    border-color: color-mix(in oklch, oklch(0.72 0.19 55) 90%, transparent);
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, oklch(0.72 0.19 55) 85%, transparent),
-      0 0 8px 1px color-mix(in oklch, oklch(0.72 0.19 55) 75%, transparent),
-      0 0 22px 6px color-mix(in oklch, oklch(0.72 0.19 55) 55%, transparent),
-      0 0 40px 12px color-mix(in oklch, oklch(0.72 0.19 55) 30%, transparent);
+    border-color: color-mix(in oklch, var(--primary) 70%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 30%, transparent);
   }
 }
 
-/* Global neon glow on hover/focus for every interactive option.
-   Applies to buttons, links, selects, tabs, menu items, cards, etc.
-   Uses --primary so it stays vivid in both light and dark themes. */
+/* Global hover/focus polish for every interactive control.
+   Subtle border highlight only — no glow blooms. Keeps buttons, links,
+   tabs, selects, menu items, and radios visually consistent site-wide. */
 @layer utilities {
   button,
   a,
@@ -289,42 +284,26 @@
   [data-slot="trigger"],
   [data-radix-collection-item] {
     transition:
-      border-color 220ms ease,
-      box-shadow 220ms ease,
-      color 220ms ease,
-      transform 220ms ease;
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      color 180ms ease,
+      background-color 180ms ease,
+      transform 180ms ease;
   }
 
-  button:not(:disabled):not([aria-disabled="true"]):hover,
   button:not(:disabled):not([aria-disabled="true"]):focus-visible,
-  a:not([aria-disabled="true"]):hover,
   a:not([aria-disabled="true"]):focus-visible,
-  select:not(:disabled):hover,
   select:not(:disabled):focus-visible,
-  summary:hover,
   summary:focus-visible,
-  [role="button"]:not([aria-disabled="true"]):hover,
   [role="button"]:not([aria-disabled="true"]):focus-visible,
-  [role="link"]:hover,
   [role="link"]:focus-visible,
-  [role="tab"]:not([aria-disabled="true"]):hover,
   [role="tab"]:not([aria-disabled="true"]):focus-visible,
-  [role="menuitem"]:not([aria-disabled="true"]):hover,
   [role="menuitem"]:not([aria-disabled="true"]):focus-visible,
-  [role="option"]:not([aria-disabled="true"]):hover,
   [role="option"]:not([aria-disabled="true"]):focus-visible,
-  [role="checkbox"]:not([aria-disabled="true"]):hover,
   [role="checkbox"]:not([aria-disabled="true"]):focus-visible,
-  [role="radio"]:not([aria-disabled="true"]):hover,
   [role="radio"]:not([aria-disabled="true"]):focus-visible,
-  [role="switch"]:not([aria-disabled="true"]):hover,
   [role="switch"]:not([aria-disabled="true"]):focus-visible {
     outline: none;
-    border-color: color-mix(in oklch, oklch(0.72 0.19 55) 90%, transparent);
-    box-shadow:
-      0 0 0 1px color-mix(in oklch, oklch(0.72 0.19 55) 85%, transparent),
-      0 0 8px 1px color-mix(in oklch, oklch(0.72 0.19 55) 75%, transparent),
-      0 0 22px 6px color-mix(in oklch, oklch(0.72 0.19 55) 55%, transparent),
-      0 0 40px 12px color-mix(in oklch, oklch(0.72 0.19 55) 30%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 45%, transparent);
   }
 }
