@@ -35,7 +35,7 @@ export type RunOptions = {
 type WorkerMsg =
   | { type: "ready" }
   | { type: "load_failed"; message: string }
-  | { type: "output_limit"; runId: number }
+  | { type: "output_limit"; runId: number; stdout?: string; stderr?: string }
   | {
       type: "done";
       runId: number;
@@ -70,7 +70,7 @@ function friendlyStderr(reason: RunReason, raw: string): string {
     case "timeout":
       return "Time Limit Exceeded: Your code took too long to run.";
     case "output_limit":
-      return "Output Limit Exceeded: Your code printed too much output.";
+      return "Output limit exceeded. Your program printed too much output.\nPlease check your loop or reduce print statements.";
     case "stopped":
       return "Execution stopped by user.";
     case "load_failed":
@@ -114,11 +114,18 @@ function attachWorker(w: Worker) {
     }
     if (msg.type === "output_limit") {
       if (currentRun && currentRun.runId === msg.runId) {
+        const partialOut = normalize(msg.stdout || "");
+        const partialErr = normalize(msg.stderr || "");
+        const truncNote =
+          "\n\n--- Output truncated (limit: 200 lines / 10,000 characters) ---";
         finishRun(
           {
             ok: false,
-            stdout: "",
-            stderr: friendlyStderr("output_limit", ""),
+            stdout: partialOut ? partialOut + truncNote : "",
+            stderr: friendlyStderr(
+              "output_limit",
+              partialErr,
+            ),
             reason: "output_limit",
           },
           true,

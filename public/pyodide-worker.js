@@ -72,8 +72,8 @@ self.onmessage = async (e) => {
       lineCount++;
       if (stdout.length + stderr.length > cap || lineCount > maxL) {
         limitHit = true;
-        // Notify main immediately so it can terminate this worker if needed.
-        self.postMessage({ type: "output_limit", runId });
+        // Notify main immediately with partial output so it can display truncated results.
+        self.postMessage({ type: "output_limit", runId, stdout, stderr });
         // Throw to interrupt Python execution.
         throw new Error("__PYKIDDA_OUTPUT_LIMIT__");
       }
