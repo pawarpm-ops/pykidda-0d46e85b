@@ -160,7 +160,7 @@ function RunTest() {
         const runs: { stdin: string; stdout: string; stderr: string; ok: boolean }[] = [];
         for (const stdin of q.testStdins) {
           // eslint-disable-next-line no-await-in-loop
-          const r = await runPython(code, stdin);
+          const r = await runPython(code, stdin, { timeoutMs: 5000 });
           runs.push({ stdin, stdout: r.stdout, stderr: r.stderr, ok: r.ok });
         }
         answers.push({ questionId: q.id, code, runs });
