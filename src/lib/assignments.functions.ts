@@ -181,6 +181,17 @@ export const submitAssignment = createServerFn({ method: "POST" })
       submissionId = inserted.id;
     }
 
+    // Record streak activity server-side so it's reliable even if the client
+    // navigates away or drops the fire-and-forget RPC.
+    try {
+      await supabase.rpc("record_streak_activity", {
+        _activity_type: "homework_submitted",
+        _reference_id: data.assignment_id,
+      });
+    } catch (e) {
+      console.error("[submitAssignment] streak record failed", e);
+    }
+
     return { id: submissionId, is_late: isLate };
   });
 
