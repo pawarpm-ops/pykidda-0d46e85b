@@ -84,7 +84,7 @@ export function ReviewPopup() {
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    getCachedUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
       setUserEmail(data.user?.email ?? null);
     });
