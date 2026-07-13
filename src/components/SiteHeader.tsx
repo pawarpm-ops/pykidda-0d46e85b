@@ -137,21 +137,20 @@ export function SiteHeader() {
     const active = isActive(item.to);
     const Icon = item.icon;
     const badge = item.badgeKey === "notifications" ? unread : 0;
-    return (
-      <Link
-        key={item.to}
-        to={item.to}
-        data-tour={item.tour}
-        aria-label={item.label}
-        className={cn(
-          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium border border-transparent transition-all duration-150",
-          "hover:border-primary/40 hover:bg-primary/5 hover:translate-x-0.5",
-          active
-            ? "bg-primary/15 text-primary border-primary/30 shadow-[0_0_0_1px_var(--color-primary)]/0"
-            : "text-foreground/75 hover:text-foreground",
-          opts?.compact && "px-2 py-2",
-        )}
-      >
+    const commonClass = cn(
+      "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium border border-transparent transition-all duration-150",
+      item.disabled
+        ? "cursor-not-allowed opacity-60 text-foreground/60"
+        : cn(
+            "hover:border-primary/40 hover:bg-primary/5 hover:translate-x-0.5",
+            active
+              ? "bg-primary/15 text-primary border-primary/30 shadow-[0_0_0_1px_var(--color-primary)]/0"
+              : "text-foreground/75 hover:text-foreground",
+          ),
+      opts?.compact && "px-2 py-2",
+    );
+    const inner = (
+      <>
         <span className="relative inline-flex items-center justify-center">
           <Icon size={20} strokeWidth={active ? 2.4 : 2} />
           {badge > 0 && (
@@ -161,6 +160,36 @@ export function SiteHeader() {
           )}
         </span>
         <span className="truncate">{item.label}</span>
+        {item.disabled && (
+          <span className="ml-auto rounded-full border border-border bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+            Soon
+          </span>
+        )}
+      </>
+    );
+    if (item.disabled) {
+      return (
+        <div
+          key={item.to}
+          role="link"
+          aria-disabled="true"
+          aria-label={`${item.label} (coming soon)`}
+          title="Coming soon"
+          className={commonClass}
+        >
+          {inner}
+        </div>
+      );
+    }
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        data-tour={item.tour}
+        aria-label={item.label}
+        className={commonClass}
+      >
+        {inner}
       </Link>
     );
   }
