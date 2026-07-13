@@ -13,7 +13,7 @@ import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 
 export type RunOutcome = {
   code: string;
-  results: { passed: boolean; expected: string; actual: string; stderr: string; label?: string; stdin?: string }[];
+  results: { passed: boolean; expected: string; actual: string; stderr: string; label?: string; stdin?: string; reason?: string }[];
   passedCount: number;
   totalCount: number;
 };
