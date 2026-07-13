@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { fetchMyStreak, getCurrentRank, getNextRank, recordStreakActivity, type StreakState } from "@/lib/streaks";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth-cache";
 
 export function StreakCard() {
   const [streak, setStreak] = useState<StreakState | null>(null);
