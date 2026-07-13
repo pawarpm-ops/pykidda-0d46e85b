@@ -19,7 +19,7 @@ export function NotificationBell() {
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    getCachedUser().then(({ data }) => {
       const uid = data.user?.id ?? null;
       setUserId(uid);
       if (uid) void refresh(uid);
