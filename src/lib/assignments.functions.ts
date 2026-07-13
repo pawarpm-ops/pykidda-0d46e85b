@@ -239,7 +239,10 @@ export const adminListAssignments = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const { supabase } = context;
-    const { data, error } = await supabase
+    // Admin listing needs every column (including expected_output/test_cases)
+    // to edit assignments — use service role.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("assignments")
       .select("*")
       .order("created_at", { ascending: false });
