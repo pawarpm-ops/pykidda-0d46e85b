@@ -17,6 +17,7 @@ import { recordMockResult } from "@/lib/progress";
 import { syncMyScore } from "@/lib/leaderboard";
 import { recordStreakActivity } from "@/lib/streaks";
 import { supabase } from "@/integrations/supabase/client";
+import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
   head: () => ({
