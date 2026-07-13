@@ -105,7 +105,7 @@ export function SiteHeader() {
   const unread = useUnreadCount(userId);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    getCachedSession().then(({ data }) => {
       setEmail(data.session?.user.email ?? null);
       setUserId(data.session?.user.id ?? null);
     });
