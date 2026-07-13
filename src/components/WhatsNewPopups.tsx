@@ -178,6 +178,20 @@ export function WhatsNewPopups() {
     }
   }
 
+  function handleView() {
+    const item = current;
+    if (!item) return;
+    void markSeenAndAdvance();
+    if (item.viewUrl) {
+      if (/^https?:\/\//.test(item.viewUrl)) {
+        window.open(item.viewUrl, "_blank", "noopener");
+      } else {
+        navigate({ to: item.viewUrl });
+      }
+    }
+  }
+
+
   if (!ready || !current) return null;
 
   const Icon = ICONS[current.type];
