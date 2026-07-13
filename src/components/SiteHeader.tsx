@@ -237,22 +237,7 @@ export function SiteHeader() {
 
           <div className="flex items-center gap-2 ml-auto">
             <ThemeToggle />
-            {email ? (
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-label={menuOpen ? "Close menu" : "Open menu"}
-                aria-expanded={menuOpen}
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background"
-              >
-                {menuOpen ? <X size={18} /> : <Menu size={18} />}
-                {!menuOpen && unread > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none">
-                    {unread > 9 ? "9+" : unread}
-                  </span>
-                )}
-              </button>
-            ) : (
+            {!email && (
               <Link
                 to="/auth"
                 className="rounded-md px-3 py-1.5 text-sm font-semibold text-primary-foreground whitespace-nowrap"
@@ -261,6 +246,20 @@ export function SiteHeader() {
                 Sign in
               </Link>
             )}
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background"
+            >
+              {menuOpen ? <X size={18} /> : <Menu size={18} />}
+              {!menuOpen && email && unread > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
