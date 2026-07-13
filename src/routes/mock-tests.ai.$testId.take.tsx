@@ -521,18 +521,29 @@ function TakeAiMock() {
               {q.options.map((opt, oi) => {
                 const selected = answers[q.id] === opt;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={oi}
-                    className={`flex items-start gap-3 rounded-md border p-3 ${
-                      selected ? "border-accent bg-accent/10" : "border-border"
+                    onClick={() => setAnswers((a) => ({ ...a, [q.id]: opt }))}
+                    aria-pressed={selected}
+                    className={`flex w-full items-start gap-3 rounded-md border p-3 text-left transition ${
+                      selected
+                        ? "border-accent bg-accent/20 ring-2 ring-accent shadow-sm"
+                        : "border-border hover:border-accent/60 hover:bg-accent/5"
                     }`}
                   >
-                    <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-border text-[10px] font-bold">
+                    <span
+                      className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${
+                        selected
+                          ? "border-accent bg-accent text-accent-foreground"
+                          : "border-border"
+                      }`}
+                    >
                       {String.fromCharCode(65 + oi)}
                     </span>
-                    <span className="flex-1">{opt}</span>
+                    <span className={`flex-1 ${selected ? "font-semibold text-foreground" : ""}`}>{opt}</span>
                     <span className="text-[10px] font-mono text-muted-foreground">Alt+{oi + 1}</span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -543,19 +554,25 @@ function TakeAiMock() {
               {(["True", "False"] as const).map((v, oi) => {
                 const selected = answers[q.id] === v;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={v}
-                    className={`flex-1 rounded-md border p-4 text-center font-semibold ${
-                      selected ? "border-accent bg-accent/10" : "border-border"
+                    onClick={() => setAnswers((a) => ({ ...a, [q.id]: v }))}
+                    aria-pressed={selected}
+                    className={`flex-1 rounded-md border p-4 text-center font-semibold transition ${
+                      selected
+                        ? "border-accent bg-accent/20 ring-2 ring-accent shadow-sm text-foreground"
+                        : "border-border hover:border-accent/60 hover:bg-accent/5"
                     }`}
                   >
                     {v}
                     <span className="ml-2 text-[10px] font-mono text-muted-foreground">Alt+{oi + 1}</span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           )}
+
 
           {(q.type === "fill" || q.type === "short" || q.type === "code") && (
             <div className="answer-editor mt-4">
