@@ -1669,7 +1669,7 @@ function ReportsTab() {
                 <button
                   onClick={() => updateStatus("Rejected")}
                   disabled={saving}
-                  className="rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-white hover:bg-destructive/80"
+                  className="rounded-md bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground hover:bg-destructive/80"
                 >
                   Reject
                 </button>
