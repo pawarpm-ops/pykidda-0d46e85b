@@ -723,9 +723,9 @@ function RunTest() {
               ref={editorRef}
               key={q.id}
               value={currentCode}
-              onChange={(v) => setCodes((c) => ({ ...c, [q.id]: v }))}
+              onChange={(v: string) => setCodes((c) => ({ ...c, [q.id]: v }))}
               rows={16}
-              onKeyDown={(e) => {
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
                 if (e.key === "Tab" && e.shiftKey) {
                   e.preventDefault();
                   const el = e.currentTarget;
