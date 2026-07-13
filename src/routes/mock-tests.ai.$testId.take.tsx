@@ -1,7 +1,9 @@
 // AI mock test — take page. Loads sanitized questions, enforces the same secure
 // keyboard-only, mouse-disabled, anti-cheat runtime as built-in mock tests.
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest, submitAiMockAttempt } from "@/lib/ai-mock.functions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
