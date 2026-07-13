@@ -718,48 +718,34 @@ function RunTest() {
               <span>solution.py</span>
               <span>Press <Kbd>Alt</Kbd>+<Kbd>E</Kbd> to focus</span>
             </div>
-            <textarea
+            <PythonCodeEditor
               ref={editorRef}
               key={q.id}
               value={currentCode}
-              onChange={(e) => setCodes((c) => ({ ...c, [q.id]: e.target.value }))}
-              spellCheck={false}
+              onChange={(v) => setCodes((c) => ({ ...c, [q.id]: v }))}
               rows={16}
-              autoFocus
-              className="block w-full resize-none bg-transparent px-4 py-3 font-mono text-sm leading-relaxed outline-none"
-              style={{ tabSize: 4 }}
               onKeyDown={(e) => {
-                // Tab insert / Shift+Tab dedent
-                if (e.key === "Tab") {
+                if (e.key === "Tab" && e.shiftKey) {
                   e.preventDefault();
                   const el = e.currentTarget;
                   const start = el.selectionStart;
                   const end = el.selectionEnd;
-                  if (e.shiftKey) {
-                    // remove up to 4 leading spaces from line containing caret
-                    const lineStart = currentCode.lastIndexOf("\n", start - 1) + 1;
-                    const before = currentCode.slice(0, lineStart);
-                    const line = currentCode.slice(lineStart, end);
-                    const after = currentCode.slice(end);
-                    let removed = 0;
-                    let newLine = line;
-                    const m = line.match(/^ {1,4}/);
-                    if (m) {
-                      removed = m[0].length;
-                      newLine = line.slice(removed);
-                    }
-                    const next = before + newLine + after;
-                    setCodes((c) => ({ ...c, [q.id]: next }));
-                    requestAnimationFrame(() => {
-                      el.selectionStart = el.selectionEnd = Math.max(lineStart, start - removed);
-                    });
-                  } else {
-                    const next = currentCode.slice(0, start) + "    " + currentCode.slice(end);
-                    setCodes((c) => ({ ...c, [q.id]: next }));
-                    requestAnimationFrame(() => {
-                      el.selectionStart = el.selectionEnd = start + 4;
-                    });
+                  const lineStart = currentCode.lastIndexOf("\n", start - 1) + 1;
+                  const before = currentCode.slice(0, lineStart);
+                  const line = currentCode.slice(lineStart, end);
+                  const after = currentCode.slice(end);
+                  let removed = 0;
+                  let newLine = line;
+                  const m = line.match(/^ {1,4}/);
+                  if (m) {
+                    removed = m[0].length;
+                    newLine = line.slice(removed);
                   }
+                  const next = before + newLine + after;
+                  setCodes((c) => ({ ...c, [q.id]: next }));
+                  requestAnimationFrame(() => {
+                    el.selectionStart = el.selectionEnd = Math.max(lineStart, start - removed);
+                  });
                 }
               }}
             />
