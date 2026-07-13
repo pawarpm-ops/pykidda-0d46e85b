@@ -30,6 +30,7 @@ import { AdminMockOverview } from "@/components/AdminMockOverview";
 import { ViolationAnalytics } from "@/components/ViolationAnalytics";
 import { getQuestion } from "@/lib/questions";
 import { TopStudentsChart } from "@/components/TopStudentsChart";
+import { StreakDebugTab } from "@/components/StreakDebugTab";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
