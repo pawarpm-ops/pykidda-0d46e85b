@@ -208,6 +208,15 @@ export function CodeRunner({
             {busy ? "Working…" : submitLabel}
           </button>
         )}
+        {busy && (
+          <button
+            onClick={handleStop}
+            className="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20"
+          >
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive" />
+            Stop Execution
+          </button>
+        )}
         {allowHint && (
           <button
             onClick={() => setShowHint((v) => !v)}
