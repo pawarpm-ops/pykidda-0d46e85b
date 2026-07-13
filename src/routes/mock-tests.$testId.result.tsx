@@ -1,9 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import { getMockTest, getQuestion } from "@/lib/questions";
 import { loadResult, type AttemptResult, type QuestionAttempt } from "@/lib/test-session";
+import { getMyMockResult } from "@/lib/mock-results.functions";
+
+const SearchSchema = z.object({ attempt: z.string().optional() });
 
 export const Route = createFileRoute("/mock-tests/$testId/result")({
+  validateSearch: (s) => SearchSchema.parse(s),
   head: () => ({
     meta: [
       { title: "Result · PY Kidda Mock Test" },
@@ -16,21 +21,63 @@ export const Route = createFileRoute("/mock-tests/$testId/result")({
   errorComponent: () => <div className="p-10">Something went wrong.</div>,
 });
 
+type StoredAttempts = { attempts: QuestionAttempt[] };
+
 function ResultPage() {
   const { testId } = Route.useParams();
+  const { attempt } = Route.useSearch();
   const test = getMockTest(testId);
   const [r, setR] = useState<AttemptResult | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
 
   useEffect(() => {
-    setR(loadResult());
-  }, []);
+    (async () => {
+      if (attempt) {
+        try {
+          const row = await getMyMockResult({ data: { attempt_id: attempt } });
+          const details = (row.details ?? null) as StoredAttempts | null;
+          setR({
+            testId: row.test_id,
+            testName: row.test_name,
+            studentName: row.student_name,
+            totalQuestions: row.total_questions,
+            marksObtained: row.marks_obtained,
+            totalMarks: row.total_marks,
+            percentage: row.percentage,
+            grade: row.grade,
+            timeTakenSec: row.time_taken_sec,
+            submissionType: (row.submission_type === "auto-violation" ? "auto-violation" : "normal"),
+            violationReason: row.violation_reason ?? undefined,
+            attempts: details?.attempts ?? [],
+            submittedAt: row.submitted_at ? new Date(row.submitted_at).getTime() : Date.now(),
+          });
+        } catch (e) {
+          setLoadErr(e instanceof Error ? e.message : "Failed to load attempt");
+        }
+        return;
+      }
+      setR(loadResult());
+    })();
+  }, [attempt]);
 
-  if (!test) return <div className="p-10">Test not found.</div>;
+  if (!test && !attempt) return <div className="p-10">Test not found.</div>;
+  if (loadErr) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="text-center">
+          <p className="text-destructive">{loadErr}</p>
+          <Link to="/mock-tests" className="underline mt-3 inline-block">Back to mock tests</Link>
+        </div>
+      </div>
+    );
+  }
   if (!r) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
         <div className="text-center">
-          <p className="text-muted-foreground">No result data found. Please take the test from the start.</p>
+          <p className="text-muted-foreground">
+            {attempt ? "Loading attempt…" : "No result data found. Please take the test from the start."}
+          </p>
           <Link to="/mock-tests" className="underline mt-3 inline-block">Back to mock tests</Link>
         </div>
       </div>
@@ -44,6 +91,7 @@ function ResultPage() {
   const isFullyCorrect = (a: QuestionAttempt) => a.total > 0 && a.passed === a.total;
   const correct = r.attempts.filter(isFullyCorrect);
   const incorrect = r.attempts.filter((a) => !isFullyCorrect(a));
+  const noDetails = r.attempts.length === 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -89,7 +137,14 @@ function ResultPage() {
           </div>
         </div>
 
-        <AnswerTabs correct={correct} incorrect={incorrect} all={r.attempts} />
+        {noDetails ? (
+          <div className="mt-8 rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+            Per-question analysis isn't available for this older attempt.
+            <br />Retake the test to see full per-question feedback.
+          </div>
+        ) : (
+          <AnswerTabs correct={correct} incorrect={incorrect} all={r.attempts} />
+        )}
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
@@ -185,7 +240,6 @@ function AttemptCard({ attempt: a, index, tab }: { attempt: QuestionAttempt; ind
         </span>
       </div>
 
-      {/* Question */}
       <div className="mt-3">
         <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Question</p>
         <p className="mt-1 text-sm font-medium">{q?.title ?? a.questionId}</p>
@@ -194,7 +248,6 @@ function AttemptCard({ attempt: a, index, tab }: { attempt: QuestionAttempt; ind
         )}
       </div>
 
-      {/* Your code */}
       <div className="mt-3">
         <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Your code</p>
         <pre className="mt-1 overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
@@ -202,7 +255,6 @@ function AttemptCard({ attempt: a, index, tab }: { attempt: QuestionAttempt; ind
         </pre>
       </div>
 
-      {/* Test case results */}
       {a.results.length > 0 && (
         <div className="mt-3 space-y-2">
           <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Test cases</p>
@@ -233,7 +285,6 @@ function AttemptCard({ attempt: a, index, tab }: { attempt: QuestionAttempt; ind
         </div>
       )}
 
-      {/* Answer key (hint + reference solution) */}
       {q && (tab === "key" || !allPassed) && (
         <div className="mt-4 rounded-md border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/5 p-3">
           <p className="text-[11px] font-bold uppercase tracking-widest text-[oklch(0.55_0.16_145)]">🔑 Answer key</p>
