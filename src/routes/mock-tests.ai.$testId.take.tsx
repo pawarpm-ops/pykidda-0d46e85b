@@ -1,7 +1,9 @@
 // AI mock test — take page. Loads sanitized questions, enforces the same secure
 // keyboard-only, mouse-disabled, anti-cheat runtime as built-in mock tests.
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest, submitAiMockAttempt } from "@/lib/ai-mock.functions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
@@ -557,27 +559,20 @@ function TakeAiMock() {
 
           {(q.type === "fill" || q.type === "short" || q.type === "code") && (
             <div className="answer-editor mt-4">
-              <textarea
-                ref={editorRef}
-                value={answers[q.id] ?? (q.type === "code" ? q.starter_code : "")}
-                onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
-                rows={q.type === "code" ? 14 : q.type === "short" ? 5 : 2}
-                spellCheck={false}
-                className={
-                  q.type === "code"
-                    ? "w-full rounded-md border border-border bg-[oklch(0.15_0.02_250)] text-[oklch(0.95_0.02_150)] font-mono text-sm p-3"
-                    : "w-full rounded-md border border-border bg-background p-3 text-sm"
-                }
-                placeholder={q.type === "code" ? "" : "Type your answer…"}
-                onKeyDown={(e) => {
-                  if (q.type !== "code") return;
-                  if (e.key === "Tab") {
-                    e.preventDefault();
-                    const el = e.currentTarget;
-                    const start = el.selectionStart;
-                    const end = el.selectionEnd;
-                    const val = el.value;
-                    if (e.shiftKey) {
+              {q.type === "code" ? (
+                <PythonCodeEditor
+                  ref={editorRef}
+                  value={answers[q.id] ?? q.starter_code ?? ""}
+                  onChange={(v: string) => setAnswers((a) => ({ ...a, [q.id]: v }))}
+                  rows={14}
+                  className="rounded-md border border-border bg-[oklch(0.15_0.02_250)]"
+                  onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                    if (e.key === "Tab" && e.shiftKey) {
+                      e.preventDefault();
+                      const el = e.currentTarget;
+                      const start = el.selectionStart;
+                      const end = el.selectionEnd;
+                      const val = el.value;
                       const before = val.slice(0, start);
                       const lineStart = before.lastIndexOf("\n") + 1;
                       if (val.slice(lineStart, lineStart + 4) === "    ") {
@@ -588,16 +583,20 @@ function TakeAiMock() {
                           el.selectionEnd = Math.max(lineStart, end - 4);
                         });
                       }
-                    } else {
-                      const newVal = val.slice(0, start) + "    " + val.slice(end);
-                      setAnswers((a) => ({ ...a, [q.id]: newVal }));
-                      requestAnimationFrame(() => {
-                        el.selectionStart = el.selectionEnd = start + 4;
-                      });
                     }
-                  }
-                }}
-              />
+                  }}
+                />
+              ) : (
+                <textarea
+                  ref={editorRef}
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
+                  rows={q.type === "short" ? 5 : 2}
+                  spellCheck={false}
+                  className="w-full rounded-md border border-border bg-background p-3 text-sm"
+                  placeholder="Type your answer…"
+                />
+              )}
             </div>
           )}
         </div>
