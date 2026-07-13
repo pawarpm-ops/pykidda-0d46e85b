@@ -639,8 +639,11 @@ function RunTest() {
 
 
   if (allowed === false) return <Navigate to="/mock-tests/$testId/warning" params={{ testId }} />;
+  if (loadError) {
+    return <div className="min-h-screen flex items-center justify-center p-8 text-destructive text-center">Couldn't load test: {loadError}</div>;
+  }
   if (!test || allowed === null) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading test…</div>;
   }
 
   const q = questions[currentIdx];
