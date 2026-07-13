@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MockTestsIndexRouteImport } from './routes/mock-tests.index'
 import { Route as UPublicIdRouteImport } from './routes/u.$publicId'
 import { Route as AuthenticatedTeacherCommentsRouteImport } from './routes/_authenticated/teacher-comments'
+import { Route as AuthenticatedStreakJourneyRouteImport } from './routes/_authenticated/streak-journey'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
@@ -68,6 +69,12 @@ const AuthenticatedTeacherCommentsRoute =
   AuthenticatedTeacherCommentsRouteImport.update({
     id: '/teacher-comments',
     path: '/teacher-comments',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStreakJourneyRoute =
+  AuthenticatedStreakJourneyRouteImport.update({
+    id: '/streak-journey',
+    path: '/streak-journey',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
@@ -180,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/streak-journey': typeof AuthenticatedStreakJourneyRoute
   '/teacher-comments': typeof AuthenticatedTeacherCommentsRoute
   '/u/$publicId': typeof UPublicIdRoute
   '/mock-tests/': typeof MockTestsIndexRoute
@@ -206,6 +214,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/streak-journey': typeof AuthenticatedStreakJourneyRoute
   '/teacher-comments': typeof AuthenticatedTeacherCommentsRoute
   '/u/$publicId': typeof UPublicIdRoute
   '/mock-tests': typeof MockTestsIndexRoute
@@ -234,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/streak-journey': typeof AuthenticatedStreakJourneyRoute
   '/_authenticated/teacher-comments': typeof AuthenticatedTeacherCommentsRoute
   '/u/$publicId': typeof UPublicIdRoute
   '/mock-tests/': typeof MockTestsIndexRoute
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/notifications'
     | '/profile'
+    | '/streak-journey'
     | '/teacher-comments'
     | '/u/$publicId'
     | '/mock-tests/'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/notifications'
     | '/profile'
+    | '/streak-journey'
     | '/teacher-comments'
     | '/u/$publicId'
     | '/mock-tests'
@@ -315,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leaderboard'
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
+    | '/_authenticated/streak-journey'
     | '/_authenticated/teacher-comments'
     | '/u/$publicId'
     | '/mock-tests/'
@@ -397,6 +410,13 @@ declare module '@tanstack/react-router' {
       path: '/teacher-comments'
       fullPath: '/teacher-comments'
       preLoaderRoute: typeof AuthenticatedTeacherCommentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/streak-journey': {
+      id: '/_authenticated/streak-journey'
+      path: '/streak-journey'
+      fullPath: '/streak-journey'
+      preLoaderRoute: typeof AuthenticatedStreakJourneyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/profile': {
@@ -545,6 +565,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedStreakJourneyRoute: typeof AuthenticatedStreakJourneyRoute
   AuthenticatedTeacherCommentsRoute: typeof AuthenticatedTeacherCommentsRoute
   AuthenticatedAdminAiMockRoute: typeof AuthenticatedAdminAiMockRoute
   AuthenticatedAssignmentsIdRoute: typeof AuthenticatedAssignmentsIdRoute
@@ -560,6 +581,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedStreakJourneyRoute: AuthenticatedStreakJourneyRoute,
   AuthenticatedTeacherCommentsRoute: AuthenticatedTeacherCommentsRoute,
   AuthenticatedAdminAiMockRoute: AuthenticatedAdminAiMockRoute,
   AuthenticatedAssignmentsIdRoute: AuthenticatedAssignmentsIdRoute,

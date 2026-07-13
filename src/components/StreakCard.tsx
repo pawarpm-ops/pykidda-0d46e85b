@@ -185,11 +185,12 @@ export function StreakCard() {
           🔥 Continue Streak
         </Link>
         <Link
-          to="/profile"
+          to="/streak-journey"
           className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
         >
-          My Journey
+          🗺️ My Journey
         </Link>
+
       </div>
     </div>
   );
