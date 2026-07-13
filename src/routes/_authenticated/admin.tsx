@@ -29,6 +29,7 @@ import { HomeworkAdminTab } from "./admin.assignments";
 import { AdminMockOverview } from "@/components/AdminMockOverview";
 import { ViolationAnalytics } from "@/components/ViolationAnalytics";
 import { getQuestion } from "@/lib/questions";
+import { TopStudentsChart } from "@/components/TopStudentsChart";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -444,23 +445,7 @@ function AdminPage() {
             </section>
 
             <section className="mt-6 grid gap-6 lg:grid-cols-2">
-              <ChartCard title="Top students (avg vs best %)">
-                {studentChart.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No mock test data yet.</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={studentChart} margin={{ top: 5, right: 10, left: -10, bottom: 40 }}>
-                      <CartesianGrid stroke="oklch(0.85 0.01 250)" strokeDasharray="3 3" opacity={0.4} />
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" interval={0} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="avg" fill={C.primary} name="Avg %" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="best" fill={C.accent} name="Best %" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </ChartCard>
+              <TopStudentsChart students={studentChart} />
 
               <ChartCard title="Score distribution">
                 {allPcts.length === 0 ? (
