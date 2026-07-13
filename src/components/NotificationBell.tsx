@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth-cache";
 import { listAnnouncements, listDismissedIds, listReadIds, markAllRead, type Announcement } from "@/lib/notifications";
 
 export function NotificationBell() {
