@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import type { CodeQuestion } from "@/lib/questions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 import { explainAndFix } from "@/lib/ai-feedback.functions";
+import { PythonCodeEditor } from "@/components/PythonCodeEditor";
+
 
 export type RunOutcome = {
   code: string;
