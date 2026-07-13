@@ -296,7 +296,7 @@ export function CodeRunner({
                     </div>
                     <div>
                       <span className="text-muted-foreground">your output: </span>
-                      <pre className="inline whitespace-pre-wrap">{r.actual || "(empty)"}</pre>
+                      <pre className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap rounded bg-muted/50 p-2">{r.actual || "(empty)"}</pre>
                     </div>
                     {r.stderr && (
                       <div className="text-destructive">
