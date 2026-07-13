@@ -227,35 +227,37 @@ function AuthGate({ children }: { children: ReactNode }) {
 
   const isAuthRoute = pathname === "/auth" || pathname.startsWith("/auth/");
   const isOnboardingRoute = pathname === "/onboarding";
+  const isPublicProfileRoute = pathname.startsWith("/u/");
+  const isPublicRoute = isAuthRoute || isPublicProfileRoute;
   const isSecureRoute =
     pathname.includes("/mock-tests/") &&
     (pathname.endsWith("/run") || pathname.endsWith("/warning"));
 
   useEffect(() => {
     if (!checked) return;
-    if (!authed && !isAuthRoute) {
+    if (!authed && !isPublicRoute) {
       navigate({ to: "/auth", replace: true });
       return;
     }
-    if (authed && onboardChecked && !onboarded && !isOnboardingRoute && !isAuthRoute) {
+    if (authed && onboardChecked && !onboarded && !isOnboardingRoute && !isPublicRoute) {
       navigate({ to: "/onboarding", replace: true });
     }
     if (authed && onboardChecked && onboarded && isOnboardingRoute) {
       navigate({ to: "/", replace: true });
     }
-  }, [checked, authed, isAuthRoute, isOnboardingRoute, onboardChecked, onboarded, navigate]);
+  }, [checked, authed, isPublicRoute, isOnboardingRoute, onboardChecked, onboarded, navigate]);
 
-  if (!checked && !isAuthRoute) {
+  if (!checked && !isPublicRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
         Loading…
       </div>
     );
   }
-  if (!authed && !isAuthRoute) {
+  if (!authed && !isPublicRoute) {
     return null;
   }
-  if (authed && onboardChecked && !onboarded && !isOnboardingRoute) {
+  if (authed && onboardChecked && !onboarded && !isOnboardingRoute && !isPublicRoute) {
     return null;
   }
 
