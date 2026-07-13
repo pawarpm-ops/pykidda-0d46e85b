@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MOCK_TESTS, mockTestQuestions } from "@/lib/questions";
-import { listAiMockTests } from "@/lib/ai-mock.functions";
+import { listAiMockTests, listMyAiMockAttempts } from "@/lib/ai-mock.functions";
+import { listMyMockResults } from "@/lib/mock-results.functions";
 
 export const Route = createFileRoute("/mock-tests/")({
   head: () => ({
@@ -124,19 +125,22 @@ function MockTestsList() {
                     <p className="mt-2 text-sm text-muted-foreground flex-1">
                       {t.description || "AI-generated mock test."}
                     </p>
-                    <div className="mt-4 flex items-center justify-between text-sm">
+                    <div className="mt-4 flex items-center justify-between gap-2 text-sm flex-wrap">
                       <span className="text-muted-foreground">
                         {t.question_count} Qs · {Math.round(t.duration_sec / 60)} min · {t.total_marks} marks
                       </span>
-                      <Link
-                        to="/mock-tests/ai/$testId/warning"
-                        params={{ testId: t.id }}
-                        className="inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-                        style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                      >
-                        Start
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to="/mock-tests/ai/$testId/warning"
+                          params={{ testId: t.id }}
+                          className="inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                          style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                        >
+                          Start
+                        </Link>
+                      </div>
                     </div>
+                    <AiHistory testId={t.id} />
                   </div>
                 ))}
 
@@ -147,7 +151,7 @@ function MockTestsList() {
                     <div key={t.id} className="card-glow rounded-xl border border-border bg-card p-5 flex flex-col">
                       <h3 className="font-semibold text-lg">{t.name}</h3>
                       <p className="mt-2 text-sm text-muted-foreground flex-1">{t.description}</p>
-                      <div className="mt-4 flex items-center justify-between text-sm">
+                      <div className="mt-4 flex items-center justify-between gap-2 text-sm flex-wrap">
                         <span className="text-muted-foreground">
                           {qs.length} Qs · {Math.round(t.durationSec / 60)} min · {marks} marks
                         </span>
@@ -160,6 +164,7 @@ function MockTestsList() {
                           Start
                         </Link>
                       </div>
+                      <StaticHistory testId={t.id} />
                     </div>
                   );
                 })}
@@ -238,6 +243,201 @@ function MockTestsList() {
           </section>
         )}
       </main>
+    </div>
+  );
+}
+
+// ------- History components -------
+
+function pctColor(p: number) {
+  if (p >= 80) return "text-[oklch(0.55_0.16_145)]";
+  if (p >= 60) return "text-primary";
+  if (p >= 40) return "text-[oklch(0.65_0.16_85)]";
+  return "text-destructive";
+}
+
+function fmtDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+}
+
+function fmtDuration(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}m ${s}s`;
+}
+
+type AiAttempt = {
+  id: string;
+  submitted_at: string | null;
+  marks_obtained: number;
+  total_marks: number;
+  percentage: number;
+  grade: string;
+  submission_type: string;
+  time_taken_sec: number;
+};
+
+function AiHistory({ testId }: { testId: string }) {
+  const fn = useServerFn(listMyAiMockAttempts);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [attempts, setAttempts] = useState<AiAttempt[] | null>(null);
+
+  async function toggle() {
+    const next = !open;
+    setOpen(next);
+    if (next && attempts === null) {
+      setLoading(true);
+      try {
+        const rows = await fn({ data: { test_id: testId } });
+        setAttempts(rows as AiAttempt[]);
+      } catch {
+        setAttempts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  return (
+    <div className="mt-3 border-t border-border/60 pt-3">
+      <button
+        onClick={toggle}
+        className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+      >
+        <span>{open ? "▾" : "▸"}</span> View history{attempts ? ` (${attempts.length})` : ""}
+      </button>
+      {open && (
+        <div className="mt-2">
+          {loading ? (
+            <p className="text-xs text-muted-foreground">Loading…</p>
+          ) : !attempts || attempts.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No attempts yet.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {attempts.map((a) => (
+                <li key={a.id}>
+                  <Link
+                    to="/mock-tests/ai/$testId/result"
+                    params={{ testId }}
+                    search={{ attempt: a.id }}
+                    className="flex items-center justify-between rounded-md border border-border bg-background/60 px-3 py-2 text-xs hover:bg-secondary/50 transition"
+                  >
+                    <span className="text-muted-foreground">{fmtDate(a.submitted_at)}</span>
+                    <span className="flex items-center gap-2">
+                      <span className={`font-bold ${pctColor(a.percentage)}`}>{a.percentage}%</span>
+                      <span className="text-muted-foreground">Grade {a.grade}</span>
+                      <span className="text-muted-foreground">· {fmtDuration(a.time_taken_sec)}</span>
+                      {a.submission_type !== "normal" && (
+                        <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive uppercase">Auto</span>
+                      )}
+                      <span className="text-accent">→</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type StaticAttempt = {
+  id: string;
+  submitted_at: string;
+  marks_obtained: number;
+  total_marks: number;
+  percentage: number;
+  grade: string;
+  total_questions: number;
+  time_taken_sec: number;
+  submission_type: string;
+  violation_reason: string | null;
+};
+
+function StaticHistory({ testId }: { testId: string }) {
+  const fn = useServerFn(listMyMockResults);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [attempts, setAttempts] = useState<StaticAttempt[] | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  async function toggle() {
+    const next = !open;
+    setOpen(next);
+    if (next && attempts === null) {
+      setLoading(true);
+      try {
+        const rows = await fn({ data: { test_id: testId } });
+        setAttempts(rows as StaticAttempt[]);
+      } catch {
+        setAttempts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }
+
+  return (
+    <div className="mt-3 border-t border-border/60 pt-3">
+      <button
+        onClick={toggle}
+        className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+      >
+        <span>{open ? "▾" : "▸"}</span> View history{attempts ? ` (${attempts.length})` : ""}
+      </button>
+      {open && (
+        <div className="mt-2">
+          {loading ? (
+            <p className="text-xs text-muted-foreground">Loading…</p>
+          ) : !attempts || attempts.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No attempts yet.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {attempts.map((a) => {
+                const isOpen = openId === a.id;
+                return (
+                  <li key={a.id} className="rounded-md border border-border bg-background/60 text-xs overflow-hidden">
+                    <button
+                      onClick={() => setOpenId(isOpen ? null : a.id)}
+                      className="flex w-full items-center justify-between px-3 py-2 hover:bg-secondary/50 transition"
+                    >
+                      <span className="text-muted-foreground">{fmtDate(a.submitted_at)}</span>
+                      <span className="flex items-center gap-2">
+                        <span className={`font-bold ${pctColor(a.percentage)}`}>{a.percentage}%</span>
+                        <span className="text-muted-foreground">Grade {a.grade}</span>
+                        {a.submission_type !== "normal" && (
+                          <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive uppercase">Auto</span>
+                        )}
+                        <span className="text-accent">{isOpen ? "▾" : "▸"}</span>
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="border-t border-border/60 bg-card px-3 py-2 space-y-1">
+                        <p><span className="text-muted-foreground">Score:</span> <b>{a.marks_obtained} / {a.total_marks}</b> marks ({a.percentage}%)</p>
+                        <p><span className="text-muted-foreground">Grade:</span> <b>{a.grade}</b></p>
+                        <p><span className="text-muted-foreground">Questions:</span> {a.total_questions}</p>
+                        <p><span className="text-muted-foreground">Time taken:</span> {fmtDuration(a.time_taken_sec)}</p>
+                        <p><span className="text-muted-foreground">Submitted:</span> {fmtDate(a.submitted_at)}</p>
+                        {a.submission_type !== "normal" && (
+                          <p className="text-destructive">Auto-submitted: {a.violation_reason ?? "violation"}</p>
+                        )}
+                        <p className="pt-1 text-[11px] text-muted-foreground italic">
+                          Per-question analysis isn't stored for these tests. Retake the test to see live per-question feedback.
+                        </p>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
