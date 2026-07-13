@@ -38,7 +38,8 @@ function AdminHomeworkList() {
     queryFn: () => listFn(),
   });
 
-  const filtered = (data ?? []).filter((h) => h.status === tab);
+  type HRow = Awaited<ReturnType<typeof adminListHomework>>[number];
+  const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => h.status === tab);
 
   async function handleCreate() {
     if (!newTitle.trim() || busy) return;
@@ -158,7 +159,7 @@ function AdminHomeworkList() {
         )}
 
         <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-          {filtered.map((h) => (
+          {filtered.map((h: HRow) => (
             <li key={h.id}>
               <div className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-md">
                 <div className="flex items-start justify-between gap-3">

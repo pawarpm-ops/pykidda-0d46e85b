@@ -54,7 +54,8 @@ function HomeworkListPage() {
     queryFn: () => listFn(),
   });
 
-  const filtered = (data ?? []).filter((h) => {
+  type HRow = Awaited<ReturnType<typeof listStudentHomework>>[number];
+  const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => {
     const s = h.submission;
     if (tab === "pending") return !s || s.status === "not_submitted" || s.status === "returned";
     if (tab === "submitted") return s && (s.status === "submitted" || s.status === "late");
@@ -99,7 +100,7 @@ function HomeworkListPage() {
         )}
 
         <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-          {filtered.map((h) => {
+          {filtered.map((h: HRow) => {
             const badge = statusBadge(h.submission);
             const due = fmtDue(h.due_at);
             return (
