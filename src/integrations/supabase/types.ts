@@ -406,6 +406,235 @@ export type Database = {
         }
         Relationships: []
       }
+      homework: {
+        Row: {
+          allow_late_submission: boolean
+          created_at: string
+          created_by: string
+          description: string
+          due_at: string | null
+          id: string
+          instructions: string | null
+          status: string
+          title: string
+          total_marks: number
+          updated_at: string
+        }
+        Insert: {
+          allow_late_submission?: boolean
+          created_at?: string
+          created_by: string
+          description?: string
+          due_at?: string | null
+          id?: string
+          instructions?: string | null
+          status?: string
+          title: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Update: {
+          allow_late_submission?: boolean
+          created_at?: string
+          created_by?: string
+          description?: string
+          due_at?: string | null
+          id?: string
+          instructions?: string | null
+          status?: string
+          title?: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      homework_question_answers: {
+        Row: {
+          auto_check_result: Json | null
+          checked_status: string
+          created_at: string
+          execution_output: string | null
+          homework_question_id: string
+          id: string
+          marks_awarded: number | null
+          student_answer: string | null
+          student_code: string | null
+          submission_id: string
+          teacher_comment: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_check_result?: Json | null
+          checked_status?: string
+          created_at?: string
+          execution_output?: string | null
+          homework_question_id: string
+          id?: string
+          marks_awarded?: number | null
+          student_answer?: string | null
+          student_code?: string | null
+          submission_id: string
+          teacher_comment?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_check_result?: Json | null
+          checked_status?: string
+          created_at?: string
+          execution_output?: string | null
+          homework_question_id?: string
+          id?: string
+          marks_awarded?: number | null
+          student_answer?: string | null
+          student_code?: string | null
+          submission_id?: string
+          teacher_comment?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_question_answers_homework_question_id_fkey"
+            columns: ["homework_question_id"]
+            isOneToOne: false
+            referencedRelation: "homework_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "homework_question_answers_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "homework_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homework_questions: {
+        Row: {
+          created_at: string
+          description: string
+          difficulty: string
+          hints: string | null
+          homework_id: string
+          id: string
+          input_format: string | null
+          marks: number
+          mcq_correct: string | null
+          mcq_options: Json | null
+          output_format: string | null
+          question_order: number
+          question_type: string
+          sample_input: string | null
+          sample_output: string | null
+          starter_code: string | null
+          test_cases: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          difficulty?: string
+          hints?: string | null
+          homework_id: string
+          id?: string
+          input_format?: string | null
+          marks?: number
+          mcq_correct?: string | null
+          mcq_options?: Json | null
+          output_format?: string | null
+          question_order?: number
+          question_type: string
+          sample_input?: string | null
+          sample_output?: string | null
+          starter_code?: string | null
+          test_cases?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          difficulty?: string
+          hints?: string | null
+          homework_id?: string
+          id?: string
+          input_format?: string | null
+          marks?: number
+          mcq_correct?: string | null
+          mcq_options?: Json | null
+          output_format?: string | null
+          question_order?: number
+          question_type?: string
+          sample_input?: string | null
+          sample_output?: string | null
+          starter_code?: string | null
+          test_cases?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_questions_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "homework"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homework_submissions: {
+        Row: {
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          homework_id: string
+          id: string
+          is_late: boolean
+          status: string
+          student_id: string
+          submitted_at: string | null
+          teacher_feedback: string | null
+          total_marks_obtained: number | null
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          homework_id: string
+          id?: string
+          is_late?: boolean
+          status?: string
+          student_id: string
+          submitted_at?: string | null
+          teacher_feedback?: string | null
+          total_marks_obtained?: number | null
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          homework_id?: string
+          id?: string
+          is_late?: boolean
+          status?: string
+          student_id?: string
+          submitted_at?: string | null
+          teacher_feedback?: string | null
+          total_marks_obtained?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homework_submissions_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "homework"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leaderboard_scores: {
         Row: {
           avatar_url: string | null
