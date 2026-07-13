@@ -99,19 +99,22 @@ export async function recordStreakActivity(
   return { current_streak: row.current_streak, longest_streak: row.longest_streak, is_new_day: row.is_new_day, unlocked_rank: unlocked };
 }
 
-export async function fetchMyStreakLogs(days = 120): Promise<Array<{ activity_date: string }>> {
+export async function fetchMyStreakLogs(
+  days = 120,
+): Promise<Array<{ activity_date: string; activity_type: string }>> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return [];
   const since = new Date();
   since.setDate(since.getDate() - days);
   const { data } = await supabase
     .from("streak_activity_logs")
-    .select("activity_date")
+    .select("activity_date, activity_type")
     .eq("user_id", u.user.id)
     .gte("activity_date", since.toISOString().slice(0, 10))
     .order("activity_date", { ascending: false });
-  return data ?? [];
+  return (data ?? []) as Array<{ activity_date: string; activity_type: string }>;
 }
+
 
 export type StreakLeaderRow = {
   user_id: string;
