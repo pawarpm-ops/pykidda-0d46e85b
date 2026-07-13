@@ -72,7 +72,7 @@ export function ReportProblem() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
+    getCachedUser().then(async ({ data }) => {
       const u = data.user;
       if (!u) return;
       setUserId(u.id);
