@@ -1,24 +1,24 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getMockTest, mockTestQuestions, type CodeQuestion } from "@/lib/questions";
+import { useServerFn } from "@tanstack/react-start";
 import {
   clearTestStarted,
   getStudentName,
   getTestStartedAt,
-  gradeFor,
   isTestStarted,
   markTestStarted,
-  saveResult,
-  type AttemptResult,
-  type QuestionAttempt,
 } from "@/lib/test-session";
-import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
-import { recordMockResult } from "@/lib/progress";
+import { loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
 import { syncMyScore } from "@/lib/leaderboard";
 import { recordStreakActivity } from "@/lib/streaks";
-import { supabase } from "@/integrations/supabase/client";
 import { PythonCodeEditor } from "@/components/PythonCodeEditor";
+import {
+  getStudentMockTest,
+  submitGradedMockAttempt,
+  type SanitizedMockTest,
+  type SanitizedMockQuestion,
+} from "@/lib/mock-secure.functions";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
   head: () => ({
