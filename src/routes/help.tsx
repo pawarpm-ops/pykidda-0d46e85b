@@ -218,6 +218,15 @@ function HelpPage() {
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12">
       {/* Header */}
       <div className="mb-8">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+          className="mb-4 -ml-2 gap-1.5 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
         <div className="flex items-center gap-3 mb-2">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/30">
             <HelpCircle className="h-5 w-5" />
