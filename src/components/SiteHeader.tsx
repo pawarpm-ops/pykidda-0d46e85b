@@ -40,7 +40,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/mock-tests", label: "Mock Tests", tour: "nav-mock", icon: ClipboardList },
   { to: "/leaderboard", label: "Leaderboard", tour: "nav-leaderboard", icon: Trophy },
-  { to: "/assignments", label: "Homework", tour: "nav-practice", authOnly: true, icon: NotebookPen },
+  { to: "/homework", label: "Homework", tour: "nav-practice", authOnly: true, icon: NotebookPen },
   { to: "/teacher-comments", label: "Teacher Comments", authOnly: true, icon: MessageCircleMore },
   { to: "/notifications", label: "Notifications", authOnly: true, icon: Bell, badgeKey: "notifications" },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true, icon: TrendingUp },
