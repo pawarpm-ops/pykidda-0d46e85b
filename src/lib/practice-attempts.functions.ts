@@ -38,5 +38,21 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
       solved: data.solved,
     });
     if (error) throw new Error(error.message);
+
+    // Record streak activity when the student actually solves the question.
+    // Uses the authenticated user client so the RPC runs as the student
+    // (the SECURITY DEFINER function uses auth.uid()).
+    if (data.solved) {
+      try {
+        await context.supabase.rpc("record_streak_activity", {
+          _activity_type: "practice_question_solved",
+          _reference_id: data.questionId,
+        });
+      } catch (e) {
+        console.error("[submitPracticeAttempt] streak record failed", e);
+      }
+    }
+
     return { ok: true };
   });
+
