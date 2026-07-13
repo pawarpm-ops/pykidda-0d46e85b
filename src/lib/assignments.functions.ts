@@ -126,7 +126,10 @@ export const submitAssignment = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => DraftSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: a, error: aErr } = await supabase
+    // expected_output is column-revoked from authenticated for security;
+    // use service role from within this trusted handler to read it.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: a, error: aErr } = await supabaseAdmin
       .from("assignments")
       .select("id, due_at, status, assignment_type, total_marks, expected_output, sample_input, sample_output, title, description")
       .eq("id", data.assignment_id)
