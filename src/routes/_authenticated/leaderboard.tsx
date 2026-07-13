@@ -345,85 +345,275 @@ function StreakLeaderboard({
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <table className="w-full text-sm">
-        <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
-          <tr>
-            <th className="px-4 py-3 text-left">Rank</th>
-            <th className="px-4 py-3 text-left">Student</th>
-            <th className="px-4 py-3 text-left">ID</th>
-            <th className="px-4 py-3 text-left">Title</th>
-            <th className="px-4 py-3 text-right">🔥 Current</th>
-            <th className="px-4 py-3 text-right">🏆 Longest</th>
-            <th className="px-4 py-3 text-center">Active</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => {
-            const originalIdx = allRows?.findIndex((x) => x.user_id === r.user_id) ?? -1;
-            const rank = originalIdx >= 0 ? originalIdx + 1 : i + 1;
-            const isMe = r.user_id === meId;
-            const alive = r.last_activity_date === today;
-            const title = getCurrentRank(r.current_streak);
-            const medal = rank === 1 ? "👑" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
-            const label =
-              r.current_streak >= 90
-                ? "UNSTOPPABLE"
-                : r.current_streak >= 30
-                  ? "LEGEND"
-                  : r.current_streak >= 7
-                    ? "HOT"
-                    : null;
-            return (
-              <tr
-                key={r.user_id}
-                className={`border-t border-border/60 ${isMe ? "bg-accent/10" : ""} ${rank === 1 && !searching ? "bg-gradient-to-r from-amber-500/10 to-transparent" : ""}`}
-              >
-                <td className="px-4 py-3 font-bold text-lg">{medal}</td>
-                <td className="px-4 py-3">
-                  <NameLink entry={directory.get(r.user_id)} className="font-medium">
-                    {r.display_name || "Anonymous"}
-                  </NameLink>
-                  {isMe && (
-                    <span className="ml-2 rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
-                      you
-                    </span>
-                  )}
-                  {label && (
-                    <span className="ml-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
-                      {label}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <StudentIdChip entry={directory.get(r.user_id)} />
-                </td>
-                <td className="px-4 py-3 text-xs">
-                  <span className="inline-flex items-center gap-1">
-                    <span>{title.icon}</span>
-                    <span className="text-muted-foreground">{title.name}</span>
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right font-bold text-orange-500 tabular-nums">
-                  {r.current_streak}
-                </td>
-                <td className="px-4 py-3 text-right text-yellow-500 tabular-nums">{r.longest_streak}</td>
-                <td className="px-4 py-3 text-center">
-                  <span
-                    className={`inline-block h-2 w-2 rounded-full ${alive ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"}`}
-                    title={alive ? "Streak alive today" : "Not active today"}
-                  />
-                </td>
-              </tr>
-            );
-          })}
+  const top3 = !searching ? rows.slice(0, 3) : [];
+  const rest = searching ? rows : rows.slice(3);
 
-        </tbody>
-      </table>
+  return (
+    <>
+      {top3.length > 0 && <StreakPodium top3={top3} meId={meId} directory={directory} today={today} />}
+
+      {rest.length > 0 && (
+        <div className="mt-10 overflow-hidden rounded-xl border border-border bg-card">
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/50 text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 text-left">Rank</th>
+                <th className="px-4 py-3 text-left">Student</th>
+                <th className="px-4 py-3 text-left">ID</th>
+                <th className="px-4 py-3 text-left">Title</th>
+                <th className="px-4 py-3 text-right">🔥 Current</th>
+                <th className="px-4 py-3 text-right">🏆 Longest</th>
+                <th className="px-4 py-3 text-center">Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rest.map((r, i) => {
+                const originalIdx = allRows?.findIndex((x) => x.user_id === r.user_id) ?? -1;
+                const rank = originalIdx >= 0 ? originalIdx + 1 : i + 4;
+                const isMe = r.user_id === meId;
+                const alive = r.last_activity_date === today;
+                const title = getCurrentRank(r.current_streak);
+                const label =
+                  r.current_streak >= 90
+                    ? "UNSTOPPABLE"
+                    : r.current_streak >= 30
+                      ? "LEGEND"
+                      : r.current_streak >= 7
+                        ? "HOT"
+                        : null;
+                return (
+                  <tr
+                    key={r.user_id}
+                    className={`border-t border-border/60 ${isMe ? "bg-accent/10" : ""}`}
+                  >
+                    <td className="px-4 py-3 font-mono text-muted-foreground">#{rank}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <StreakAvatar row={r} size={32} />
+                        <NameLink entry={directory.get(r.user_id)} className="font-medium">
+                          {r.display_name || "Anonymous"}
+                        </NameLink>
+                        {isMe && (
+                          <span className="rounded-full bg-accent/20 px-2 py-0.5 text-xs text-accent">
+                            you
+                          </span>
+                        )}
+                        {label && (
+                          <span className="rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                            {label}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StudentIdChip entry={directory.get(r.user_id)} />
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      <span className="inline-flex items-center gap-1">
+                        <span>{title.icon}</span>
+                        <span className="text-muted-foreground">{title.name}</span>
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-orange-500 tabular-nums">
+                      {r.current_streak}
+                    </td>
+                    <td className="px-4 py-3 text-right text-yellow-500 tabular-nums">{r.longest_streak}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={`inline-block h-2 w-2 rounded-full ${alive ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"}`}
+                        title={alive ? "Streak alive today" : "Not active today"}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
+const STREAK_RANK_STYLE: Record<
+  number,
+  { medal: string; gradient: string; glow: string; ring: string; height: string; label: string }
+> = {
+  1: {
+    medal: "👑",
+    gradient: "linear-gradient(140deg, oklch(0.78 0.19 55), oklch(0.62 0.22 30))",
+    glow: "0 20px 60px -10px oklch(0.65 0.22 35 / 0.65)",
+    ring: "ring-4 ring-[oklch(0.92_0.15_70)]",
+    height: "min-h-[280px]",
+    label: "On Fire",
+  },
+  2: {
+    medal: "🥈",
+    gradient: "linear-gradient(140deg, oklch(0.82 0.13 55), oklch(0.68 0.16 40))",
+    glow: "0 14px 40px -10px oklch(0.7 0.16 40 / 0.55)",
+    ring: "ring-4 ring-[oklch(0.9_0.1_65)]",
+    height: "min-h-[230px]",
+    label: "Blazing",
+  },
+  3: {
+    medal: "🥉",
+    gradient: "linear-gradient(140deg, oklch(0.78 0.1 45), oklch(0.6 0.14 30))",
+    glow: "0 14px 40px -10px oklch(0.58 0.15 30 / 0.5)",
+    ring: "ring-4 ring-[oklch(0.82_0.1_50)]",
+    height: "min-h-[210px]",
+    label: "Heating Up",
+  },
+};
+
+function StreakPodium({
+  top3,
+  meId,
+  directory,
+  today,
+}: {
+  top3: StreakLeaderRow[];
+  meId: string | null;
+  directory: Directory;
+  today: string;
+}) {
+  const first = top3[0];
+  const second = top3[1];
+  const third = top3[2];
+
+  return (
+    <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-3">
+      <div className="order-2 sm:order-1">
+        {second ? (
+          <StreakPodiumCard rank={2} row={second} meId={meId} entry={directory.get(second.user_id)} today={today} />
+        ) : (
+          <EmptyStreakPlace rank={2} />
+        )}
+      </div>
+      <div className="order-1 sm:order-2">
+        <StreakPodiumCard rank={1} row={first} meId={meId} entry={directory.get(first.user_id)} today={today} />
+      </div>
+      <div className="order-3">
+        {third ? (
+          <StreakPodiumCard rank={3} row={third} meId={meId} entry={directory.get(third.user_id)} today={today} />
+        ) : (
+          <EmptyStreakPlace rank={3} />
+        )}
+      </div>
     </div>
   );
 }
+
+function StreakPodiumCard({
+  rank,
+  row,
+  meId,
+  entry,
+  today,
+}: {
+  rank: 1 | 2 | 3;
+  row: StreakLeaderRow;
+  meId: string | null;
+  entry: DirectoryEntry | undefined;
+  today: string;
+}) {
+  const s = STREAK_RANK_STYLE[rank];
+  const isMe = row.user_id === meId;
+  const alive = row.last_activity_date === today;
+  const title = getCurrentRank(row.current_streak);
+  return (
+    <div
+      className={`relative flex flex-col items-center justify-end overflow-hidden rounded-2xl border border-white/20 p-6 text-center text-[oklch(0.15_0.02_250)] ${s.height}`}
+      style={{ backgroundImage: s.gradient, boxShadow: s.glow }}
+    >
+      {/* Ambient flame glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-10 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full opacity-40 blur-3xl"
+        style={{ background: "radial-gradient(circle, oklch(0.9 0.2 60) 0%, transparent 70%)" }}
+      />
+
+      <div className="absolute inset-x-0 top-3 text-center text-3xl drop-shadow-sm">{s.medal}</div>
+      <div className="absolute right-3 top-3 rounded-full bg-black/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider">
+        #{rank}
+      </div>
+      <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-black/20 px-2 py-0.5 text-[11px] font-semibold">
+        <span
+          className={`inline-block h-1.5 w-1.5 rounded-full ${alive ? "bg-emerald-400 animate-pulse" : "bg-white/40"}`}
+        />
+        {alive ? "Active today" : "Idle"}
+      </div>
+
+      <div className={`relative mb-3 overflow-hidden rounded-full bg-white/40 ${s.ring}`}>
+        <StreakAvatar row={row} size={rank === 1 ? 88 : 72} />
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-[0.25em] opacity-80">{s.label}</p>
+      <h3 className="mt-1 truncate text-lg font-bold">
+        <NameLink entry={entry}>{row.display_name || "Anonymous"}</NameLink>
+        {isMe && <span className="ml-1 text-sm font-normal opacity-70">(you)</span>}
+      </h3>
+      {entry?.student_unique_id && (
+        <div className="mt-1">
+          <StudentIdChip entry={entry} />
+        </div>
+      )}
+
+      <div className="mt-2 flex items-baseline gap-1">
+        <span className="text-4xl">🔥</span>
+        <span className="text-4xl font-extrabold tabular-nums">{row.current_streak}</span>
+        <span className="text-sm font-medium opacity-70">days</span>
+      </div>
+
+      <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-black/15 px-2.5 py-1 text-[11px] font-semibold">
+        <span>{title.icon}</span>
+        <span>{title.name}</span>
+      </div>
+
+      <div className="mt-2 text-xs opacity-80">
+        Longest 🏆 <span className="font-semibold tabular-nums">{row.longest_streak}</span> days
+      </div>
+    </div>
+  );
+}
+
+function EmptyStreakPlace({ rank }: { rank: 2 | 3 }) {
+  const s = STREAK_RANK_STYLE[rank];
+  return (
+    <div
+      className={`flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-card/40 p-6 text-center text-muted-foreground ${s.height}`}
+    >
+      <div className="text-3xl opacity-50">{s.medal}</div>
+      <p className="mt-2 text-xs font-semibold uppercase tracking-widest">Spot open</p>
+      <p className="mt-1 text-sm">Rank #{rank} needs a streaker</p>
+    </div>
+  );
+}
+
+function StreakAvatar({ row, size }: { row: StreakLeaderRow; size: number }) {
+  const initial = (row.display_name?.trim()?.[0] ?? "?").toUpperCase();
+  if (row.avatar_url) {
+    return (
+      <img
+        src={row.avatar_url}
+        alt=""
+        width={size}
+        height={size}
+        className="block h-full w-full object-cover"
+        style={{ width: size, height: size }}
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
+  return (
+    <div
+      className="flex items-center justify-center bg-[oklch(0.25_0.02_250)] font-bold text-[oklch(0.95_0.01_250)]"
+      style={{ width: size, height: size, fontSize: size * 0.42 }}
+    >
+      {initial}
+    </div>
+  );
+}
+
 
 
 function Podium({
