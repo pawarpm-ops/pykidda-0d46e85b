@@ -13,6 +13,7 @@ import {
   Bell,
   LogOut,
   Shield,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
