@@ -78,58 +78,45 @@ function MyAssignmentsPage() {
           </div>
         )}
 
-        <div className="mt-6 -mx-6 overflow-x-auto px-6 pb-3 [scrollbar-width:thin]">
-          <ul className="flex snap-x snap-mandatory gap-4">
-            {data?.map((row) => {
-              const isSelfSolve = (row as { submission_mode?: string }).submission_mode === "self_solve" || !row.due_at;
-              const when = fmtWhen(row.due_at, isSelfSolve);
-              const badge = statusBadge(row);
-              return (
-                <li
-                  key={row.id}
-                  className={`card-glow group relative flex w-[19rem] shrink-0 snap-start flex-col rounded-xl border border-border bg-card p-5 shadow-sm sm:w-[22rem] ${when.soon ? "ring-1 ring-accent/50" : ""}`}
+        <ul className="mt-6 flex flex-col gap-2">
+          {data?.map((row) => {
+            const isSelfSolve = (row as { submission_mode?: string }).submission_mode === "self_solve" || !row.due_at;
+            const when = fmtWhen(row.due_at, isSelfSolve);
+            const badge = statusBadge(row);
+            return (
+              <li key={row.id}>
+                <Link
+                  to="/assignments/$id"
+                  params={{ id: row.id }}
+                  className={`group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm transition hover:border-accent/60 hover:bg-card/80 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] ${when.soon ? "ring-1 ring-accent/50" : ""}`}
                 >
-                  {when.soon && (
-                    <span className="pointer-events-none absolute inset-0 rounded-xl" style={{ boxShadow: "inset 0 0 32px oklch(0.72 0.16 60 / 0.15)" }} />
-                  )}
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest font-semibold text-accent">
-                        {row.assignment_type} · {row.difficulty}
-                        {row.unit != null ? ` · Unit ${row.unit}` : ""}
-                      </p>
-                      <h2 className="mt-1 text-lg font-bold leading-snug">{row.title}</h2>
-                      {row.topic && <p className="text-xs text-muted-foreground">{row.topic}</p>}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="truncate text-base font-semibold">{row.title}</h2>
+                      <span className={`hidden sm:inline-block shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.cls}`}>{badge.text}</span>
                     </div>
-                    <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badge.cls}`}>{badge.text}</span>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {row.assignment_type} · {row.difficulty}
+                      {row.unit != null ? ` · Unit ${row.unit}` : ""}
+                      {row.topic ? ` · ${row.topic}` : ""}
+                    </p>
                   </div>
-                  <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{row.description || "No description"}</p>
-                  <div className="mt-4 flex items-center justify-between gap-2 text-xs">
-                    <span className={
-                      when.tone === "bad" ? "font-semibold text-destructive"
-                      : when.tone === "warn" ? "font-semibold text-accent animate-pulse"
-                      : "text-muted-foreground"
-                    }>
-                      ⏰ {when.text}
-                    </span>
-                    <span className="text-muted-foreground">{row.total_marks} marks</span>
-                  </div>
-                  <div className="mt-4 flex-1" />
-                  <div>
-                    <Link
-                      to="/assignments/$id"
-                      params={{ id: row.id }}
-                      className="btn-glow inline-flex items-center rounded-md px-3 py-1.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-                      style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                    >
-                      Open assignment →
-                    </Link>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                  <span className={`hidden sm:inline text-xs ${
+                    when.tone === "bad" ? "font-semibold text-destructive"
+                    : when.tone === "warn" ? "font-semibold text-accent"
+                    : "text-muted-foreground"
+                  }`}>
+                    ⏰ {when.text}
+                  </span>
+                  <span className="hidden sm:inline text-xs text-muted-foreground">{row.total_marks} marks</span>
+                  <span className={`sm:hidden shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.cls}`}>{badge.text}</span>
+                  <span className="text-accent opacity-0 transition group-hover:opacity-100">→</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+
 
       </main>
     </div>
