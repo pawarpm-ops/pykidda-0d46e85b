@@ -1150,6 +1150,69 @@ export type Database = {
         }
         Relationships: []
       }
+      system_health_logs: {
+        Row: {
+          category: string
+          created_at: string
+          device_info: Json | null
+          duration_ms: number | null
+          error_details: Json | null
+          error_message: string
+          id: string
+          module_name: string | null
+          page_route: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          status: string
+          status_code: number | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          device_info?: Json | null
+          duration_ms?: number | null
+          error_details?: Json | null
+          error_message: string
+          id?: string
+          module_name?: string | null
+          page_route?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          status_code?: number | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          device_info?: Json | null
+          duration_ms?: number | null
+          error_details?: Json | null
+          error_message?: string
+          id?: string
+          module_name?: string | null
+          page_route?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          status_code?: number | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_reviews: {
         Row: {
           category: string | null
@@ -1317,6 +1380,21 @@ export type Database = {
         }
         Returns: string
       }
+      log_system_health_event: {
+        Args: {
+          _category: string
+          _device_info?: Json
+          _duration_ms?: number
+          _error_details?: Json
+          _error_message: string
+          _module_name?: string
+          _page_route?: string
+          _severity?: string
+          _status_code?: number
+          _user_email?: string
+        }
+        Returns: string
+      }
       record_streak_activity: {
         Args: { _activity_type: string; _reference_id?: string }
         Returns: {
@@ -1324,6 +1402,15 @@ export type Database = {
           is_new_day: boolean
           longest_streak: number
           today_completed: boolean
+        }[]
+      }
+      system_health_summary: {
+        Args: never
+        Returns: {
+          category: string
+          count_7d: number
+          count_today: number
+          critical_today: number
         }[]
       }
     }
