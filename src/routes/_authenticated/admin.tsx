@@ -545,7 +545,23 @@ function AdminPage() {
 
         {tab === "homework" && (
           <section className="mt-6">
-            <HomeworkAdminTab />
+            <div className="rounded-xl border border-accent/40 bg-accent/5 p-6 text-center">
+              <p className="text-lg font-bold">📚 Homework has moved</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Manage multi-question homework — create, publish, and grade student submissions.
+              </p>
+              <Link
+                to="/admin/homework"
+                className="mt-4 inline-block rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              >
+                Open Homework Manager →
+              </Link>
+            </div>
+            <details className="mt-4 rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
+              <summary className="cursor-pointer font-semibold">Legacy single-question homework (read-only)</summary>
+              <div className="mt-3"><HomeworkAdminTab /></div>
+            </details>
           </section>
         )}
 
