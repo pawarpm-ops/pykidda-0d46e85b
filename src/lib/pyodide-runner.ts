@@ -35,7 +35,7 @@ export type RunOptions = {
 type WorkerMsg =
   | { type: "ready" }
   | { type: "load_failed"; message: string }
-  | { type: "output_limit"; runId: number }
+  | { type: "output_limit"; runId: number; stdout?: string; stderr?: string }
   | {
       type: "done";
       runId: number;
