@@ -1,0 +1,1 @@
+ALTER TABLE public.mock_results ADD COLUMN IF NOT EXISTS details JSONB;

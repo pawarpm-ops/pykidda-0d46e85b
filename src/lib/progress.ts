@@ -125,6 +125,7 @@ export function recordMockResult(userId: string | null, r: AttemptResult) {
         submissionType: r.submissionType,
         violationReason: r.violationReason ?? null,
         submittedAt: r.submittedAt,
+        details: { attempts: r.attempts },
       },
     }).catch((e) => console.error("submitMockResult failed", e));
   }

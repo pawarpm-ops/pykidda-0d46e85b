@@ -364,7 +364,6 @@ function StaticHistory({ testId }: { testId: string }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState<StaticAttempt[] | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
 
   async function toggle() {
     const next = !open;
@@ -398,42 +397,27 @@ function StaticHistory({ testId }: { testId: string }) {
             <p className="text-xs text-muted-foreground">No attempts yet.</p>
           ) : (
             <ul className="space-y-1.5">
-              {attempts.map((a) => {
-                const isOpen = openId === a.id;
-                return (
-                  <li key={a.id} className="rounded-md border border-border bg-background/60 text-xs overflow-hidden">
-                    <button
-                      onClick={() => setOpenId(isOpen ? null : a.id)}
-                      className="flex w-full items-center justify-between px-3 py-2 hover:bg-secondary/50 transition"
-                    >
-                      <span className="text-muted-foreground">{fmtDate(a.submitted_at)}</span>
-                      <span className="flex items-center gap-2">
-                        <span className={`font-bold ${pctColor(a.percentage)}`}>{a.percentage}%</span>
-                        <span className="text-muted-foreground">Grade {a.grade}</span>
-                        {a.submission_type !== "normal" && (
-                          <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive uppercase">Auto</span>
-                        )}
-                        <span className="text-accent">{isOpen ? "▾" : "▸"}</span>
-                      </span>
-                    </button>
-                    {isOpen && (
-                      <div className="border-t border-border/60 bg-card px-3 py-2 space-y-1">
-                        <p><span className="text-muted-foreground">Score:</span> <b>{a.marks_obtained} / {a.total_marks}</b> marks ({a.percentage}%)</p>
-                        <p><span className="text-muted-foreground">Grade:</span> <b>{a.grade}</b></p>
-                        <p><span className="text-muted-foreground">Questions:</span> {a.total_questions}</p>
-                        <p><span className="text-muted-foreground">Time taken:</span> {fmtDuration(a.time_taken_sec)}</p>
-                        <p><span className="text-muted-foreground">Submitted:</span> {fmtDate(a.submitted_at)}</p>
-                        {a.submission_type !== "normal" && (
-                          <p className="text-destructive">Auto-submitted: {a.violation_reason ?? "violation"}</p>
-                        )}
-                        <p className="pt-1 text-[11px] text-muted-foreground italic">
-                          Per-question analysis isn't stored for these tests. Retake the test to see live per-question feedback.
-                        </p>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
+              {attempts.map((a) => (
+                <li key={a.id}>
+                  <Link
+                    to="/mock-tests/$testId/result"
+                    params={{ testId }}
+                    search={{ attempt: a.id }}
+                    className="flex items-center justify-between rounded-md border border-border bg-background/60 px-3 py-2 text-xs hover:bg-secondary/50 transition"
+                  >
+                    <span className="text-muted-foreground">{fmtDate(a.submitted_at)}</span>
+                    <span className="flex items-center gap-2">
+                      <span className={`font-bold ${pctColor(a.percentage)}`}>{a.percentage}%</span>
+                      <span className="text-muted-foreground">Grade {a.grade}</span>
+                      <span className="text-muted-foreground">· {fmtDuration(a.time_taken_sec)}</span>
+                      {a.submission_type !== "normal" && (
+                        <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive uppercase">Auto</span>
+                      )}
+                      <span className="text-accent">→</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
             </ul>
           )}
         </div>
@@ -441,3 +425,4 @@ function StaticHistory({ testId }: { testId: string }) {
     </div>
   );
 }
+
