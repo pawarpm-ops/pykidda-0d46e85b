@@ -114,11 +114,18 @@ function attachWorker(w: Worker) {
     }
     if (msg.type === "output_limit") {
       if (currentRun && currentRun.runId === msg.runId) {
+        const partialOut = normalize(msg.stdout || "");
+        const partialErr = normalize(msg.stderr || "");
+        const truncNote =
+          "\n\n--- Output truncated (limit: 200 lines / 10,000 characters) ---";
         finishRun(
           {
             ok: false,
-            stdout: "",
-            stderr: friendlyStderr("output_limit", ""),
+            stdout: partialOut ? partialOut + truncNote : "",
+            stderr: friendlyStderr(
+              "output_limit",
+              partialErr,
+            ),
             reason: "output_limit",
           },
           true,
