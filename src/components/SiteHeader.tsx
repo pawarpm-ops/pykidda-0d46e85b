@@ -13,6 +13,7 @@ import {
   Bell,
   LogOut,
   Shield,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/notifications", label: "Notifications", authOnly: true, icon: Bell, badgeKey: "notifications" },
   { to: "/analytics", label: "Analytics", tour: "nav-analytics", authOnly: true, icon: TrendingUp },
   { to: "/profile", label: "Profile", tour: "nav-profile", authOnly: true, icon: User },
+  { to: "/help", label: "Help / FAQ", icon: HelpCircle },
 ];
 
 function useUnreadCount(userId: string | null) {

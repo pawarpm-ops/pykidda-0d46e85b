@@ -85,6 +85,13 @@ export function ReportProblem() {
     });
   }, []);
 
+  // Allow other parts of the app to open the modal via a custom event.
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("open-report-problem", handler);
+    return () => window.removeEventListener("open-report-problem", handler);
+  }, []);
+
   // Re-sync auto-fill when route changes and modal is closed
   useEffect(() => {
     if (open) return;
