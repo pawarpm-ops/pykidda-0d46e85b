@@ -178,11 +178,6 @@ export function WhatsNewPopups() {
     }
   }
 
-  // Dismiss without marking seen — popup can reappear next session.
-  function dismissTemporarily() {
-    setQueue((q) => q.slice(1));
-  }
-
   function handleView() {
     const item = current;
     if (!item) return;
@@ -195,6 +190,7 @@ export function WhatsNewPopups() {
       }
     }
   }
+
 
   if (!ready || !current) return null;
 
@@ -222,12 +218,13 @@ export function WhatsNewPopups() {
 
         <button
           type="button"
-          onClick={dismissTemporarily}
-          aria-label="Close"
+          onClick={markSeenAndAdvance}
+          aria-label="Close and don't show again"
           className="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background/70 hover:bg-secondary transition-colors"
         >
           <X size={16} />
         </button>
+
 
         <div className="p-6">
           <div className="flex items-center gap-3 mb-4">
