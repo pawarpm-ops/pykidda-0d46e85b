@@ -616,6 +616,24 @@ export const getAiMockAttemptResult = createServerFn({ method: "POST" })
     return { attempt, test, questions: questions ?? [] };
   });
 
+// ----------- List my attempts for a given AI mock test -----------
+
+export const listMyAiMockAttempts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ test_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
+    const { data: rows, error } = await supabaseAdmin
+      .from("ai_mock_attempts")
+      .select("id,submitted_at,started_at,marks_obtained,total_marks,percentage,grade,submission_type,time_taken_sec")
+      .eq("test_id", data.test_id)
+      .eq("user_id", context.userId)
+      .not("submitted_at", "is", null)
+      .order("submitted_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
 // ----------- Refine existing draft with AI chat instruction -----------
 
 const RefineInput = z.object({
