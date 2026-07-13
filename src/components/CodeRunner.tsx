@@ -107,6 +107,7 @@ export function CodeRunner({
         stderr: r.stderr,
         label: tc.label,
         stdin: tc.stdin ?? "",
+        reason: r.reason,
       });
       if (r.reason === "stopped") {
         stoppedRef.current = true;
