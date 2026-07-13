@@ -724,6 +724,7 @@ function Editor() {
                 onDateChange={setSchedDate}
                 onStartTimeChange={setSchedStart}
                 onEndTimeChange={setSchedEnd}
+                durationMinutes={durationMinutes}
               />
             </div>
             <div className="mt-3">
