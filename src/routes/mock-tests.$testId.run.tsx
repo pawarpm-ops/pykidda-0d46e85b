@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getMockTest, mockTestQuestions, type CodeQuestion } from "@/lib/questions";
 import {
