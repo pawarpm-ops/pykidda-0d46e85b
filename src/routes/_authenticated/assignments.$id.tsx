@@ -8,7 +8,7 @@ import {
   saveDraftSubmission,
   submitAssignment,
 } from "@/lib/assignments.functions";
-import { loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
+import { cancelPython, loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
 import { recordStreakActivity } from "@/lib/streaks";
 
 
