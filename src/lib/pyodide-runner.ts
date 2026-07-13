@@ -70,7 +70,7 @@ function friendlyStderr(reason: RunReason, raw: string): string {
     case "timeout":
       return "Time Limit Exceeded: Your code took too long to run.";
     case "output_limit":
-      return "Output Limit Exceeded: Your code printed too much output.";
+      return "Output limit exceeded. Your program printed too much output.\nPlease check your loop or reduce print statements.";
     case "stopped":
       return "Execution stopped by user.";
     case "load_failed":
