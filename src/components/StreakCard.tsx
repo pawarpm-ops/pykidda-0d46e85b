@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { fetchMyStreak, getCurrentRank, getNextRank, recordStreakActivity, type StreakState } from "@/lib/streaks";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth-cache";
 
 export function StreakCard() {
   const [streak, setStreak] = useState<StreakState | null>(null);
@@ -13,7 +14,7 @@ export function StreakCard() {
     // Belt-and-suspenders: on dashboard mount, if today's login streak was never
     // recorded (fresh account, or root-level trigger missed), fire it here.
     (async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await getCachedUser();
       if (!u.user) return;
       const s = await fetchMyStreak();
       if (!alive) return;

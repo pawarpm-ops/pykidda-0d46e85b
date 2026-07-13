@@ -59,20 +59,34 @@ export async function logHealthEventClient(
 // -------- Slow-page tracking --------
 // Fires once per full page load if the load exceeds a threshold.
 
-const SLOW_WARN_MS = 3000;
-const SLOW_CRITICAL_MS = 6000;
+const SLOW_WARN_MS = 5000;
+const SLOW_CRITICAL_MS = 12000;
 
 let slowInstalled = false;
 export function installSlowPageTracker(routeName?: string) {
   if (slowInstalled || typeof window === "undefined") return;
   slowInstalled = true;
+  // Track visibility across the page's lifetime — if the tab was ever hidden
+  // before load fired, navigation timing is not comparable to a foreground
+  // load (browsers throttle background tabs, inflating duration by seconds).
+  let wasHidden = document.visibilityState === "hidden";
+  const onVis = () => {
+    if (document.visibilityState === "hidden") wasHidden = true;
+  };
+  document.addEventListener("visibilitychange", onVis);
   const onLoad = () => {
+    document.removeEventListener("visibilitychange", onVis);
     try {
+      if (wasHidden) return; // don't false-flag backgrounded loads
       const nav = performance.getEntriesByType(
         "navigation",
       )[0] as PerformanceNavigationTiming | undefined;
       if (!nav) return;
-      const duration = Math.round(nav.duration);
+      // Prefer domContentLoadedEventEnd — loadEventEnd waits on late images/
+      // analytics and misrepresents real interactivity.
+      const duration = Math.round(
+        nav.domContentLoadedEventEnd || nav.duration,
+      );
       if (duration < SLOW_WARN_MS) return;
       const severity: ClientHealthEvent["severity"] =
         duration >= SLOW_CRITICAL_MS ? "critical" : "medium";

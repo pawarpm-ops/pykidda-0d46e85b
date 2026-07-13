@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { X, Megaphone, BookOpen, ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/auth-cache";
 
 type ItemType = "announcement" | "homework" | "mock_test";
 
@@ -48,7 +49,7 @@ export function WhatsNewPopups() {
     let cancelled = false;
 
     async function load() {
-      const { data: sess } = await supabase.auth.getSession();
+      const { data: sess } = await getCachedSession();
       const uid = sess.session?.user.id;
       if (!uid) {
         if (!cancelled) setReady(true);

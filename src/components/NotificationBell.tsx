@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth-cache";
 import { listAnnouncements, listDismissedIds, listReadIds, markAllRead, type Announcement } from "@/lib/notifications";
 
 export function NotificationBell() {
@@ -18,7 +19,7 @@ export function NotificationBell() {
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    getCachedUser().then(({ data }) => {
       const uid = data.user?.id ?? null;
       setUserId(uid);
       if (uid) void refresh(uid);

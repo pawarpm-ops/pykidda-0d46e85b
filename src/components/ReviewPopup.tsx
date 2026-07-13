@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth-cache";
 import { Loader2, Sparkles, Star, X } from "lucide-react";
 
 const STORAGE_KEY = "pykidda.review.prefs.v1";
@@ -83,7 +84,7 @@ export function ReviewPopup() {
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    getCachedUser().then(({ data }) => {
       setUserId(data.user?.id ?? null);
       setUserEmail(data.user?.email ?? null);
     });

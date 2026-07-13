@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedUser } from "@/lib/auth-cache";
 import { AlertTriangle, Bug, Loader2, Send, X } from "lucide-react";
 
 const PROBLEM_TYPES = [
@@ -71,7 +72,7 @@ export function ReportProblem() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
+    getCachedUser().then(async ({ data }) => {
       const u = data.user;
       if (!u) return;
       setUserId(u.id);

@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getCachedSession } from "@/lib/auth-cache";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useIsAdmin } from "@/lib/role";
@@ -104,7 +105,7 @@ export function SiteHeader() {
   const unread = useUnreadCount(userId);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    getCachedSession().then(({ data }) => {
       setEmail(data.session?.user.email ?? null);
       setUserId(data.session?.user.id ?? null);
     });
