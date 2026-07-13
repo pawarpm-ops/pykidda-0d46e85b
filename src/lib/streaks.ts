@@ -6,7 +6,9 @@ export type StreakActivityType =
   | "practice_set_completed"
   | "mock_test_attempted"
   | "coding_question_solved"
-  | "daily_challenge_completed";
+  | "daily_challenge_completed"
+  | "homework_submitted";
+
 
 export type StreakRank = {
   days: number;

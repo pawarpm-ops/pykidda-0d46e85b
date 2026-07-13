@@ -9,6 +9,8 @@ import {
   submitAssignment,
 } from "@/lib/assignments.functions";
 import { loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
+import { recordStreakActivity } from "@/lib/streaks";
+
 
 export const Route = createFileRoute("/_authenticated/assignments/$id")({
   head: () => ({
@@ -121,8 +123,10 @@ function AssignmentDetailPage() {
         },
       });
       setToast(res.is_late ? "Submitted (late) 📤" : "Submitted successfully 🎉");
+      void recordStreakActivity("homework_submitted", id);
       await refetch();
       setTimeout(() => setToast(null), 3000);
+
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Submit failed");
       setTimeout(() => setToast(null), 4000);
