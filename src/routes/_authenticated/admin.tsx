@@ -30,6 +30,7 @@ import { AdminMockOverview } from "@/components/AdminMockOverview";
 import { ViolationAnalytics } from "@/components/ViolationAnalytics";
 import { getQuestion } from "@/lib/questions";
 import { TopStudentsChart } from "@/components/TopStudentsChart";
+import { StreakDebugTab } from "@/components/StreakDebugTab";
 
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -139,7 +140,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks">("overview");
   const [overviewSubTab, setOverviewSubTab] = useState<"complete" | "mocks">("complete");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
@@ -354,7 +355,7 @@ function AdminPage() {
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "announce", "reports", "reviews", "homework"] as const).map((t) => (
+            {(["overview", "students", "activity", "streaks", "announce", "reports", "reviews", "homework"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -365,7 +366,7 @@ function AdminPage() {
                 }`}
                 style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
               >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : "📚 Homework"}
+                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : "📚 Homework"}
               </button>
             ))}
             <button
@@ -518,6 +519,10 @@ function AdminPage() {
 
         {tab === "activity" && (
           <ActivityTab authInfo={authInfo} students={students} profiles={profiles} />
+        )}
+
+        {tab === "streaks" && (
+          <StreakDebugTab students={students.map((s) => ({ user_id: s.user_id, name: s.name }))} />
         )}
 
         {tab === "announce" && authorId && (
