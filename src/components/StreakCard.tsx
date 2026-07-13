@@ -14,7 +14,7 @@ export function StreakCard() {
     // Belt-and-suspenders: on dashboard mount, if today's login streak was never
     // recorded (fresh account, or root-level trigger missed), fire it here.
     (async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const { data: u } = await getCachedUser();
       if (!u.user) return;
       const s = await fetchMyStreak();
       if (!alive) return;
