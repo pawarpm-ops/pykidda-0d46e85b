@@ -222,10 +222,11 @@ function HelpPage() {
           variant="ghost"
           size="sm"
           onClick={handleBack}
+          aria-label="Go back"
+          title="Go back"
           className="mb-4 -ml-2 gap-1.5 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
         </Button>
         <div className="flex items-center gap-3 mb-2">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/30">
