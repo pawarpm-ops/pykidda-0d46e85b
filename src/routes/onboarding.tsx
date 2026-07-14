@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import pyMascotAsset from "@/assets/py-mascot.png.asset.json";
+
 
 
 export const Route = createFileRoute("/onboarding")({
@@ -492,26 +492,24 @@ function PyMascot({ step, done }: { step: number; done: boolean }) {
         }}
       />
       <div className={`relative ${done ? "py-celebrate" : "py-float"}`}>
-        <div key={reactKey} className="py-react">
-          <img
-            src={pyMascotAsset.url}
-            alt="Py, a majestic 3D python mascot with golden-brown scales and glowing blue eyes"
-            width={1024}
-            height={1024}
-            loading="eager"
-            decoding="async"
-            className="h-44 w-44 md:h-56 md:w-56 lg:h-64 lg:w-64 object-contain select-none"
-            style={{
-              WebkitMaskImage:
-                "radial-gradient(ellipse at center, black 62%, transparent 92%)",
-              maskImage:
-                "radial-gradient(ellipse at center, black 62%, transparent 92%)",
-              filter: "drop-shadow(0 24px 40px rgba(56,189,248,0.35))",
-            }}
-            draggable={false}
-          />
+        <div
+          key={reactKey}
+          className="py-react relative grid place-items-center h-24 w-24 md:h-28 md:w-28 rounded-2xl border border-white/15 bg-white/[0.04] backdrop-blur-sm shadow-[0_20px_60px_-20px_rgba(56,189,248,0.55)]"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, rgba(56,189,248,0.18), rgba(129,140,248,0.14) 45%, rgba(236,72,153,0.14))",
+          }}
+          aria-label="PY Kidda"
+        >
+          <span
+            className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent select-none"
+            style={{ backgroundImage: "linear-gradient(135deg,#38bdf8,#818cf8,#f472b6)" }}
+          >
+            Py
+          </span>
         </div>
       </div>
+
     </div>
   );
 }
