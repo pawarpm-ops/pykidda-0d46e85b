@@ -380,7 +380,7 @@ function StepControl({
     case 0:
       return (
         <input
-          ref={(el) => (inputRef.current = el)}
+          ref={(el) => { inputRef.current = el; }}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -394,7 +394,7 @@ function StepControl({
     case 1:
       return (
         <input
-          ref={(el) => (inputRef.current = el)}
+          ref={(el) => { inputRef.current = el; }}
           type="tel"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -408,7 +408,7 @@ function StepControl({
     case 2:
       return (
         <input
-          ref={(el) => (inputRef.current = el)}
+          ref={(el) => { inputRef.current = el; }}
           type="date"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -420,7 +420,7 @@ function StepControl({
     case 3:
       return (
         <input
-          ref={(el) => (inputRef.current = el)}
+          ref={(el) => { inputRef.current = el; }}
           type="number"
           inputMode="numeric"
           value={value}
@@ -435,7 +435,7 @@ function StepControl({
     case 4:
       return (
         <textarea
-          ref={(el) => (inputRef.current = el)}
+          ref={(el) => { inputRef.current = el; }}
           value={value}
           onChange={(e) => onChange(e.target.value.slice(0, ABOUT_MAX))}
           rows={5}
