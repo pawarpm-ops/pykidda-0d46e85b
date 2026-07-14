@@ -237,7 +237,8 @@ function AuthGate({ children }: { children: ReactNode }) {
   const isAuthRoute = pathname === "/auth" || pathname.startsWith("/auth/");
   const isOnboardingRoute = pathname === "/onboarding";
   const isPublicProfileRoute = pathname.startsWith("/u/");
-  const isPublicRoute = isAuthRoute || isPublicProfileRoute;
+  const isOAuthConsentRoute = pathname === "/.lovable/oauth/consent";
+  const isPublicRoute = isAuthRoute || isPublicProfileRoute || isOAuthConsentRoute;
   const isSecureRoute =
     pathname.includes("/mock-tests/") &&
     (pathname.endsWith("/run") || pathname.endsWith("/warning"));
