@@ -237,7 +237,7 @@ function OnboardingPage() {
 
       {/* Main */}
       <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-10 pb-16 md:pt-16">
-        <PyMascot speaking={!done} reacting={done} />
+        <PyMascot step={step} done={done} />
 
         {/* Speech bubble */}
         <div className="relative mt-4 max-w-md rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white/85 shadow-lg backdrop-blur">
