@@ -202,8 +202,7 @@ export function ReviewPopup() {
         role="dialog"
         aria-modal="true"
       >
-        {/* Mascot */}
-        <SnakeMascot celebrating={submitted} pointingStars={rating === 0} />
+        {submitted && <Confetti />}
 
         {/* Close */}
         <button
@@ -379,54 +378,6 @@ export function ReviewPopup() {
   );
 }
 
-function SnakeMascot({ celebrating, pointingStars }: { celebrating: boolean; pointingStars: boolean }) {
-  return (
-    <>
-      {/* Orbiting mini snake */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2 hidden sm:block"
-        style={{ animation: "pyko-orbit 14s linear infinite" }}
-      >
-        <div className="text-3xl" style={{ filter: "drop-shadow(0 4px 10px rgba(34,211,238,0.5))" }}>
-          🐍
-        </div>
-      </div>
-
-      {/* Main mascot bouncing top-left */}
-      <div
-        className="pointer-events-none absolute -left-4 -top-10 sm:-left-8 sm:-top-14"
-        style={{
-          animation: celebrating
-            ? "pyko-celebrate 0.6s ease-in-out infinite"
-            : "pyko-bounce 2.4s ease-in-out infinite",
-        }}
-      >
-        <div className="relative">
-          <div
-            className="text-6xl sm:text-7xl"
-            style={{ filter: "drop-shadow(0 8px 18px rgba(16,185,129,0.55))" }}
-          >
-            🐍
-          </div>
-          {pointingStars && (
-            <div
-              className="absolute -bottom-2 -right-2 text-xl animate-bounce"
-              style={{ animationDuration: "1.4s" }}
-            >
-              👉
-            </div>
-          )}
-          <div
-            className="absolute left-6 top-4 h-1.5 w-1.5 rounded-full bg-slate-900"
-            style={{ animation: "pyko-blink 4s infinite", transformOrigin: "center" }}
-          />
-        </div>
-      </div>
-
-      {celebrating && <Confetti />}
-    </>
-  );
-}
 
 function Confetti() {
   const bits = Array.from({ length: 24 });
