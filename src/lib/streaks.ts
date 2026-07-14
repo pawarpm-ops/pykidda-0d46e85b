@@ -54,7 +54,6 @@ export type StreakState = {
   last_activity_date: string | null;
   today_completed: boolean;
   streak_freezes_available: number;
-  last_freeze_used_at: string | null;
 };
 
 export async function fetchMyStreak(): Promise<StreakState | null> {
@@ -62,10 +61,10 @@ export async function fetchMyStreak(): Promise<StreakState | null> {
   if (!u.user) return null;
   const { data } = await supabase
     .from("student_streaks")
-    .select("current_streak, longest_streak, last_activity_date, today_completed, streak_freezes_available, last_freeze_used_at")
+    .select("current_streak, longest_streak, last_activity_date, today_completed, streak_freezes_available")
     .eq("user_id", u.user.id)
     .maybeSingle();
-  if (!data) return { current_streak: 0, longest_streak: 0, last_activity_date: null, today_completed: false, streak_freezes_available: 0, last_freeze_used_at: null };
+  if (!data) return { current_streak: 0, longest_streak: 0, last_activity_date: null, today_completed: false, streak_freezes_available: 0 };
   return data as StreakState;
 }
 
