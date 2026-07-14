@@ -130,6 +130,19 @@ export function StreakCard() {
             <span className={done ? "text-emerald-400" : "text-orange-400"}>●</span>
             {done ? "Today done" : "Today pending"}
           </div>
+          <div
+            className={`mt-1 flex items-center justify-end gap-1 text-[10px] font-bold ${
+              (streak?.streak_freezes_available ?? 0) > 0 ? "text-cyan-300" : "text-white/40"
+            }`}
+            title={
+              (streak?.streak_freezes_available ?? 0) > 0
+                ? "You have 1 streak freeze this month. If you miss a day, it will be used automatically to save your streak."
+                : "No freeze available. You get 1 free freeze at the start of each month."
+            }
+          >
+            <span>❄️</span>
+            <span>{(streak?.streak_freezes_available ?? 0) > 0 ? "Freeze ready" : "Freeze used"}</span>
+          </div>
         </div>
       </div>
 

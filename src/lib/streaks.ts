@@ -53,6 +53,7 @@ export type StreakState = {
   longest_streak: number;
   last_activity_date: string | null;
   today_completed: boolean;
+  streak_freezes_available: number;
 };
 
 export async function fetchMyStreak(): Promise<StreakState | null> {
@@ -60,17 +61,17 @@ export async function fetchMyStreak(): Promise<StreakState | null> {
   if (!u.user) return null;
   const { data } = await supabase
     .from("student_streaks")
-    .select("current_streak, longest_streak, last_activity_date, today_completed")
+    .select("current_streak, longest_streak, last_activity_date, today_completed, streak_freezes_available")
     .eq("user_id", u.user.id)
     .maybeSingle();
-  if (!data) return { current_streak: 0, longest_streak: 0, last_activity_date: null, today_completed: false };
-  return data;
+  if (!data) return { current_streak: 0, longest_streak: 0, last_activity_date: null, today_completed: false, streak_freezes_available: 0 };
+  return data as StreakState;
 }
 
 export async function recordStreakActivity(
   activity: StreakActivityType,
   referenceId?: string,
-): Promise<{ current_streak: number; longest_streak: number; is_new_day: boolean; unlocked_rank: StreakRank | null } | null> {
+): Promise<{ current_streak: number; longest_streak: number; is_new_day: boolean; unlocked_rank: StreakRank | null; freeze_used: boolean; freezes_available: number } | null> {
   // Pass null (not undefined) so the JSON body always includes `_reference_id`;
   // some PostgREST setups fail overload resolution when an optional param key is missing.
   const { data, error } = await supabase.rpc("record_streak_activity", {
@@ -85,22 +86,27 @@ export async function recordStreakActivity(
     console.warn("[streak] record_streak_activity returned no rows", { activity, referenceId });
     return null;
   }
-  const row = data[0] as { current_streak: number; longest_streak: number; today_completed: boolean; is_new_day: boolean };
+  const row = data[0] as { current_streak: number; longest_streak: number; today_completed: boolean; is_new_day: boolean; freeze_used?: boolean; freezes_available?: number };
   const prevRank = getCurrentRank(row.current_streak - (row.is_new_day ? 1 : 0));
   const currRank = getCurrentRank(row.current_streak);
   const unlocked = row.is_new_day && currRank.name !== prevRank.name && currRank.days > 0 ? currRank : null;
+  const freeze_used = !!row.freeze_used;
+  const freezes_available = row.freezes_available ?? 0;
   // dispatch UI event
   if (typeof window !== "undefined") {
     window.dispatchEvent(
       new CustomEvent("pk:streak-updated", {
-        detail: { ...row, unlocked_rank: unlocked },
+        detail: { ...row, unlocked_rank: unlocked, freeze_used, freezes_available },
       }),
     );
+    if (freeze_used) {
+      window.dispatchEvent(new CustomEvent("pk:streak-freeze-used", { detail: row }));
+    }
   }
   // Check for new badges after every recorded activity.
   // Fire-and-forget: badge failures must never block streak flow.
   evaluateAndAwardBadges(activity).catch(() => {});
-  return { current_streak: row.current_streak, longest_streak: row.longest_streak, is_new_day: row.is_new_day, unlocked_rank: unlocked };
+  return { current_streak: row.current_streak, longest_streak: row.longest_streak, is_new_day: row.is_new_day, unlocked_rank: unlocked, freeze_used, freezes_available };
 }
 
 export async function fetchMyStreakLogs(
