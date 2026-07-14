@@ -494,21 +494,57 @@ function PyMascot({ step, done }: { step: number; done: boolean }) {
       <div className={`relative ${done ? "py-celebrate" : "py-float"}`}>
         <div
           key={reactKey}
-          className="py-react relative grid place-items-center h-24 w-24 md:h-28 md:w-28 rounded-2xl border border-white/15 bg-white/[0.04] backdrop-blur-sm shadow-[0_20px_60px_-20px_rgba(56,189,248,0.55)]"
-          style={{
-            backgroundImage:
-              "linear-gradient(135deg, rgba(56,189,248,0.18), rgba(129,140,248,0.14) 45%, rgba(236,72,153,0.14))",
-          }}
-          aria-label="PY Kidda"
+          className="py-react relative grid place-items-center"
+          aria-label="Pyko the Python mascot"
         >
-          <span
-            className="text-3xl md:text-4xl font-bold tracking-tight bg-clip-text text-transparent select-none"
-            style={{ backgroundImage: "linear-gradient(135deg,#38bdf8,#818cf8,#f472b6)" }}
+          <svg
+            width="112"
+            height="128"
+            viewBox="0 0 84 96"
+            xmlns="http://www.w3.org/2000/svg"
+            className="drop-shadow-[0_20px_40px_rgba(56,189,248,0.35)]"
+            aria-hidden
           >
-            Py
-          </span>
+            <path
+              d="M14 78 C 6 60, 22 50, 38 56 C 56 62, 74 52, 70 32 C 66 14, 46 10, 32 18"
+              stroke="oklch(0.55 0.16 155)"
+              strokeWidth="14"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d="M14 78 C 6 60, 22 50, 38 56 C 56 62, 74 52, 70 32 C 66 14, 46 10, 32 18"
+              stroke="oklch(0.7 0.17 145)"
+              strokeWidth="8"
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray="2 10"
+              opacity="0.6"
+            />
+            <ellipse cx="30" cy="20" rx="18" ry="14" fill="oklch(0.72 0.17 145)" />
+            <ellipse cx="30" cy="22" rx="16" ry="11" fill="oklch(0.82 0.13 145)" />
+            <rect x="14" y="6" width="32" height="4" rx="1" fill="#1a1a2e" />
+            <polygon points="30,2 50,8 30,14 10,8" fill="#1a1a2e" />
+            <circle cx="46" cy="10" r="1.6" fill="oklch(0.85 0.18 85)" />
+            <path d="M46 11 L 50 22" stroke="oklch(0.85 0.18 85)" strokeWidth="1.4" />
+            <circle cx="24" cy="22" r="4" fill="white" stroke="#1a1a2e" strokeWidth="1.4" />
+            <circle cx="36" cy="22" r="4" fill="white" stroke="#1a1a2e" strokeWidth="1.4" />
+            <line x1="28" y1="22" x2="32" y2="22" stroke="#1a1a2e" strokeWidth="1.4" />
+            <circle cx="24" cy="22" r="1.6" fill="#1a1a2e">
+              <animate attributeName="r" values="1.6;1.6;0.2;1.6" keyTimes="0;0.85;0.9;1" dur="3.6s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="36" cy="22" r="1.6" fill="#1a1a2e">
+              <animate attributeName="r" values="1.6;1.6;0.2;1.6" keyTimes="0;0.85;0.9;1" dur="3.6s" repeatCount="indefinite" />
+            </circle>
+            <path d="M26 28 Q 30 31 34 28" stroke="#1a1a2e" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+            <path d="M16 22 l -5 -1 l 2 2 l -2 2 l 5 -1" fill="oklch(0.65 0.22 25)" />
+            <rect x="44" y="64" width="22" height="14" rx="2" fill="#1a1a2e" />
+            <rect x="46" y="66" width="18" height="10" rx="1" fill="oklch(0.78 0.16 200)" />
+            <rect x="42" y="78" width="26" height="2" rx="1" fill="#0f1024" />
+          </svg>
         </div>
       </div>
+
 
     </div>
   );
