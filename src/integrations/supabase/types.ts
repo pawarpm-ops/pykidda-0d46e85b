@@ -1415,6 +1415,8 @@ export type Database = {
         Args: { _activity_type: string; _reference_id?: string }
         Returns: {
           current_streak: number
+          freeze_used: boolean
+          freezes_available: number
           is_new_day: boolean
           longest_streak: number
           today_completed: boolean
