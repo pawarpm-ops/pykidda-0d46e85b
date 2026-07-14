@@ -202,8 +202,7 @@ export function ReviewPopup() {
         role="dialog"
         aria-modal="true"
       >
-        {/* Mascot */}
-        <SnakeMascot celebrating={submitted} pointingStars={rating === 0} />
+        {submitted && <Confetti />}
 
         {/* Close */}
         <button
