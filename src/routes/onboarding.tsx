@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import pyMascotAsset from "@/assets/py-mascot.png.asset.json";
+
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -235,7 +237,7 @@ function OnboardingPage() {
 
       {/* Main */}
       <main className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-6 pt-10 pb-16 md:pt-16">
-        <PyMascot speaking={!done} reacting={done} />
+        <PyMascot step={step} done={done} />
 
         {/* Speech bubble */}
         <div className="relative mt-4 max-w-md rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white/85 shadow-lg backdrop-blur">
@@ -307,42 +309,43 @@ function OnboardingPage() {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes breathe {
+        @keyframes pyFloat {
           0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-4px) scale(1.02); }
+          50% { transform: translateY(-8px) scale(1.012); }
         }
-        @keyframes sway {
-          0%, 100% { transform: rotate(-2deg); }
-          50% { transform: rotate(2deg); }
+        @keyframes pyEntrance {
+          from { opacity: 0; transform: translateY(24px) scale(0.94); filter: blur(6px); }
+          to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
-        @keyframes blink {
-          0%, 92%, 100% { transform: scaleY(1); }
-          95% { transform: scaleY(0.1); }
+        @keyframes pyPulseGlow {
+          0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.08); }
         }
-        @keyframes tongue {
-          0%, 80%, 100% { transform: scaleX(1); opacity: 1; }
-          90% { transform: scaleX(1.4); opacity: 0.8; }
+        @keyframes pyReact {
+          0% { transform: scale(1) rotate(0deg); }
+          40% { transform: scale(1.04) rotate(-1.2deg); }
+          100% { transform: scale(1) rotate(0deg); }
         }
-        @keyframes celebrate {
-          0% { transform: translateY(0) rotate(0); }
-          25% { transform: translateY(-10px) rotate(-6deg); }
-          50% { transform: translateY(0) rotate(0); }
-          75% { transform: translateY(-8px) rotate(6deg); }
-          100% { transform: translateY(0) rotate(0); }
+        @keyframes pyCelebrate {
+          0% { transform: translateY(0) scale(1); }
+          30% { transform: translateY(-10px) scale(1.03); }
+          60% { transform: translateY(-2px) scale(1.015); }
+          100% { transform: translateY(0) scale(1); }
         }
-        .py-breathe { animation: breathe 3.6s ease-in-out infinite; transform-origin: center; }
-        .py-sway { animation: sway 4.2s ease-in-out infinite; transform-origin: 50% 90%; }
-        .py-blink { animation: blink 4.8s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-        .py-tongue { animation: tongue 3.2s ease-in-out infinite; transform-origin: left center; transform-box: fill-box; }
-        .py-celebrate { animation: celebrate 1.2s ease-in-out infinite; }
+        .py-entrance { animation: pyEntrance 900ms cubic-bezier(.2,.7,.2,1) both; }
+        .py-float { animation: pyFloat 6s ease-in-out infinite; }
+        .py-react { animation: pyReact 700ms cubic-bezier(.2,.7,.2,1); }
+        .py-celebrate { animation: pyCelebrate 1400ms cubic-bezier(.2,.7,.2,1) infinite; }
+        .py-glow { animation: pyPulseGlow 5s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .py-breathe, .py-sway, .py-blink, .py-tongue, .py-celebrate,
+          .py-entrance, .py-float, .py-react, .py-celebrate, .py-glow,
           .animate-\\[fadeSlide_\\.35s_ease-out\\], .animate-\\[fadeSlide_\\.4s_ease-out\\] {
             animation: none !important;
           }
         }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.7); cursor: pointer; }
       `}</style>
+
     </div>
   );
 }
@@ -473,82 +476,43 @@ function BackgroundGlow() {
   );
 }
 
-function PyMascot({ speaking, reacting }: { speaking: boolean; reacting: boolean }) {
+function PyMascot({ step, done }: { step: number; done: boolean }) {
+  // re-trigger reaction animation on step change
+  const reactKey = `${step}-${done ? "d" : "s"}`;
   return (
-    <div className={`relative h-40 w-40 md:h-48 md:w-48 ${reacting ? "py-celebrate" : "py-breathe"}`}>
-      <svg viewBox="0 0 200 200" className="h-full w-full drop-shadow-[0_20px_30px_rgba(56,189,248,0.35)]">
-        <defs>
-          <radialGradient id="pyBody" cx="35%" cy="30%" r="80%">
-            <stop offset="0%" stopColor="#7dd3fc" />
-            <stop offset="55%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#1d4ed8" />
-          </radialGradient>
-          <radialGradient id="pyBelly" cx="50%" cy="50%" r="60%">
-            <stop offset="0%" stopColor="#fde68a" />
-            <stop offset="100%" stopColor="#f59e0b" />
-          </radialGradient>
-          <radialGradient id="pyShine" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.9)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-          </radialGradient>
-        </defs>
-
-        {/* Body coil */}
-        <g className="py-sway">
-          <path
-            d="M40 150 Q30 100 70 90 Q120 82 130 60 Q135 35 105 30 Q75 27 70 50"
-            fill="none"
-            stroke="url(#pyBody)"
-            strokeWidth="26"
-            strokeLinecap="round"
+    <div className="relative py-entrance">
+      {/* Soft radial glow blending image edges into navy bg */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[130%] w-[130%] py-glow"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(56,189,248,0.28) 0%, rgba(129,140,248,0.15) 35%, rgba(10,16,36,0) 70%)",
+          filter: "blur(8px)",
+        }}
+      />
+      <div className={`relative ${done ? "py-celebrate" : "py-float"}`}>
+        <div key={reactKey} className="py-react">
+          <img
+            src={pyMascotAsset.url}
+            alt="Py, a majestic 3D python mascot with golden-brown scales and glowing blue eyes"
+            width={1024}
+            height={1024}
+            loading="eager"
+            decoding="async"
+            className="h-44 w-44 md:h-56 md:w-56 lg:h-64 lg:w-64 object-contain select-none"
+            style={{
+              WebkitMaskImage:
+                "radial-gradient(ellipse at center, black 62%, transparent 92%)",
+              maskImage:
+                "radial-gradient(ellipse at center, black 62%, transparent 92%)",
+              filter: "drop-shadow(0 24px 40px rgba(56,189,248,0.35))",
+            }}
+            draggable={false}
           />
-          {/* Head */}
-          <g>
-            <ellipse cx="105" cy="60" rx="38" ry="32" fill="url(#pyBody)" />
-            {/* Belly patch */}
-            <ellipse cx="105" cy="72" rx="20" ry="14" fill="url(#pyBelly)" opacity="0.85" />
-            {/* Shine */}
-            <ellipse cx="90" cy="45" rx="14" ry="8" fill="url(#pyShine)" opacity="0.7" />
-
-            {/* Eyes */}
-            <g>
-              <ellipse cx="92" cy="55" rx="7" ry="8" fill="white" />
-              <ellipse cx="118" cy="55" rx="7" ry="8" fill="white" />
-              <circle className="py-blink" cx="93" cy="56" r="3.4" fill="#0f172a" />
-              <circle className="py-blink" cx="119" cy="56" r="3.4" fill="#0f172a" />
-              <circle cx="94" cy="55" r="1.2" fill="white" />
-              <circle cx="120" cy="55" r="1.2" fill="white" />
-            </g>
-
-            {/* Smile */}
-            <path
-              d="M96 72 Q105 80 116 72"
-              stroke="#0f172a"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              fill="none"
-            />
-            {/* Tongue */}
-            {speaking && (
-              <path
-                className="py-tongue"
-                d="M108 78 Q116 84 122 80"
-                stroke="#f43f5e"
-                strokeWidth="2"
-                strokeLinecap="round"
-                fill="none"
-              />
-            )}
-
-            {/* Cheeks */}
-            <circle cx="82" cy="66" r="3.5" fill="#fb7185" opacity="0.6" />
-            <circle cx="128" cy="66" r="3.5" fill="#fb7185" opacity="0.6" />
-          </g>
-        </g>
-
-        {/* Ground shadow */}
-        <ellipse cx="90" cy="178" rx="46" ry="6" fill="black" opacity="0.35" />
-      </svg>
+        </div>
+      </div>
     </div>
   );
 }
+
