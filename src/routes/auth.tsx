@@ -6,6 +6,13 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { logHealthEventClient } from "@/lib/system-health-client";
 
+// Only allow same-origin relative paths as post-login destinations.
+function safeNext(v: unknown): string {
+  if (typeof v !== "string") return "/";
+  if (!v.startsWith("/") || v.startsWith("//")) return "/";
+  return v;
+}
+
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
@@ -13,27 +20,38 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Sign in with Google to practice Python on PY Kidda." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({ next: safeNext(s.next) }),
   component: AuthPage,
   ssr: false,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/", replace: true });
+      if (data.session) {
+        if (next && next !== "/") window.location.href = next;
+        else navigate({ to: "/", replace: true });
+      }
     });
-  }, [navigate]);
+  }, [navigate, next]);
 
   async function signInGoogle() {
     setError(null);
     setBusy(true);
     try {
+      // Preserve `next` through the Google round-trip so the user returns to
+      // the same page (e.g. the OAuth consent screen).
+      const returnTo =
+        window.location.origin +
+        "/auth" +
+        (next && next !== "/" ? `?next=${encodeURIComponent(next)}` : "");
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/auth",
+        redirect_uri: returnTo,
       });
       if (result.error) {
         const msg = result.error instanceof Error ? result.error.message : "Google login failed. Please try again.";
@@ -50,8 +68,9 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      // Session already set by wrapper — AuthGate routes based on onboarding/role.
-      navigate({ to: "/", replace: true });
+      // Session already set by wrapper — honor `next` if present.
+      if (next && next !== "/") window.location.href = next;
+      else navigate({ to: "/", replace: true });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Google login failed. Please try again.";
       setError(msg);
