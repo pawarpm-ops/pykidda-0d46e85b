@@ -476,82 +476,43 @@ function BackgroundGlow() {
   );
 }
 
-function PyMascot({ speaking, reacting }: { speaking: boolean; reacting: boolean }) {
+function PyMascot({ step, done }: { step: number; done: boolean }) {
+  // re-trigger reaction animation on step change
+  const reactKey = `${step}-${done ? "d" : "s"}`;
   return (
-    <div className={`relative h-40 w-40 md:h-48 md:w-48 ${reacting ? "py-celebrate" : "py-breathe"}`}>
-      <svg viewBox="0 0 200 200" className="h-full w-full drop-shadow-[0_20px_30px_rgba(56,189,248,0.35)]">
-        <defs>
-          <radialGradient id="pyBody" cx="35%" cy="30%" r="80%">
-            <stop offset="0%" stopColor="#7dd3fc" />
-            <stop offset="55%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#1d4ed8" />
-          </radialGradient>
-          <radialGradient id="pyBelly" cx="50%" cy="50%" r="60%">
-            <stop offset="0%" stopColor="#fde68a" />
-            <stop offset="100%" stopColor="#f59e0b" />
-          </radialGradient>
-          <radialGradient id="pyShine" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.9)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-          </radialGradient>
-        </defs>
-
-        {/* Body coil */}
-        <g className="py-sway">
-          <path
-            d="M40 150 Q30 100 70 90 Q120 82 130 60 Q135 35 105 30 Q75 27 70 50"
-            fill="none"
-            stroke="url(#pyBody)"
-            strokeWidth="26"
-            strokeLinecap="round"
+    <div className="relative py-entrance">
+      {/* Soft radial glow blending image edges into navy bg */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[130%] w-[130%] py-glow"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(56,189,248,0.28) 0%, rgba(129,140,248,0.15) 35%, rgba(10,16,36,0) 70%)",
+          filter: "blur(8px)",
+        }}
+      />
+      <div className={`relative ${done ? "py-celebrate" : "py-float"}`}>
+        <div key={reactKey} className="py-react">
+          <img
+            src={pyMascotAsset.url}
+            alt="Py, a majestic 3D python mascot with golden-brown scales and glowing blue eyes"
+            width={1024}
+            height={1024}
+            loading="eager"
+            decoding="async"
+            className="h-44 w-44 md:h-56 md:w-56 lg:h-64 lg:w-64 object-contain select-none"
+            style={{
+              WebkitMaskImage:
+                "radial-gradient(ellipse at center, black 62%, transparent 92%)",
+              maskImage:
+                "radial-gradient(ellipse at center, black 62%, transparent 92%)",
+              filter: "drop-shadow(0 24px 40px rgba(56,189,248,0.35))",
+            }}
+            draggable={false}
           />
-          {/* Head */}
-          <g>
-            <ellipse cx="105" cy="60" rx="38" ry="32" fill="url(#pyBody)" />
-            {/* Belly patch */}
-            <ellipse cx="105" cy="72" rx="20" ry="14" fill="url(#pyBelly)" opacity="0.85" />
-            {/* Shine */}
-            <ellipse cx="90" cy="45" rx="14" ry="8" fill="url(#pyShine)" opacity="0.7" />
-
-            {/* Eyes */}
-            <g>
-              <ellipse cx="92" cy="55" rx="7" ry="8" fill="white" />
-              <ellipse cx="118" cy="55" rx="7" ry="8" fill="white" />
-              <circle className="py-blink" cx="93" cy="56" r="3.4" fill="#0f172a" />
-              <circle className="py-blink" cx="119" cy="56" r="3.4" fill="#0f172a" />
-              <circle cx="94" cy="55" r="1.2" fill="white" />
-              <circle cx="120" cy="55" r="1.2" fill="white" />
-            </g>
-
-            {/* Smile */}
-            <path
-              d="M96 72 Q105 80 116 72"
-              stroke="#0f172a"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              fill="none"
-            />
-            {/* Tongue */}
-            {speaking && (
-              <path
-                className="py-tongue"
-                d="M108 78 Q116 84 122 80"
-                stroke="#f43f5e"
-                strokeWidth="2"
-                strokeLinecap="round"
-                fill="none"
-              />
-            )}
-
-            {/* Cheeks */}
-            <circle cx="82" cy="66" r="3.5" fill="#fb7185" opacity="0.6" />
-            <circle cx="128" cy="66" r="3.5" fill="#fb7185" opacity="0.6" />
-          </g>
-        </g>
-
-        {/* Ground shadow */}
-        <ellipse cx="90" cy="178" rx="46" ry="6" fill="black" opacity="0.35" />
-      </svg>
+        </div>
+      </div>
     </div>
   );
 }
+
