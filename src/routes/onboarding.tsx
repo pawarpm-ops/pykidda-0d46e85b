@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import pyMascotAsset from "@/assets/py-mascot.png.asset.json";
+
 
 
 export const Route = createFileRoute("/onboarding")({
