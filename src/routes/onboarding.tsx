@@ -309,42 +309,43 @@ function OnboardingPage() {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes breathe {
+        @keyframes pyFloat {
           0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-4px) scale(1.02); }
+          50% { transform: translateY(-8px) scale(1.012); }
         }
-        @keyframes sway {
-          0%, 100% { transform: rotate(-2deg); }
-          50% { transform: rotate(2deg); }
+        @keyframes pyEntrance {
+          from { opacity: 0; transform: translateY(24px) scale(0.94); filter: blur(6px); }
+          to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
         }
-        @keyframes blink {
-          0%, 92%, 100% { transform: scaleY(1); }
-          95% { transform: scaleY(0.1); }
+        @keyframes pyPulseGlow {
+          0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.08); }
         }
-        @keyframes tongue {
-          0%, 80%, 100% { transform: scaleX(1); opacity: 1; }
-          90% { transform: scaleX(1.4); opacity: 0.8; }
+        @keyframes pyReact {
+          0% { transform: scale(1) rotate(0deg); }
+          40% { transform: scale(1.04) rotate(-1.2deg); }
+          100% { transform: scale(1) rotate(0deg); }
         }
-        @keyframes celebrate {
-          0% { transform: translateY(0) rotate(0); }
-          25% { transform: translateY(-10px) rotate(-6deg); }
-          50% { transform: translateY(0) rotate(0); }
-          75% { transform: translateY(-8px) rotate(6deg); }
-          100% { transform: translateY(0) rotate(0); }
+        @keyframes pyCelebrate {
+          0% { transform: translateY(0) scale(1); }
+          30% { transform: translateY(-10px) scale(1.03); }
+          60% { transform: translateY(-2px) scale(1.015); }
+          100% { transform: translateY(0) scale(1); }
         }
-        .py-breathe { animation: breathe 3.6s ease-in-out infinite; transform-origin: center; }
-        .py-sway { animation: sway 4.2s ease-in-out infinite; transform-origin: 50% 90%; }
-        .py-blink { animation: blink 4.8s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-        .py-tongue { animation: tongue 3.2s ease-in-out infinite; transform-origin: left center; transform-box: fill-box; }
-        .py-celebrate { animation: celebrate 1.2s ease-in-out infinite; }
+        .py-entrance { animation: pyEntrance 900ms cubic-bezier(.2,.7,.2,1) both; }
+        .py-float { animation: pyFloat 6s ease-in-out infinite; }
+        .py-react { animation: pyReact 700ms cubic-bezier(.2,.7,.2,1); }
+        .py-celebrate { animation: pyCelebrate 1400ms cubic-bezier(.2,.7,.2,1) infinite; }
+        .py-glow { animation: pyPulseGlow 5s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .py-breathe, .py-sway, .py-blink, .py-tongue, .py-celebrate,
+          .py-entrance, .py-float, .py-react, .py-celebrate, .py-glow,
           .animate-\\[fadeSlide_\\.35s_ease-out\\], .animate-\\[fadeSlide_\\.4s_ease-out\\] {
             animation: none !important;
           }
         }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.7); cursor: pointer; }
       `}</style>
+
     </div>
   );
 }
