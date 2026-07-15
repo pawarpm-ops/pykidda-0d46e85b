@@ -82,6 +82,8 @@ function PracticeSolvePage() {
   const handleSubmit = useCallback(
     async (outcome: RunOutcome) => {
       if (!question) return;
+      const solved =
+        outcome.passedCount === outcome.totalCount && outcome.totalCount > 0;
       try {
         await submitFn({
           data: {
@@ -89,16 +91,28 @@ function PracticeSolvePage() {
             unit: question.unit,
             passed: outcome.passedCount,
             total: outcome.totalCount,
-            solved:
-              outcome.passedCount === outcome.totalCount && outcome.totalCount > 0,
+            solved,
           },
         });
+        if (solved) {
+          toast.success("Attempt submitted 🎉", {
+            description: `Solved with ${outcome.passedCount}/${outcome.totalCount} tests passing.`,
+          });
+        } else {
+          toast("Attempt saved", {
+            description: `${outcome.passedCount}/${outcome.totalCount} tests passed. Keep trying!`,
+          });
+        }
       } catch (e) {
         console.error("[practice] submit failed", e);
+        toast.error("Could not submit attempt", {
+          description: e instanceof Error ? e.message : "Please try again.",
+        });
       }
     },
     [question, submitFn],
   );
+
 
   if (isDb && isLoading) {
     return (
