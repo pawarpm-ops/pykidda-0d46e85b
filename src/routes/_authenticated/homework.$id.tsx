@@ -95,7 +95,10 @@ function HomeworkDetailPage() {
 
   const questions = (data?.questions ?? []) as Question[];
   const submission = data?.submission ?? null;
-  const readOnly = submission?.status === "checked";
+  const submittedStatuses = ["submitted", "late", "checked", "returned"];
+  const alreadySubmitted = submission ? submittedStatuses.includes(submission.status) : false;
+  const isChecked = submission?.status === "checked";
+  const readOnly = alreadySubmitted; // once submitted, no more edits/resubmission
   const overdue = data?.homework.due_at
     ? new Date(data.homework.due_at) < new Date()
     : false;
@@ -247,7 +250,7 @@ function HomeworkDetailPage() {
           </div>
         )}
 
-        {readOnly && (
+        {isChecked ? (
           <div className="mt-4 rounded-xl border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/10 p-4 text-sm">
             <p className="font-bold">Checked by teacher</p>
             <p className="mt-1 text-muted-foreground">
@@ -257,7 +260,15 @@ function HomeworkDetailPage() {
               <p className="mt-2 whitespace-pre-wrap">{submission.teacher_feedback}</p>
             )}
           </div>
-        )}
+        ) : alreadySubmitted ? (
+          <div className="mt-4 rounded-xl border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/10 p-4 text-sm">
+            <p className="font-bold">Already submitted ✅</p>
+            <p className="mt-1 text-muted-foreground">
+              You submitted this homework{submission?.submitted_at ? ` on ${new Date(submission.submitted_at).toLocaleString()}` : ""}
+              {submission?.status === "late" ? " (marked late)" : ""}. You can view your answers but can't change or resubmit them.
+            </p>
+          </div>
+        ) : null}
 
         {questions.length === 0 ? (
           <p className="mt-8 text-sm text-muted-foreground">No questions in this homework yet.</p>
@@ -312,7 +323,14 @@ function HomeworkDetailPage() {
         )}
 
         <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-border pt-6">
-          {!readOnly && (
+          {readOnly ? (
+            <button
+              disabled
+              className="rounded-md border border-border bg-secondary/40 px-4 py-2 text-sm font-semibold text-muted-foreground cursor-not-allowed"
+            >
+              Already submitted ✅
+            </button>
+          ) : (
             <button
               onClick={() => setConfirmOpen(true)}
               disabled={overdue && !hw.allow_late_submission}
@@ -327,7 +345,13 @@ function HomeworkDetailPage() {
             </button>
           )}
           <span className="text-xs text-muted-foreground">
-            {savedAt ? `Draft saved at ${savedAt}` : readOnly ? "Checked — read-only" : "Autosaves as you type"}
+            {savedAt
+              ? `Draft saved at ${savedAt}`
+              : isChecked
+                ? "Checked — read-only"
+                : alreadySubmitted
+                  ? "Submitted — read-only"
+                  : "Autosaves as you type"}
           </span>
         </div>
       </main>
