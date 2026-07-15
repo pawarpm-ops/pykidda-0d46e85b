@@ -21,6 +21,15 @@ const Input = z.object({
     .max(5),
 });
 
+const Correction = z.object({
+  startLine: z.number().int().positive(),
+  endLine: z.number().int().positive(),
+  originalCode: z.string().max(1000),
+  replacementCode: z.string().max(1000),
+  explanation: z.string().max(400),
+  confidence: z.enum(["high", "medium", "low"]).default("medium"),
+});
+
 const Output = z.object({
   errorType: z.string(),
   errorTypeFriendly: z.string(),
@@ -31,7 +40,9 @@ const Output = z.object({
   howToFix: z.array(z.string()).max(8),
   miniExample: z.string().default(""),
   tryThisNext: z.string(),
+  corrections: z.array(Correction).max(3).default([]),
 });
+
 
 export type AiFeedback = z.infer<typeof Output>;
 
