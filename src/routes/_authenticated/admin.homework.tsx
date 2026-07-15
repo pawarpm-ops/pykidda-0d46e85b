@@ -90,20 +90,23 @@ function AdminHomeworkList() {
         {/* Two entry cards */}
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <button
-            onClick={() => { setShowManual(true); setShowAi(false); }}
-            className="group text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-accent hover:scale-[1.02] hover:shadow-[var(--shadow-warm)]"
+            onClick={handleCreateManual}
+            disabled={busy}
+            className="group text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-accent hover:scale-[1.02] hover:shadow-[var(--shadow-warm)] disabled:opacity-60"
           >
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-accent/15 p-3 text-accent"><Pencil size={22} /></div>
               <h3 className="text-lg font-bold">Create Homework Manually</h3>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              Start with a title, then add questions yourself — description, sample I/O, test cases, marks, and due date.
+              Jump straight into the homework editor — set the title, description, due date, and add questions one by one.
             </p>
-            <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-accent group-hover:underline">Open manual form →</p>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-accent group-hover:underline">
+              {busy ? "Opening editor…" : "Open editor →"}
+            </p>
           </button>
           <button
-            onClick={() => { setShowAi(true); setShowManual(false); }}
+            onClick={() => setShowAi(true)}
             className="group text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-[var(--shadow-warm)]"
           >
             <div className="flex items-center gap-3">
@@ -116,38 +119,6 @@ function AdminHomeworkList() {
             <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-primary group-hover:underline">Open AI generator →</p>
           </button>
         </div>
-
-        {showManual && (
-          <div className="mt-4 rounded-xl border border-accent/40 bg-accent/5 p-4">
-            <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Homework title
-            </label>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <input
-                autoFocus
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="e.g. Unit 3 — Functions & Recursion"
-                className="flex-1 min-w-[220px] rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              />
-              <button
-                onClick={handleCreate}
-                disabled={busy || !newTitle.trim()}
-                className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
-                style={{ backgroundImage: "var(--gradient-sunrise)" }}
-              >
-                Create
-              </button>
-              <button
-                onClick={() => { setShowManual(false); setNewTitle(""); }}
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
 
         {showAi && (
           <AiHomeworkDialog
