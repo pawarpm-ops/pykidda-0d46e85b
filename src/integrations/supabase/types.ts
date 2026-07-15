@@ -1120,6 +1120,8 @@ export type Database = {
           current_streak: number
           id: string
           last_activity_date: string | null
+          last_freeze_grant_month: string | null
+          last_freeze_used_at: string | null
           longest_streak: number
           streak_freezes_available: number
           streak_freezes_used: number
@@ -1132,6 +1134,8 @@ export type Database = {
           current_streak?: number
           id?: string
           last_activity_date?: string | null
+          last_freeze_grant_month?: string | null
+          last_freeze_used_at?: string | null
           longest_streak?: number
           streak_freezes_available?: number
           streak_freezes_used?: number
@@ -1144,6 +1148,8 @@ export type Database = {
           current_streak?: number
           id?: string
           last_activity_date?: string | null
+          last_freeze_grant_month?: string | null
+          last_freeze_used_at?: string | null
           longest_streak?: number
           streak_freezes_available?: number
           streak_freezes_used?: number
