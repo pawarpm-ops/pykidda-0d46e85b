@@ -196,10 +196,12 @@ Analyse and respond with the JSON object described in the system message.`;
         if (c.startLine < 1 || c.endLine < c.startLine || c.endLine > totalLines) return false;
         const span = c.endLine - c.startLine + 1;
         if (span > 5) return false;
-        // Reject "whole program" replacements.
         if (span >= totalLines) return false;
         const actual = codeLines.slice(c.startLine - 1, c.endLine).join("\n");
-        return actual === c.originalCode;
+        if (actual === c.originalCode) return true;
+        // Whitespace-tolerant fallback (trailing spaces / trailing newline differences).
+        const norm = (s: string) => s.replace(/[ \t]+$/gm, "").replace(/\s+$/, "");
+        return norm(actual) === norm(c.originalCode);
       });
       return { ...validated, corrections: safeCorrections };
 
