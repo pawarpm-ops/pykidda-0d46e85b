@@ -364,26 +364,27 @@ function AdminPage() {
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
           <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "streaks", "announce", "reports", "reviews", "homework", "audit", "health"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => {
-                  if (t === "homework") {
-                    navigate({ to: "/admin/homework" });
-                  } else {
-                    setTab(t);
-                  }
-                }}
-                className={`px-3 py-1.5 rounded transition ${
-                  tab === t
-                    ? "font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-                    : "hover:bg-secondary"
-                }`}
-                style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
-              >
-                {t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : t === "audit" ? "📜 Audit log" : t === "health" ? "🩺 System Health" : "📚 Homework"}
-              </button>
-            ))}
+            {(["overview", "students", "activity", "streaks", "announce", "reports", "reviews", "homework", "audit", "health"] as const).map((t) => {
+              const label = t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : t === "audit" ? "📜 Audit log" : t === "health" ? "🩺 System Health" : "📚 Homework";
+              const cls = `px-3 py-1.5 rounded transition ${
+                tab === t
+                  ? "font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                  : "hover:bg-secondary"
+              }`;
+              const style = tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined;
+              if (t === "homework") {
+                return (
+                  <Link key={t} to="/admin/homework" className={cls} style={style}>
+                    {label}
+                  </Link>
+                );
+              }
+              return (
+                <button key={t} onClick={() => setTab(t)} className={cls} style={style}>
+                  {label}
+                </button>
+              );
+            })}
             <button
               onClick={() => navigate({ to: "/admin/ai-mock" })}
               className="px-3 py-1.5 rounded transition font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
