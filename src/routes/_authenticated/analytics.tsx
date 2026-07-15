@@ -19,6 +19,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { ViolationAnalytics } from "@/components/ViolationAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { computeAnalytics, getProgress, clearProgress, type Analytics } from "@/lib/progress";
+import { getMyAnalyticsData } from "@/lib/analytics.functions";
 import { QUESTIONS } from "@/lib/questions";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
