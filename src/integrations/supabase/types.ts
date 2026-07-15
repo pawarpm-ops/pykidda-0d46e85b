@@ -506,6 +506,7 @@ export type Database = {
           created_by: string
           description: string
           due_at: string | null
+          estimated_minutes: number | null
           id: string
           instructions: string | null
           status: string
@@ -519,6 +520,7 @@ export type Database = {
           created_by: string
           description?: string
           due_at?: string | null
+          estimated_minutes?: number | null
           id?: string
           instructions?: string | null
           status?: string
@@ -532,6 +534,7 @@ export type Database = {
           created_by?: string
           description?: string
           due_at?: string | null
+          estimated_minutes?: number | null
           id?: string
           instructions?: string | null
           status?: string
