@@ -1060,6 +1060,7 @@ export type Database = {
           gender: string | null
           id: string
           onboarded: boolean
+          presence_status: string
           public_profile_id: string | null
           public_profile_settings: Json
           qr_created_at: string | null
@@ -1082,6 +1083,7 @@ export type Database = {
           gender?: string | null
           id: string
           onboarded?: boolean
+          presence_status?: string
           public_profile_id?: string | null
           public_profile_settings?: Json
           qr_created_at?: string | null
@@ -1104,6 +1106,7 @@ export type Database = {
           gender?: string | null
           id?: string
           onboarded?: boolean
+          presence_status?: string
           public_profile_id?: string | null
           public_profile_settings?: Json
           qr_created_at?: string | null

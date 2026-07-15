@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS presence_status TEXT NOT NULL DEFAULT 'active' CHECK (presence_status IN ('active','idle','offline'));
