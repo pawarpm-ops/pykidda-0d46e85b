@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/SiteHeader";
-import { QUESTIONS, type CodeQuestion } from "@/lib/questions";
+import type { CodeQuestion } from "@/lib/questions";
 import { listPublishedPracticeQuestions } from "@/lib/practice-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/practice/")({
@@ -42,11 +42,6 @@ function PracticeListPage() {
 
   const grouped = useMemo(() => {
     const g = new Map<number, CodeQuestion[]>();
-    for (const q of QUESTIONS) {
-      const arr = g.get(q.unit) ?? [];
-      arr.push(q);
-      g.set(q.unit, arr);
-    }
     for (const r of dbQs ?? []) {
       const testCount = Array.isArray(r.tests) ? r.tests.length : 0;
       const q: CodeQuestion = {
