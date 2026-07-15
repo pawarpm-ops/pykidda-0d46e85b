@@ -602,6 +602,49 @@ export const adminDeleteQuestion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminDuplicateQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+    const { data: src, error: sErr } = await supabaseAdmin
+      .from("homework_questions")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!src) throw new Error("Question not found");
+    const { data: sib } = await supabaseAdmin
+      .from("homework_questions")
+      .select("question_order")
+      .eq("homework_id", src.homework_id)
+      .order("question_order", { ascending: false })
+      .limit(1);
+    const nextOrder = ((sib?.[0]?.question_order as number | undefined) ?? 0) + 1;
+    const {
+      id: _omit,
+      created_at: _c,
+      updated_at: _u,
+      ...rest
+    } = src as Record<string, unknown>;
+    void _omit; void _c; void _u;
+    const insertRow = {
+      ...rest,
+      question_order: nextOrder,
+      title: `${(src as { title?: string }).title ?? "Question"} (copy)`,
+    };
+    const { data: inserted, error } = await (context as Ctx).supabase
+      .from("homework_questions")
+      .insert(insertRow)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: inserted.id };
+  });
+
 export const adminReorderQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
