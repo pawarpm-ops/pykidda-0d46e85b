@@ -69,7 +69,7 @@ function PracticeSolvePage() {
         marks: r.marks,
       };
     }
-    return QUESTIONS.find((q) => q.id === qid);
+    return undefined;
   }, [qid, isDb, dbRow]);
 
   useEffect(() => {
