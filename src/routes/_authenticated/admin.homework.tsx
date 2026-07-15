@@ -31,9 +31,7 @@ function AdminHomeworkList() {
   const deleteFn = useServerFn(adminDeleteHomework);
 
   const [tab, setTab] = useState<Tab>("all");
-  const [showManual, setShowManual] = useState(false);
   const [showAi, setShowAi] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
   const [busy, setBusy] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
@@ -44,20 +42,19 @@ function AdminHomeworkList() {
   type HRow = Awaited<ReturnType<typeof adminListHomework>>[number];
   const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => tab === "all" || h.status === tab);
 
-  async function handleCreate() {
-    if (!newTitle.trim() || busy) return;
+  async function handleCreateManual() {
+    if (busy) return;
     setBusy(true);
     try {
       const res = await createFn({
         data: {
-          title: newTitle.trim(),
+          title: "Untitled homework",
           description: "",
           status: "draft",
           allow_late_submission: true,
         },
       });
-      setNewTitle("");
-      setShowManual(false);
+      setShowAi(false);
       navigate({ to: "/admin/homework/$id", params: { id: res.id } });
     } finally {
       setBusy(false);
