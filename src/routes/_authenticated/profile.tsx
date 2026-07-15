@@ -49,6 +49,8 @@ function ProfilePage() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [presenceStatus, setPresenceStatus] = useState<"active" | "idle" | "offline">("active");
+  const [savingStatus, setSavingStatus] = useState(false);
 
   const [publicId, setPublicId] = useState<string | null>(null);
   const [studentUniqueId, setStudentUniqueId] = useState<string | null>(null);
