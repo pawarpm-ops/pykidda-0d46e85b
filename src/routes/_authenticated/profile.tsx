@@ -206,10 +206,19 @@ function ProfilePage() {
 
   const initial = (displayName || email || "?").trim().charAt(0).toUpperCase();
 
+  const tabs: { key: TabKey; label: string; icon: LucideIcon }[] = [
+    { key: "profile", label: "Your Profile", icon: User },
+    { key: "streak", label: "Streak", icon: Flame },
+    { key: "badges", label: "Badges", icon: Award },
+    { key: "qr", label: "QR & Privacy", icon: QrCode },
+    { key: "reports", label: "Reports", icon: FileText },
+    { key: "tutorial", label: "Website Tutorial", icon: GraduationCap },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-2xl px-6 py-10">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
         <button
           type="button"
           onClick={() => {
@@ -233,289 +242,322 @@ function ProfilePage() {
         {loading ? (
           <p className="mt-10 text-muted-foreground">Loading…</p>
         ) : (
-          <form
-            onSubmit={save}
-            className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)] flex flex-col gap-5"
-          >
-            <div className="flex items-center gap-4">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarUrl}
-                  alt="Avatar preview"
-                  className="h-16 w-16 rounded-full object-cover border border-border"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              ) : (
-                <span
-                  className="inline-flex h-16 w-16 items-center justify-center rounded-full text-2xl font-black text-primary-foreground"
-                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                >
-                  {initial}
-                </span>
-              )}
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold truncate">{displayName || "Unnamed kidda"}</p>
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold"
-                    style={{
-                      borderColor:
-                        presenceStatus === "active"
-                          ? "oklch(0.65 0.15 145 / 0.4)"
-                          : presenceStatus === "idle"
-                            ? "oklch(0.75 0.15 85 / 0.4)"
-                            : "oklch(0.6 0 0 / 0.3)",
-                      color:
-                        presenceStatus === "active"
-                          ? "oklch(0.5 0.15 145)"
-                          : presenceStatus === "idle"
-                            ? "oklch(0.55 0.15 70)"
-                            : "oklch(0.5 0 0)",
-                      backgroundColor:
-                        presenceStatus === "active"
-                          ? "oklch(0.65 0.15 145 / 0.1)"
-                          : presenceStatus === "idle"
-                            ? "oklch(0.75 0.15 85 / 0.1)"
-                            : "oklch(0.6 0 0 / 0.08)",
-                    }}
-                    aria-label={`Status: ${presenceStatus}`}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
+            {/* Vertical sidebar nav */}
+            <nav
+              className="md:sticky md:top-6 md:self-start rounded-2xl border border-border bg-card p-2 shadow-[var(--shadow-warm)] flex md:flex-col gap-1 overflow-x-auto md:overflow-visible"
+              aria-label="Profile sections"
+            >
+              {tabs.map((t) => {
+                const Icon = t.icon;
+                const selected = activeTab === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setActiveTab(t.key)}
+                    aria-current={selected ? "page" : undefined}
+                    className={`inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition text-left whitespace-nowrap ${
+                      selected
+                        ? "bg-accent text-accent-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
                   >
-                    <span
-                      className={`inline-block h-2 w-2 rounded-full ${presenceStatus === "active" ? "animate-pulse" : ""}`}
-                      style={{
-                        backgroundColor:
-                          presenceStatus === "active"
-                            ? "oklch(0.65 0.18 145)"
-                            : presenceStatus === "idle"
-                              ? "oklch(0.75 0.18 80)"
-                              : "oklch(0.55 0 0)",
-                      }}
-                    />
-                    {presenceStatus.charAt(0).toUpperCase() + presenceStatus.slice(1)}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground truncate">{email}</p>
-                {studentUniqueId && (
-                  <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-accent">
-                    <span className="opacity-70">Student ID:</span>
-                    <span className="tracking-wider">{studentUniqueId}</span>
-                  </p>
-                )}
-              </div>
-            </div>
+                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
 
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium">Status</span>
-              <div className="inline-flex rounded-lg border border-input bg-background p-1 w-fit" role="radiogroup" aria-label="Presence status">
-                {(["active", "idle", "offline"] as const).map((s) => {
-                  const selected = presenceStatus === s;
-                  const dotColor =
-                    s === "active"
-                      ? "oklch(0.65 0.18 145)"
-                      : s === "idle"
-                        ? "oklch(0.75 0.18 80)"
-                        : "oklch(0.55 0 0)";
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      disabled={savingStatus}
-                      onClick={() => { if (!selected) void updatePresenceStatus(s); }}
-                      className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                        selected ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            {/* Section content */}
+            <div className="min-w-0">
+              {activeTab === "profile" && (
+                <form
+                  onSubmit={save}
+                  className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)] flex flex-col gap-5"
+                >
+                  <div className="flex items-center gap-4">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt="Avatar preview"
+                        className="h-16 w-16 rounded-full object-cover border border-border"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <span
+                        className="inline-flex h-16 w-16 items-center justify-center rounded-full text-2xl font-black text-primary-foreground"
+                        style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                      >
+                        {initial}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold truncate">{displayName || "Unnamed kidda"}</p>
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+                          style={{
+                            borderColor:
+                              presenceStatus === "active"
+                                ? "oklch(0.65 0.15 145 / 0.4)"
+                                : presenceStatus === "idle"
+                                  ? "oklch(0.75 0.15 85 / 0.4)"
+                                  : "oklch(0.6 0 0 / 0.3)",
+                            color:
+                              presenceStatus === "active"
+                                ? "oklch(0.5 0.15 145)"
+                                : presenceStatus === "idle"
+                                  ? "oklch(0.55 0.15 70)"
+                                  : "oklch(0.5 0 0)",
+                            backgroundColor:
+                              presenceStatus === "active"
+                                ? "oklch(0.65 0.15 145 / 0.1)"
+                                : presenceStatus === "idle"
+                                  ? "oklch(0.75 0.15 85 / 0.1)"
+                                  : "oklch(0.6 0 0 / 0.08)",
+                          }}
+                          aria-label={`Status: ${presenceStatus}`}
+                        >
+                          <span
+                            className={`inline-block h-2 w-2 rounded-full ${presenceStatus === "active" ? "animate-pulse" : ""}`}
+                            style={{
+                              backgroundColor:
+                                presenceStatus === "active"
+                                  ? "oklch(0.65 0.18 145)"
+                                  : presenceStatus === "idle"
+                                    ? "oklch(0.75 0.18 80)"
+                                    : "oklch(0.55 0 0)",
+                            }}
+                          />
+                          {presenceStatus.charAt(0).toUpperCase() + presenceStatus.slice(1)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{email}</p>
+                      {studentUniqueId && (
+                        <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-accent">
+                          <span className="opacity-70">Student ID:</span>
+                          <span className="tracking-wider">{studentUniqueId}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium">Status</span>
+                    <div className="inline-flex rounded-lg border border-input bg-background p-1 w-fit" role="radiogroup" aria-label="Presence status">
+                      {(["active", "idle", "offline"] as const).map((s) => {
+                        const selected = presenceStatus === s;
+                        const dotColor =
+                          s === "active"
+                            ? "oklch(0.65 0.18 145)"
+                            : s === "idle"
+                              ? "oklch(0.75 0.18 80)"
+                              : "oklch(0.55 0 0)";
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            disabled={savingStatus}
+                            onClick={() => { if (!selected) void updatePresenceStatus(s); }}
+                            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                              selected ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: dotColor }} />
+                            {s.charAt(0).toUpperCase() + s.slice(1)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Let others know if you're around. Shown on your public profile.
+                    </span>
+                  </div>
+
+                  <label className="flex flex-col gap-1">
+                    <span className="text-sm font-medium">Display name</span>
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      maxLength={60}
+                      placeholder="e.g. Ada Lovelace"
+                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+                    />
+                    <span className="text-xs text-muted-foreground">{displayName.length}/60</span>
+                  </label>
+
+                  <label className="flex flex-col gap-1">
+                    <span className="text-sm font-medium">Bio</span>
+                    <textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      maxLength={280}
+                      rows={4}
+                      placeholder="A short intro — what are you learning?"
+                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent resize-y"
+                    />
+                    <span className="text-xs text-muted-foreground">{bio.length}/280</span>
+                  </label>
+
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium">Avatar image</span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label
+                        className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted ${
+                          uploading ? "pointer-events-none opacity-60" : ""
+                        }`}
+                      >
+                        {uploading ? "Uploading…" : avatarUrl ? "Change photo" : "Choose photo"}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/gif"
+                          className="hidden"
+                          disabled={uploading}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            e.target.value = "";
+                            if (f) void handleAvatarFile(f);
+                          }}
+                        />
+                      </label>
+                      {avatarUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setAvatarUrl("")}
+                          className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      PNG, JPEG, WebP, or GIF. Max 3 MB. Leave empty for the gradient avatar.
+                    </span>
+                  </div>
+
+                  {msg && (
+                    <div
+                      className={`rounded-md border p-3 text-sm ${
+                        msg.kind === "ok"
+                          ? "border-[oklch(0.65_0.15_145)]/40 bg-[oklch(0.65_0.15_145)]/10 text-[oklch(0.45_0.15_145)]"
+                          : "border-destructive/40 bg-destructive/10 text-destructive"
                       }`}
                     >
-                      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: dotColor }} />
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                      {msg.text}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
+                      style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                    >
+                      {saving ? "Saving…" : "Save profile"}
                     </button>
-                  );
-                })}
-              </div>
-              <span className="text-xs text-muted-foreground">
-                Let others know if you're around. Shown on your public profile.
-              </span>
-            </div>
+                  </div>
+                </form>
+              )}
 
+              {activeTab === "streak" && <StreakCard />}
 
+              {activeTab === "badges" && (
+                <div className="flex flex-col gap-6">
+                  <YourNextBadges />
+                  {userId && <BadgesGrid studentId={userId} />}
+                </div>
+              )}
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Display name</span>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                maxLength={60}
-                placeholder="e.g. Ada Lovelace"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-              />
-              <span className="text-xs text-muted-foreground">{displayName.length}/60</span>
-            </label>
+              {activeTab === "qr" && (
+                <div className="flex flex-col gap-6">
+                  {publicId && (
+                    <ProfileQrCard publicId={publicId} displayName={displayName} enabled={qrEnabled} />
+                  )}
+                  <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-bold">Public QR profile settings</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Control exactly what people see when they scan your QR code. Personal info
+                          (email, phone, birth date) is never shared — even if all switches are on.
+                        </p>
+                      </div>
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-sm font-semibold">
+                        <input
+                          type="checkbox"
+                          checked={qrEnabled}
+                          onChange={toggleQrEnabled}
+                          disabled={savingPrivacy}
+                          className="h-4 w-4"
+                        />
+                        {qrEnabled ? "QR profile is ON" : "QR profile is OFF"}
+                      </label>
+                    </div>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Bio</span>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                maxLength={280}
-                rows={4}
-                placeholder="A short intro — what are you learning?"
-                className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent resize-y"
-              />
-              <span className="text-xs text-muted-foreground">{bio.length}/280</span>
-            </label>
+                    <div className={`mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 ${qrEnabled ? "" : "opacity-50 pointer-events-none"}`}>
+                      {(
+                        [
+                          ["showAvatar", "Show avatar"],
+                          ["showClass", "Show class / college"],
+                          ["showStreak", "Show streak 🔥"],
+                          ["showBadges", "Show badges 🏅"],
+                          ["showCertificates", "Show certificates"],
+                          ["showLeaderboardRank", "Show leaderboard rank"],
+                          ["showCompletedUnits", "Show completed units & progress"],
+                        ] as [keyof PublicProfileSettings, string][]
+                      ).map(([key, label]) => (
+                        <label
+                          key={key}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm"
+                        >
+                          <span>{label}</span>
+                          <input
+                            type="checkbox"
+                            checked={publicSettings[key]}
+                            onChange={() => toggleSetting(key)}
+                            disabled={savingPrivacy}
+                            className="h-4 w-4"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium">Avatar image</span>
-              <div className="flex flex-wrap items-center gap-3">
-                <label
-                  className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted ${
-                    uploading ? "pointer-events-none opacity-60" : ""
-                  }`}
-                >
-                  {uploading ? "Uploading…" : avatarUrl ? "Change photo" : "Choose photo"}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    className="hidden"
-                    disabled={uploading}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (f) void handleAvatarFile(f);
-                    }}
-                  />
-                </label>
-                {avatarUrl && (
+              {activeTab === "reports" && userId && <MyReports userId={userId} />}
+
+              {activeTab === "tutorial" && (
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
+                  <h2 className="text-lg font-bold">Website tutorial</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Replay the friendly onboarding tour with Pyko, your Python guide.
+                  </p>
                   <button
                     type="button"
-                    onClick={() => setAvatarUrl("")}
-                    className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+                    onClick={() => restartTutorial()}
+                    className="mt-4 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold hover:border-accent transition-colors"
                   >
-                    Remove
+                    🐍 Restart website tutorial
                   </button>
-                )}
-              </div>
-              <span className="text-xs text-muted-foreground">
-                PNG, JPEG, WebP, or GIF. Max 3 MB. Leave empty for the gradient avatar.
-              </span>
+                </div>
+              )}
             </div>
-
-            {msg && (
-              <div
-                className={`rounded-md border p-3 text-sm ${
-                  msg.kind === "ok"
-                    ? "border-[oklch(0.65_0.15_145)]/40 bg-[oklch(0.65_0.15_145)]/10 text-[oklch(0.45_0.15_145)]"
-                    : "border-destructive/40 bg-destructive/10 text-destructive"
-                }`}
-              >
-                {msg.text}
-              </div>
-            )}
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
-                style={{ backgroundImage: "var(--gradient-sunrise)" }}
-              >
-                {saving ? "Saving…" : "Save profile"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        <div className="mt-8">
-          <StreakCard />
-        </div>
-
-        <YourNextBadges />
-
-        {userId && <BadgesGrid studentId={userId} />}
-
-        {publicId && (
-          <div className="mt-8">
-            <ProfileQrCard publicId={publicId} displayName={displayName} enabled={qrEnabled} />
           </div>
         )}
-
-        <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold">Public QR profile settings</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Control exactly what people see when they scan your QR code. Personal info
-                (email, phone, birth date) is never shared — even if all switches are on.
-              </p>
-            </div>
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-sm font-semibold">
-              <input
-                type="checkbox"
-                checked={qrEnabled}
-                onChange={toggleQrEnabled}
-                disabled={savingPrivacy}
-                className="h-4 w-4"
-              />
-              {qrEnabled ? "QR profile is ON" : "QR profile is OFF"}
-            </label>
-          </div>
-
-          <div className={`mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 ${qrEnabled ? "" : "opacity-50 pointer-events-none"}`}>
-            {(
-              [
-                ["showAvatar", "Show avatar"],
-                ["showClass", "Show class / college"],
-                ["showStreak", "Show streak 🔥"],
-                ["showBadges", "Show badges 🏅"],
-                ["showCertificates", "Show certificates"],
-                ["showLeaderboardRank", "Show leaderboard rank"],
-                ["showCompletedUnits", "Show completed units & progress"],
-              ] as [keyof PublicProfileSettings, string][]
-            ).map(([key, label]) => (
-              <label
-                key={key}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm"
-              >
-                <span>{label}</span>
-                <input
-                  type="checkbox"
-                  checked={publicSettings[key]}
-                  onChange={() => toggleSetting(key)}
-                  disabled={savingPrivacy}
-                  className="h-4 w-4"
-                />
-              </label>
-            ))}
-          </div>
-        </div>
-
-
-
-
-        <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-warm)]">
-          <h2 className="text-lg font-bold">Website tutorial</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Replay the friendly onboarding tour with Pyko, your Python guide.
-          </p>
-          <button
-            type="button"
-            onClick={() => restartTutorial()}
-            className="mt-4 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold hover:border-accent transition-colors"
-          >
-            🐍 Restart website tutorial
-          </button>
-        </div>
-
-        {userId && <MyReports userId={userId} />}
       </main>
     </div>
   );
 }
+
 
 type MyReport = {
   id: string;
