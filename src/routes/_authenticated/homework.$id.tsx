@@ -250,7 +250,7 @@ function HomeworkDetailPage() {
           </div>
         )}
 
-        {readOnly && (
+        {isChecked ? (
           <div className="mt-4 rounded-xl border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/10 p-4 text-sm">
             <p className="font-bold">Checked by teacher</p>
             <p className="mt-1 text-muted-foreground">
@@ -260,7 +260,15 @@ function HomeworkDetailPage() {
               <p className="mt-2 whitespace-pre-wrap">{submission.teacher_feedback}</p>
             )}
           </div>
-        )}
+        ) : alreadySubmitted ? (
+          <div className="mt-4 rounded-xl border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/10 p-4 text-sm">
+            <p className="font-bold">Already submitted ✅</p>
+            <p className="mt-1 text-muted-foreground">
+              You submitted this homework{submission?.submitted_at ? ` on ${new Date(submission.submitted_at).toLocaleString()}` : ""}
+              {submission?.status === "late" ? " (marked late)" : ""}. You can view your answers but can't change or resubmit them.
+            </p>
+          </div>
+        ) : null}
 
         {questions.length === 0 ? (
           <p className="mt-8 text-sm text-muted-foreground">No questions in this homework yet.</p>
