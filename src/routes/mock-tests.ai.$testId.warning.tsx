@@ -108,6 +108,7 @@ function Warning() {
       try {
         const { test } = await getFn({ data: { id: testId } });
         setTest(test as TestMeta);
+        void recordDailyStreakVisit("mock_opened", testId);
       } catch (e) {
         setLoadError((e as Error).message);
       }
