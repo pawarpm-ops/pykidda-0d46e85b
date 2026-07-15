@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/SiteHeader";
 import type { CodeQuestion } from "@/lib/questions";
 import { listPublishedPracticeQuestions } from "@/lib/practice-admin.functions";
+import { recordStreakActivity } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/practice/")({
   head: () => ({
