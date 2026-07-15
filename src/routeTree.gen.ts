@@ -44,6 +44,7 @@ import { Route as MockTestsAiTestIdWarningRouteImport } from './routes/mock-test
 import { Route as MockTestsAiTestIdTakeRouteImport } from './routes/mock-tests.ai.$testId.take'
 import { Route as MockTestsAiTestIdResultRouteImport } from './routes/mock-tests.ai.$testId.result'
 import { Route as AuthenticatedMockTestsScheduledTestIdRouteImport } from './routes/_authenticated/mock-tests.scheduled.$testId'
+import { Route as AuthenticatedAdminHomeworkNewRouteImport } from './routes/_authenticated/admin.homework.new'
 import { Route as AuthenticatedAdminHomeworkIdRouteImport } from './routes/_authenticated/admin.homework.$id'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -237,6 +238,12 @@ const AuthenticatedMockTestsScheduledTestIdRoute =
     path: '/mock-tests/scheduled/$testId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminHomeworkNewRoute =
+  AuthenticatedAdminHomeworkNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedAdminHomeworkRoute,
+  } as any)
 const AuthenticatedAdminHomeworkIdRoute =
   AuthenticatedAdminHomeworkIdRouteImport.update({
     id: '/$id',
@@ -276,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/homework/': typeof AuthenticatedHomeworkIndexRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
   '/admin/homework/$id': typeof AuthenticatedAdminHomeworkIdRoute
+  '/admin/homework/new': typeof AuthenticatedAdminHomeworkNewRoute
   '/mock-tests/scheduled/$testId': typeof AuthenticatedMockTestsScheduledTestIdRoute
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
@@ -313,6 +321,7 @@ export interface FileRoutesByTo {
   '/homework': typeof AuthenticatedHomeworkIndexRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
   '/admin/homework/$id': typeof AuthenticatedAdminHomeworkIdRoute
+  '/admin/homework/new': typeof AuthenticatedAdminHomeworkNewRoute
   '/mock-tests/scheduled/$testId': typeof AuthenticatedMockTestsScheduledTestIdRoute
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
@@ -352,6 +361,7 @@ export interface FileRoutesById {
   '/_authenticated/homework/': typeof AuthenticatedHomeworkIndexRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
   '/_authenticated/admin/homework/$id': typeof AuthenticatedAdminHomeworkIdRoute
+  '/_authenticated/admin/homework/new': typeof AuthenticatedAdminHomeworkNewRoute
   '/_authenticated/mock-tests/scheduled/$testId': typeof AuthenticatedMockTestsScheduledTestIdRoute
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/homework/'
     | '/practice/'
     | '/admin/homework/$id'
+    | '/admin/homework/new'
     | '/mock-tests/scheduled/$testId'
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/homework'
     | '/practice'
     | '/admin/homework/$id'
+    | '/admin/homework/new'
     | '/mock-tests/scheduled/$testId'
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
@@ -466,6 +478,7 @@ export interface FileRouteTypes {
     | '/_authenticated/homework/'
     | '/_authenticated/practice/'
     | '/_authenticated/admin/homework/$id'
+    | '/_authenticated/admin/homework/new'
     | '/_authenticated/mock-tests/scheduled/$testId'
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
@@ -740,6 +753,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMockTestsScheduledTestIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/homework/new': {
+      id: '/_authenticated/admin/homework/new'
+      path: '/new'
+      fullPath: '/admin/homework/new'
+      preLoaderRoute: typeof AuthenticatedAdminHomeworkNewRouteImport
+      parentRoute: typeof AuthenticatedAdminHomeworkRoute
+    }
     '/_authenticated/admin/homework/$id': {
       id: '/_authenticated/admin/homework/$id'
       path: '/$id'
@@ -752,11 +772,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminHomeworkRouteChildren {
   AuthenticatedAdminHomeworkIdRoute: typeof AuthenticatedAdminHomeworkIdRoute
+  AuthenticatedAdminHomeworkNewRoute: typeof AuthenticatedAdminHomeworkNewRoute
 }
 
 const AuthenticatedAdminHomeworkRouteChildren: AuthenticatedAdminHomeworkRouteChildren =
   {
     AuthenticatedAdminHomeworkIdRoute: AuthenticatedAdminHomeworkIdRoute,
+    AuthenticatedAdminHomeworkNewRoute: AuthenticatedAdminHomeworkNewRoute,
   }
 
 const AuthenticatedAdminHomeworkRouteWithChildren =
