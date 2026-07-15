@@ -36,6 +36,21 @@ import { SystemHealthTab } from "@/components/SystemHealthTab";
 import { logAdminActionClient } from "@/lib/audit-log-client";
 import { BadgesGrid } from "@/components/BadgesGrid";
 import { AdminBadgesOverview } from "@/components/AdminBadgesOverview";
+import {
+  LayoutDashboard,
+  Users,
+  Activity as ActivityIcon,
+  Flame,
+  Award,
+  Megaphone,
+  FileText,
+  Star,
+  ClipboardList,
+  ScrollText,
+  HeartPulse,
+  FlaskConical,
+  type LucideIcon,
+} from "lucide-react";
 
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -364,39 +379,70 @@ function AdminPage() {
             <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">Teacher dashboard</h1>
             <p className="mt-1 text-muted-foreground">Track every student's progress and send announcements.</p>
           </div>
-          <div className="flex gap-1 rounded-md border border-border bg-card p-1 text-sm flex-wrap">
-            {(["overview", "students", "activity", "streaks", "badges", "announce", "reports", "reviews", "homework", "audit", "health"] as const).map((t) => {
-              const label = t === "overview" ? "Overview" : t === "students" ? "Students" : t === "activity" ? "Activity logs" : t === "streaks" ? "🔥 Streaks" : t === "badges" ? "🏅 Badges" : t === "announce" ? "Announcements" : t === "reports" ? "Reports" : t === "reviews" ? "Reviews" : t === "audit" ? "📜 Audit log" : t === "health" ? "🩺 System Health" : "📚 Homework";
-              const cls = `px-3 py-1.5 rounded transition ${
-                tab === t
-                  ? "font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-                  : "hover:bg-secondary"
-              }`;
-              const style = tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined;
-              if (t === "homework") {
-                return (
-                  <Link key={t} to="/admin/homework" className={cls} style={style}>
-                    {label}
-                  </Link>
-                );
-              }
+        </div>
+
+
+
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
+          <nav
+            className="md:sticky md:top-6 md:self-start rounded-2xl border border-border bg-card p-2 shadow-[var(--shadow-warm)] flex md:flex-col gap-1 overflow-x-auto md:overflow-visible"
+            aria-label="Admin sections"
+          >
+            {([
+              { key: "overview", label: "Overview", icon: LayoutDashboard },
+              { key: "students", label: "Students", icon: Users },
+              { key: "activity", label: "Activity logs", icon: ActivityIcon },
+              { key: "streaks", label: "Streaks", icon: Flame },
+              { key: "badges", label: "Badges", icon: Award },
+              { key: "announce", label: "Announcements", icon: Megaphone },
+              { key: "reports", label: "Reports", icon: FileText },
+              { key: "reviews", label: "Reviews", icon: Star },
+              { key: "audit", label: "Audit log", icon: ScrollText },
+              { key: "health", label: "System Health", icon: HeartPulse },
+            ] as const).map((t) => {
+              const Icon = t.icon;
+              const selected = tab === t.key;
               return (
-                <button key={t} onClick={() => setTab(t)} className={cls} style={style}>
-                  {label}
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setTab(t.key)}
+                  aria-current={selected ? "page" : undefined}
+                  className={`inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition text-left whitespace-nowrap ${
+                    selected
+                      ? "bg-accent text-accent-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{t.label}</span>
                 </button>
               );
             })}
+
+            <Link
+              to="/admin/homework"
+              className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition whitespace-nowrap"
+            >
+              <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Homework</span>
+            </Link>
+
             <button
+              type="button"
               onClick={() => navigate({ to: "/admin/ai-mock" })}
-              className="px-3 py-1.5 rounded transition font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+              className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] transition whitespace-nowrap"
               style={{ backgroundImage: "var(--gradient-sunrise)" }}
               title="Open AI Mock Test Creator"
             >
-              🧪 AI Mock Creator
+              <FlaskConical className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>AI Mock Creator</span>
             </button>
-          </div>
+          </nav>
 
-        </div>
+          <div className="min-w-0">
+
 
 
 
@@ -568,8 +614,10 @@ function AdminPage() {
           </section>
         )}
 
-
+          </div>
+        </div>
       </main>
+
     </div>
   );
 }
