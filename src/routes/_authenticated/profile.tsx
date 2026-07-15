@@ -67,7 +67,7 @@ function ProfilePage() {
       setUserId(u.user.id);
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name, bio, avatar_url, public_profile_id, student_unique_id, qr_enabled, public_profile_settings")
+        .select("display_name, bio, avatar_url, public_profile_id, student_unique_id, qr_enabled, public_profile_settings, presence_status")
         .eq("id", u.user.id)
         .maybeSingle();
       if (error) {
@@ -83,6 +83,8 @@ function ProfilePage() {
           ...DEFAULT_PUBLIC_SETTINGS,
           ...((data.public_profile_settings as Partial<PublicProfileSettings>) ?? {}),
         });
+        const ps = (data as { presence_status?: string }).presence_status;
+        if (ps === "active" || ps === "idle" || ps === "offline") setPresenceStatus(ps);
       }
       setLoading(false);
     })();
