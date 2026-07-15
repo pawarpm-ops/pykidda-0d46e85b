@@ -1,0 +1,105 @@
+CREATE OR REPLACE FUNCTION public.record_streak_activity(_activity_type text, _reference_id text DEFAULT NULL::text)
+ RETURNS TABLE(current_streak integer, longest_streak integer, today_completed boolean, is_new_day boolean, freeze_used boolean, freezes_available integer)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  _uid UUID := auth.uid();
+  _today DATE := (now() AT TIME ZONE 'Asia/Kolkata')::date;
+  _month_start DATE := date_trunc('month', _today)::date;
+  _row public.student_streaks;
+  _new_streak INTEGER;
+  _new_longest INTEGER;
+  _is_new_day BOOLEAN := false;
+  _counts_toward_streak BOOLEAN;
+  _freeze_used BOOLEAN := false;
+  _avail INTEGER;
+BEGIN
+  IF _uid IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  _counts_toward_streak := _activity_type IN (
+    'homework_opened',
+    'practice_opened',
+    'mock_opened',
+    'scheduled_mock_opened',
+    'homework_submitted',
+    'practice_question_solved',
+    'practice_set_completed',
+    'mock_test_attempted',
+    'coding_question_solved',
+    'daily_challenge_completed'
+  );
+
+  INSERT INTO public.student_streaks(user_id, current_streak, longest_streak, last_activity_date, today_completed)
+  VALUES (_uid, 0, 0, NULL, false)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  SELECT * INTO _row FROM public.student_streaks WHERE user_id = _uid FOR UPDATE;
+
+  IF _row.last_freeze_grant_month IS NULL OR _row.last_freeze_grant_month < _month_start THEN
+    UPDATE public.student_streaks ss
+      SET streak_freezes_available = 1,
+          last_freeze_grant_month = _month_start
+      WHERE ss.user_id = _uid;
+    _row.streak_freezes_available := 1;
+    _row.last_freeze_grant_month := _month_start;
+  END IF;
+
+  IF NOT _counts_toward_streak THEN
+    INSERT INTO public.streak_activity_logs(user_id, activity_date, activity_type, activity_reference_id, streak_count_after_activity, points_earned)
+    VALUES (_uid, _today, _activity_type, _reference_id, COALESCE(_row.current_streak, 0), 0);
+
+    current_streak := COALESCE(_row.current_streak, 0);
+    longest_streak := COALESCE(_row.longest_streak, 0);
+    today_completed := COALESCE(_row.today_completed, false);
+    is_new_day := false;
+    freeze_used := false;
+    freezes_available := COALESCE(_row.streak_freezes_available, 0);
+    RETURN NEXT;
+    RETURN;
+  END IF;
+
+  IF _row.last_activity_date = _today THEN
+    _new_streak := _row.current_streak;
+  ELSIF _row.last_activity_date = _today - INTERVAL '1 day' THEN
+    _new_streak := _row.current_streak + 1;
+    _is_new_day := true;
+  ELSIF _row.last_activity_date IS NOT NULL AND COALESCE(_row.streak_freezes_available, 0) > 0
+        AND (_today - _row.last_activity_date) = 2 THEN
+    _new_streak := _row.current_streak + 1;
+    _is_new_day := true;
+    _freeze_used := true;
+  ELSE
+    _new_streak := 1;
+    _is_new_day := true;
+  END IF;
+
+  _new_longest := GREATEST(COALESCE(_row.longest_streak, 0), _new_streak);
+
+  UPDATE public.student_streaks ss
+  SET current_streak = _new_streak,
+      longest_streak = _new_longest,
+      last_activity_date = _today,
+      today_completed = true,
+      streak_freezes_available = CASE WHEN _freeze_used THEN GREATEST(ss.streak_freezes_available - 1, 0) ELSE ss.streak_freezes_available END,
+      streak_freezes_used = CASE WHEN _freeze_used THEN ss.streak_freezes_used + 1 ELSE ss.streak_freezes_used END,
+      last_freeze_used_at = CASE WHEN _freeze_used THEN now() ELSE ss.last_freeze_used_at END
+  WHERE ss.user_id = _uid
+  RETURNING ss.streak_freezes_available INTO _avail;
+
+  INSERT INTO public.streak_activity_logs(user_id, activity_date, activity_type, activity_reference_id, streak_count_after_activity, points_earned)
+  VALUES (_uid, _today, _activity_type, _reference_id, _new_streak, 10);
+
+  current_streak := _new_streak;
+  longest_streak := _new_longest;
+  today_completed := true;
+  is_new_day := _is_new_day;
+  freeze_used := _freeze_used;
+  freezes_available := COALESCE(_avail, 0);
+  RETURN NEXT;
+  RETURN;
+END;
+$function$;
