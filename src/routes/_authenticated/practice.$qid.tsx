@@ -2,12 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CodeRunner, type RunOutcome } from "@/components/CodeRunner";
 import type { CodeQuestion } from "@/lib/questions";
 import { submitPracticeAttempt } from "@/lib/practice-attempts.functions";
 import { getPublishedPracticeQuestion } from "@/lib/practice-admin.functions";
 import { recordDailyStreakVisit } from "@/lib/streaks";
+
 
 export const Route = createFileRoute("/_authenticated/practice/$qid")({
   head: () => ({
