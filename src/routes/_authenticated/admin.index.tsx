@@ -305,7 +305,7 @@ function AdminPage() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
-        <main className="mx-auto max-w-7xl px-6 py-10">Loading admin dashboard…</main>
+        <main className="mx-auto w-full max-w-[1600px] px-4 md:px-8 py-10">Loading admin dashboard…</main>
       </div>
     );
   }
@@ -373,7 +373,7 @@ function AdminPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-6 py-10">
+      <main className="mx-auto w-full max-w-[1600px] px-4 md:px-8 py-10">
         <Link
           to="/"
           className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground/80 hover:border-primary/50 hover:text-foreground transition-colors mb-4"
