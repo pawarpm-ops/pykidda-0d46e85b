@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CodeRunner, type RunOutcome } from "@/components/CodeRunner";
-import { QUESTIONS, type CodeQuestion } from "@/lib/questions";
+import type { CodeQuestion } from "@/lib/questions";
 import { submitPracticeAttempt } from "@/lib/practice-attempts.functions";
 import { getPublishedPracticeQuestion } from "@/lib/practice-admin.functions";
 import { recordDailyStreakVisit } from "@/lib/streaks";
