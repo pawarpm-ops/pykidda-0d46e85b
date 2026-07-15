@@ -50,8 +50,53 @@ const HomeworkInput = z.object({
   instructions: z.string().max(20000).nullable().optional(),
   due_at: z.string().nullable().optional(),
   allow_late_submission: z.boolean().default(true),
+  estimated_minutes: z.number().int().min(1).max(100000).nullable().optional(),
   status: z.enum(["draft", "published", "closed"]).default("draft"),
 });
+
+type QRowForValidation = {
+  id: string;
+  question_type: string;
+  title: string | null;
+  description: string | null;
+  marks: number | null;
+  test_cases: unknown;
+  mcq_options: string[] | null;
+  mcq_correct: string | null;
+};
+
+function validateQuestionForPublish(q: QRowForValidation, idx: number): string[] {
+  const errs: string[] = [];
+  const label = `Q${idx + 1}`;
+  if (!q.title || !q.title.trim()) errs.push(`${label}: title is required`);
+  if (!q.description || !q.description.trim())
+    errs.push(`${label}: description is required`);
+  const marks = Number(q.marks ?? 0);
+  if (!Number.isFinite(marks) || marks <= 0)
+    errs.push(`${label}: marks must be greater than 0`);
+  if (q.question_type === "coding" || q.question_type === "practice") {
+    const tc = Array.isArray(q.test_cases) ? (q.test_cases as unknown[]) : [];
+    const valid = tc.filter(
+      (t) =>
+        t &&
+        typeof t === "object" &&
+        typeof (t as { input?: unknown }).input === "string" &&
+        typeof (t as { expected?: unknown }).expected === "string" &&
+        (t as { expected: string }).expected.length > 0,
+    );
+    if (valid.length === 0)
+      errs.push(`${label}: needs at least one valid test case`);
+  }
+  if (q.question_type === "mcq") {
+    const opts = (q.mcq_options ?? []).map((o) => (o ?? "").trim()).filter(Boolean);
+    const unique = new Set(opts);
+    if (opts.length < 2 || unique.size < 2)
+      errs.push(`${label}: needs at least two unique options`);
+    if (!q.mcq_correct || !opts.includes(q.mcq_correct.trim()))
+      errs.push(`${label}: correct option must match one of the options`);
+  }
+  return errs;
+}
 
 // ================== STUDENT ==================
 
