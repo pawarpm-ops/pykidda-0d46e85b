@@ -116,6 +116,10 @@ export function CodeRunner({
     setOutcome(null);
     setAiResult(null);
     setAiError(null);
+    setAiSnapshot(null);
+    setCorrectorDismissed(false);
+    setApplyNotice(null);
+
     try {
       await loadPyodideOnce();
       setPyReady(true);
