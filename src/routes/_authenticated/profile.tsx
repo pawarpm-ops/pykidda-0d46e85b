@@ -127,6 +127,9 @@ function ProfilePage() {
     } else {
       toast.success(`Status set to ${next}`);
     }
+  }
+
+
 
   function toggleQrEnabled() {
     const next = !qrEnabled;
