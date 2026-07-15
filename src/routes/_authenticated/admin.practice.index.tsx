@@ -43,14 +43,13 @@ function AdminPracticePage() {
     (r) => tab === "all" || r.status === tab,
   );
 
-  const grouped = Array.from(
-    filtered.reduce((m, r) => {
-      const arr = m.get(r.unit) ?? [];
-      arr.push(r);
-      m.set(r.unit, arr);
-      return m;
-    }, new Map<number, Row[]>()).entries(),
-  ).sort((a, b) => a[0] - b[0]);
+  const groupMap = new Map<number, Row[]>();
+  for (const r of filtered) {
+    const arr = groupMap.get(r.unit) ?? [];
+    arr.push(r);
+    groupMap.set(r.unit, arr);
+  }
+  const grouped = Array.from(groupMap.entries()).sort((a, b) => a[0] - b[0]);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this practice question? This cannot be undone.")) return;
