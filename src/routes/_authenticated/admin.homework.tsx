@@ -32,7 +32,6 @@ function AdminHomeworkList() {
 
   const [tab, setTab] = useState<Tab>("all");
   const [showAi, setShowAi] = useState(false);
-  const [busy, setBusy] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-homework"],
@@ -41,25 +40,6 @@ function AdminHomeworkList() {
 
   type HRow = Awaited<ReturnType<typeof adminListHomework>>[number];
   const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => tab === "all" || h.status === tab);
-
-  async function handleCreateManual() {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const res = await createFn({
-        data: {
-          title: "Untitled homework",
-          description: "",
-          status: "draft",
-          allow_late_submission: true,
-        },
-      });
-      setShowAi(false);
-      navigate({ to: "/admin/homework/$id", params: { id: res.id } });
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this homework? This cannot be undone.")) return;
