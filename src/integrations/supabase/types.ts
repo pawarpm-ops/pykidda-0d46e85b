@@ -893,6 +893,57 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_questions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          difficulty: string | null
+          hint: string | null
+          id: string
+          marks: number
+          prompt: string
+          solution: string | null
+          starter_code: string
+          status: string
+          tests: Json
+          title: string
+          unit: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string | null
+          hint?: string | null
+          id?: string
+          marks?: number
+          prompt: string
+          solution?: string | null
+          starter_code?: string
+          status?: string
+          tests?: Json
+          title: string
+          unit: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          difficulty?: string | null
+          hint?: string | null
+          id?: string
+          marks?: number
+          prompt?: string
+          solution?: string | null
+          starter_code?: string
+          status?: string
+          tests?: Json
+          title?: string
+          unit?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       problem_reports: {
         Row: {
           admin_remarks: string | null
