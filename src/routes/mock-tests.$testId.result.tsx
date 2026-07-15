@@ -303,6 +303,18 @@ function AttemptCard({ attempt: a, index, tab }: { attempt: QuestionAttempt; ind
           </div>
         </div>
       )}
+
+      {q && !allPassed && a.code.trim() && (
+        <MockAiCorrector
+          title={q.title}
+          prompt={q.prompt}
+          userCode={a.code}
+          referenceSolution={q.solution ?? ""}
+          failingTests={a.results
+            .filter((r) => !r.passed)
+            .map((r) => ({ expected: r.expected, actual: r.actual, stderr: r.stderr }))}
+        />
+      )}
     </li>
   );
 }
