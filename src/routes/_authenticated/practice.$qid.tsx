@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CodeRunner, type RunOutcome } from "@/components/CodeRunner";
-import { QUESTIONS } from "@/lib/questions";
+import { QUESTIONS, type CodeQuestion } from "@/lib/questions";
 import { submitPracticeAttempt } from "@/lib/practice-attempts.functions";
+import { getPublishedPracticeQuestion } from "@/lib/practice-admin.functions";
 import { recordDailyStreakVisit } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/practice/$qid")({
@@ -22,8 +24,53 @@ function PracticeSolvePage() {
   const { qid } = Route.useParams();
   const navigate = useNavigate();
   const submitFn = useServerFn(submitPracticeAttempt);
+  const fetchDb = useServerFn(getPublishedPracticeQuestion);
 
-  const question = useMemo(() => QUESTIONS.find((q) => q.id === qid), [qid]);
+  const isDb = qid.startsWith("db-");
+  const dbId = isDb ? qid.slice(3) : "";
+
+  const { data: dbRow, isLoading } = useQuery({
+    queryKey: ["practice-db-question", dbId],
+    queryFn: () => fetchDb({ data: { id: dbId } }),
+    enabled: isDb,
+  });
+
+  const question: CodeQuestion | undefined = useMemo(() => {
+    if (isDb) {
+      if (!dbRow) return undefined;
+      type Row = {
+        id: string;
+        unit: number;
+        title: string;
+        prompt: string;
+        starter_code: string | null;
+        tests: unknown;
+        hint: string | null;
+        solution: string | null;
+        marks: number;
+      };
+      const r = dbRow as Row;
+      const tests = Array.isArray(r.tests)
+        ? (r.tests as Array<{ stdin?: string; expected: string; label?: string }>).map((t) => ({
+            stdin: t.stdin ?? "",
+            expected: t.expected ?? "",
+            label: t.label,
+          }))
+        : [];
+      return {
+        id: qid,
+        unit: r.unit,
+        title: r.title,
+        prompt: r.prompt,
+        starterCode: r.starter_code ?? "",
+        tests,
+        hint: r.hint ?? "",
+        solution: r.solution ?? "",
+        marks: r.marks,
+      };
+    }
+    return QUESTIONS.find((q) => q.id === qid);
+  }, [qid, isDb, dbRow]);
 
   useEffect(() => {
     if (!question) return;
@@ -50,6 +97,17 @@ function PracticeSolvePage() {
     },
     [question, submitFn],
   );
+
+  if (isDb && isLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <SiteHeader />
+        <main className="mx-auto max-w-3xl px-6 py-16 text-center">
+          <p className="text-sm text-muted-foreground">Loading question…</p>
+        </main>
+      </div>
+    );
+  }
 
   if (!question) {
     return (
