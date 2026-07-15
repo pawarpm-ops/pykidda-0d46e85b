@@ -1,0 +1,1 @@
+ALTER TABLE public.homework ADD COLUMN IF NOT EXISTS estimated_minutes integer;

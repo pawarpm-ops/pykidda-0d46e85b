@@ -50,8 +50,53 @@ const HomeworkInput = z.object({
   instructions: z.string().max(20000).nullable().optional(),
   due_at: z.string().nullable().optional(),
   allow_late_submission: z.boolean().default(true),
+  estimated_minutes: z.number().int().min(1).max(100000).nullable().optional(),
   status: z.enum(["draft", "published", "closed"]).default("draft"),
 });
+
+type QRowForValidation = {
+  id: string;
+  question_type: string;
+  title: string | null;
+  description: string | null;
+  marks: number | null;
+  test_cases: unknown;
+  mcq_options: string[] | null;
+  mcq_correct: string | null;
+};
+
+function validateQuestionForPublish(q: QRowForValidation, idx: number): string[] {
+  const errs: string[] = [];
+  const label = `Q${idx + 1}`;
+  if (!q.title || !q.title.trim()) errs.push(`${label}: title is required`);
+  if (!q.description || !q.description.trim())
+    errs.push(`${label}: description is required`);
+  const marks = Number(q.marks ?? 0);
+  if (!Number.isFinite(marks) || marks <= 0)
+    errs.push(`${label}: marks must be greater than 0`);
+  if (q.question_type === "coding" || q.question_type === "practice") {
+    const tc = Array.isArray(q.test_cases) ? (q.test_cases as unknown[]) : [];
+    const valid = tc.filter(
+      (t) =>
+        t &&
+        typeof t === "object" &&
+        typeof (t as { input?: unknown }).input === "string" &&
+        typeof (t as { expected?: unknown }).expected === "string" &&
+        (t as { expected: string }).expected.length > 0,
+    );
+    if (valid.length === 0)
+      errs.push(`${label}: needs at least one valid test case`);
+  }
+  if (q.question_type === "mcq") {
+    const opts = (q.mcq_options ?? []).map((o) => (o ?? "").trim()).filter(Boolean);
+    const unique = new Set(opts);
+    if (opts.length < 2 || unique.size < 2)
+      errs.push(`${label}: needs at least two unique options`);
+    if (!q.mcq_correct || !opts.includes(q.mcq_correct.trim()))
+      errs.push(`${label}: correct option must match one of the options`);
+  }
+  return errs;
+}
 
 // ================== STUDENT ==================
 
@@ -396,18 +441,51 @@ export const adminUpdateHomework = createServerFn({ method: "POST" })
     const { id, ...updates } = data;
     const { data: before } = await supabase
       .from("homework")
-      .select("status, title")
+      .select("status, title, due_at")
       .eq("id", id)
       .maybeSingle();
+    const publishTransition =
+      !!before &&
+      before.status !== "published" &&
+      updates.status === "published";
+    // Strict server-side validation on publish
+    if (publishTransition) {
+      const nextTitle = (updates.title ?? before?.title ?? "").trim();
+      if (!nextTitle) throw new Error("Homework title is required to publish.");
+      const dueRaw = updates.due_at ?? before?.due_at ?? null;
+      if (!dueRaw)
+        throw new Error("A valid due date is required to publish.");
+      const dueDate = new Date(dueRaw);
+      if (Number.isNaN(dueDate.getTime()))
+        throw new Error("Due date is invalid.");
+      if (dueDate.getTime() <= Date.now())
+        throw new Error("Due date must be in the future.");
+      const { supabaseAdmin } = await import(
+        "@/integrations/supabase/client.server"
+      );
+      const { data: qs, error: qErr } = await supabaseAdmin
+        .from("homework_questions")
+        .select(
+          "id, question_type, title, description, marks, test_cases, mcq_options, mcq_correct",
+        )
+        .eq("homework_id", id)
+        .order("question_order");
+      if (qErr) throw new Error(qErr.message);
+      const questions = (qs ?? []) as QRowForValidation[];
+      if (questions.length === 0)
+        throw new Error("Add at least one question before publishing.");
+      const errs: string[] = [];
+      questions.forEach((q, i) => errs.push(...validateQuestionForPublish(q, i)));
+      if (errs.length)
+        throw new Error(
+          "Cannot publish — fix these issues first:\n• " + errs.join("\n• "),
+        );
+    }
     const { error } = await supabase
       .from("homework")
       .update(updates)
       .eq("id", id);
     if (error) throw new Error(error.message);
-    const publishTransition =
-      !!before &&
-      before.status !== "published" &&
-      updates.status === "published";
     if (publishTransition) {
       await supabase.from("announcements").insert({
         author_id: userId,
@@ -433,7 +511,11 @@ export const adminUpdateHomework = createServerFn({ method: "POST" })
 
 export const adminDeleteHomework = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({ id: z.string().uuid(), force: z.boolean().optional() })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context as Ctx);
     const { supabase } = context as Ctx;
@@ -442,6 +524,18 @@ export const adminDeleteHomework = createServerFn({ method: "POST" })
       .select("title, status")
       .eq("id", data.id)
       .maybeSingle();
+    if (before?.status === "published" && !data.force) {
+      const { count } = await supabase
+        .from("homework_submissions")
+        .select("id", { count: "exact", head: true })
+        .eq("homework_id", data.id)
+        .in("status", ["submitted", "late", "checked", "returned"]);
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `This homework is published and has ${count} submission(s). Close it or pass force=true to delete anyway.`,
+        );
+      }
+    }
     const { error } = await supabase
       .from("homework")
       .delete()
@@ -457,6 +551,7 @@ export const adminDeleteHomework = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
 
 export const adminAddQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -505,6 +600,49 @@ export const adminDeleteQuestion = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const adminDuplicateQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabaseAdmin } = await import(
+      "@/integrations/supabase/client.server"
+    );
+    const { data: src, error: sErr } = await supabaseAdmin
+      .from("homework_questions")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!src) throw new Error("Question not found");
+    const { data: sib } = await supabaseAdmin
+      .from("homework_questions")
+      .select("question_order")
+      .eq("homework_id", src.homework_id)
+      .order("question_order", { ascending: false })
+      .limit(1);
+    const nextOrder = ((sib?.[0]?.question_order as number | undefined) ?? 0) + 1;
+    const {
+      id: _omit,
+      created_at: _c,
+      updated_at: _u,
+      ...rest
+    } = src as Record<string, unknown>;
+    void _omit; void _c; void _u;
+    const insertRow = {
+      ...rest,
+      question_order: nextOrder,
+      title: `${(src as { title?: string }).title ?? "Question"} (copy)`,
+    };
+    const { data: inserted, error } = await (context as Ctx).supabase
+      .from("homework_questions")
+      .insert(insertRow)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: inserted.id };
   });
 
 export const adminReorderQuestions = createServerFn({ method: "POST" })
