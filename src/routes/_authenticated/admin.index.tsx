@@ -390,16 +390,16 @@ function AdminPage() {
             aria-label="Admin sections"
           >
             {([
-              { key: "overview", label: "Overview", icon: LayoutDashboard },
-              { key: "students", label: "Students", icon: Users },
-              { key: "activity", label: "Activity logs", icon: ActivityIcon },
-              { key: "streaks", label: "Streaks", icon: Flame },
-              { key: "badges", label: "Badges", icon: Award },
-              { key: "announce", label: "Announcements", icon: Megaphone },
-              { key: "reports", label: "Reports", icon: FileText },
-              { key: "reviews", label: "Reviews", icon: Star },
-              { key: "audit", label: "Audit log", icon: ScrollText },
-              { key: "health", label: "System Health", icon: HeartPulse },
+              { key: "overview", label: "Overview", icon: LayoutDashboard, emoji: "📊" },
+              { key: "students", label: "Students", icon: Users, emoji: "👥" },
+              { key: "activity", label: "Activity logs", icon: ActivityIcon, emoji: "📈" },
+              { key: "streaks", label: "Streaks", icon: Flame, emoji: "🔥" },
+              { key: "badges", label: "Badges", icon: Award, emoji: "🏅" },
+              { key: "announce", label: "Announcements", icon: Megaphone, emoji: "📢" },
+              { key: "reports", label: "Reports", icon: FileText, emoji: "📝" },
+              { key: "reviews", label: "Reviews", icon: Star, emoji: "⭐" },
+              { key: "audit", label: "Audit log", icon: ScrollText, emoji: "📜" },
+              { key: "health", label: "System Health", icon: HeartPulse, emoji: "🩺" },
             ] as const).map((t) => {
               const Icon = t.icon;
               const selected = tab === t.key;
@@ -416,6 +416,7 @@ function AdminPage() {
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span aria-hidden="true">{t.emoji}</span>
                   <span>{t.label}</span>
                 </button>
               );
@@ -426,6 +427,7 @@ function AdminPage() {
               className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition whitespace-nowrap"
             >
               <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span aria-hidden="true">📚</span>
               <span>Homework</span>
             </Link>
 
@@ -437,8 +439,10 @@ function AdminPage() {
               title="Open AI Mock Test Creator"
             >
               <FlaskConical className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span aria-hidden="true">🧪</span>
               <span>AI Mock Creator</span>
             </button>
+
           </nav>
 
           <div className="min-w-0">
