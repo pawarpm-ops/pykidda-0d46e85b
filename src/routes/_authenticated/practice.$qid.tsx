@@ -2,12 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CodeRunner, type RunOutcome } from "@/components/CodeRunner";
 import type { CodeQuestion } from "@/lib/questions";
 import { submitPracticeAttempt } from "@/lib/practice-attempts.functions";
 import { getPublishedPracticeQuestion } from "@/lib/practice-admin.functions";
 import { recordDailyStreakVisit } from "@/lib/streaks";
+
 
 export const Route = createFileRoute("/_authenticated/practice/$qid")({
   head: () => ({
@@ -80,6 +82,8 @@ function PracticeSolvePage() {
   const handleSubmit = useCallback(
     async (outcome: RunOutcome) => {
       if (!question) return;
+      const solved =
+        outcome.passedCount === outcome.totalCount && outcome.totalCount > 0;
       try {
         await submitFn({
           data: {
@@ -87,16 +91,28 @@ function PracticeSolvePage() {
             unit: question.unit,
             passed: outcome.passedCount,
             total: outcome.totalCount,
-            solved:
-              outcome.passedCount === outcome.totalCount && outcome.totalCount > 0,
+            solved,
           },
         });
+        if (solved) {
+          toast.success("Attempt submitted 🎉", {
+            description: `Solved with ${outcome.passedCount}/${outcome.totalCount} tests passing.`,
+          });
+        } else {
+          toast("Attempt saved", {
+            description: `${outcome.passedCount}/${outcome.totalCount} tests passed. Keep trying!`,
+          });
+        }
       } catch (e) {
         console.error("[practice] submit failed", e);
+        toast.error("Could not submit attempt", {
+          description: e instanceof Error ? e.message : "Please try again.",
+        });
       }
     },
     [question, submitFn],
   );
+
 
   if (isDb && isLoading) {
     return (
