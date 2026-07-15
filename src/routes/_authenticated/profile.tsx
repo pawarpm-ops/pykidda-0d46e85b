@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { User, Flame, Award, FileText, GraduationCap, QrCode, type LucideIcon } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StreakCard } from "@/components/StreakCard";
 import { ProfileQrCard } from "@/components/ProfileQrCard";
