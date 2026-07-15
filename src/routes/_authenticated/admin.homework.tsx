@@ -69,22 +69,21 @@ function AdminHomeworkList() {
 
         {/* Two entry cards */}
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <button
-            onClick={handleCreateManual}
-            disabled={busy}
-            className="group text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-accent hover:scale-[1.02] hover:shadow-[var(--shadow-warm)] disabled:opacity-60"
+          <Link
+            to="/admin/homework/new"
+            className="group text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-accent hover:scale-[1.02] hover:shadow-[var(--shadow-warm)]"
           >
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-accent/15 p-3 text-accent"><Pencil size={22} /></div>
               <h3 className="text-lg font-bold">Create Homework Manually</h3>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              Jump straight into the homework editor — set the title, description, due date, and add questions one by one.
+              Open the manual editor — set the title, description, due date, and add questions one by one.
             </p>
             <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-accent group-hover:underline">
-              {busy ? "Opening editor…" : "Open editor →"}
+              Open editor →
             </p>
-          </button>
+          </Link>
           <button
             onClick={() => setShowAi(true)}
             className="group text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-[var(--shadow-warm)]"
