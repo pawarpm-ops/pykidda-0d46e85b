@@ -260,6 +260,36 @@ function AiHomeworkDialog({
   const [publish, setPublish] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [refFile, setRefFile] = useState<{
+    name: string;
+    mime: string;
+    size: number;
+    data_url: string;
+  } | null>(null);
+
+  const MAX_FILE_BYTES = 6 * 1024 * 1024; // 6 MB raw
+  const ACCEPTED = ".pdf,.txt,.md,.json,.csv,.png,.jpg,.jpeg,.webp";
+
+  async function onPickFile(f: File | null) {
+    setErr(null);
+    if (!f) { setRefFile(null); return; }
+    if (f.size > MAX_FILE_BYTES) {
+      setErr("File is too large. Please pick a file under 6 MB.");
+      return;
+    }
+    const data_url: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result ?? ""));
+      r.onerror = () => reject(r.error ?? new Error("Could not read file."));
+      r.readAsDataURL(f);
+    });
+    setRefFile({
+      name: f.name,
+      mime: f.type || "application/octet-stream",
+      size: f.size,
+      data_url,
+    });
+  }
 
   async function handleGenerate() {
     if (!title.trim() || !topic.trim() || busy) return;
@@ -275,6 +305,9 @@ function AiHomeworkDialog({
           marks_per_question: marks,
           instructions: instructions.trim(),
           publish,
+          reference_file: refFile
+            ? { name: refFile.name, mime: refFile.mime, data_url: refFile.data_url }
+            : null,
         },
       });
       onCreated(res.id);
@@ -284,6 +317,7 @@ function AiHomeworkDialog({
       setBusy(false);
     }
   }
+
 
   return (
     <div className="mt-4 rounded-xl border border-primary/40 bg-primary/5 p-5">
@@ -371,7 +405,43 @@ function AiHomeworkDialog({
             className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-primary"
           />
         </label>
+
+        <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground sm:col-span-2">
+          Reference file (optional)
+          <div className="mt-1 rounded-md border border-dashed border-border bg-background p-3">
+            {refFile ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm font-normal normal-case tracking-normal text-foreground">
+                  <p className="font-semibold">{refFile.name}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {refFile.mime || "unknown"} · {(refFile.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRefFile(null)}
+                  className="rounded-md border border-border bg-card px-2 py-1 text-[11px] font-normal normal-case tracking-normal text-muted-foreground hover:text-destructive"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col gap-1 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                <input
+                  type="file"
+                  accept={ACCEPTED}
+                  onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+                  className="block w-full text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary-foreground hover:file:opacity-90"
+                />
+                <span>
+                  PDF, image, or text (up to 6 MB). The AI will use its content to write the questions.
+                </span>
+              </label>
+            )}
+          </div>
+        </div>
       </div>
+
 
       {err && (
         <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">

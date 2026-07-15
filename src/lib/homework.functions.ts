@@ -879,6 +879,21 @@ const AiGenerateInput = z.object({
   marks_per_question: z.number().int().min(1).max(100).default(10),
   instructions: z.string().max(4000).default(""),
   publish: z.boolean().default(false),
+  // Optional reference file the AI should base the homework on.
+  // file_data must be a `data:<mime>;base64,...` URL. Keep under ~6 MB.
+  reference_file: z
+    .object({
+      name: z.string().max(200),
+      mime: z.string().max(200),
+      data_url: z
+        .string()
+        .max(9_000_000)
+        .refine((s) => s.startsWith("data:") && s.includes(";base64,"), {
+          message: "reference_file.data_url must be a base64 data URL",
+        }),
+    })
+    .nullable()
+    .optional(),
 });
 
 const AiHwQuestion = z.object({
@@ -903,6 +918,11 @@ export const adminGenerateHomeworkWithAi = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("AI is not configured on this project.");
 
+    const ref = data.reference_file ?? null;
+    const refNote = ref
+      ? `\n- A reference file (${ref.name}) is attached below. Base the questions on its content when relevant.`
+      : "";
+
     const sys = `You are an expert Python teacher creating homework for engineering students.
 Return ONLY a JSON object of this exact shape (no markdown):
 {
@@ -925,11 +945,47 @@ Rules:
 - Produce EXACTLY ${data.count} coding questions on the topic below.
 - Difficulty target: "${data.difficulty}".
 - Each question ~${data.marks_per_question} marks.
-- All Python must run on plain CPython/Pyodide: no file I/O, no plotting, no pandas.`;
+- All Python must run on plain CPython/Pyodide: no file I/O, no plotting, no pandas.${refNote}`;
 
-    const user = `Homework title: ${data.title}
+    const userText = `Homework title: ${data.title}
 Topic: ${data.topic}
 ${data.instructions.trim() ? `Extra instructions:\n"""\n${data.instructions.slice(0, 4000)}\n"""` : ""}`;
+
+    // Build multimodal user content when a reference file is attached.
+    type ContentBlock =
+      | { type: "text"; text: string }
+      | { type: "image_url"; image_url: { url: string } }
+      | { type: "file"; file: { filename: string; file_data: string } };
+
+    let userContent: string | ContentBlock[] = userText;
+    if (ref) {
+      const blocks: ContentBlock[] = [{ type: "text", text: userText }];
+      if (ref.mime.startsWith("image/")) {
+        blocks.push({ type: "image_url", image_url: { url: ref.data_url } });
+      } else if (ref.mime.startsWith("text/") || ref.mime === "application/json") {
+        // Decode small text files inline so any model can read them.
+        try {
+          const b64 = ref.data_url.split(";base64,")[1] ?? "";
+          const decoded = Buffer.from(b64, "base64").toString("utf8").slice(0, 60000);
+          blocks.push({
+            type: "text",
+            text: `Reference file "${ref.name}":\n"""\n${decoded}\n"""`,
+          });
+        } catch {
+          blocks.push({
+            type: "file",
+            file: { filename: ref.name, file_data: ref.data_url },
+          });
+        }
+      } else {
+        // PDFs and other docs go as a file block.
+        blocks.push({
+          type: "file",
+          file: { filename: ref.name, file_data: ref.data_url },
+        });
+      }
+      userContent = blocks;
+    }
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -938,7 +994,7 @@ ${data.instructions.trim() ? `Extra instructions:\n"""\n${data.instructions.slic
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: sys },
-          { role: "user", content: user },
+          { role: "user", content: userContent },
         ],
         response_format: { type: "json_object" },
       }),
@@ -949,6 +1005,7 @@ ${data.instructions.trim() ? `Extra instructions:\n"""\n${data.instructions.slic
       const t = await res.text().catch(() => "");
       throw new Error(`AI could not generate homework right now. (${res.status}) ${t.slice(0, 160)}`);
     }
+
     const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const content = json.choices?.[0]?.message?.content ?? "";
     let parsed: { questions?: unknown[] };
