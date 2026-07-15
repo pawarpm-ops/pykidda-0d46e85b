@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getMockTest, mockTestQuestions } from "@/lib/questions";
 import { getStudentName, markTestStarted, setStudentName } from "@/lib/test-session";
 import { supabase } from "@/integrations/supabase/client";
+import { recordDailyStreakVisit } from "@/lib/streaks";
 
 export const Route = createFileRoute("/mock-tests/$testId/warning")({
   head: () => ({
