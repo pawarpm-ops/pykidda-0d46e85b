@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/SiteHeader";
 import { listAiMockTests } from "@/lib/ai-mock.functions";
+import { recordDailyStreakVisit } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/mock-tests/scheduled/$testId")({
   head: () => ({ meta: [{ title: "Scheduled Mock Test · PY Kidda" }, { name: "robots", content: "noindex" }] }),
