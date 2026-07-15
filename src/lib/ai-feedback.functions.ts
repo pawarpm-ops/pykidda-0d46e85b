@@ -154,12 +154,18 @@ Analyse and respond with the JSON object described in the system message.`;
           "Lovable-API-Key": key,
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-3.5-flash",
           messages: [
             { role: "system", content: sys },
-            { role: "user", content: user },
+            {
+              role: "user",
+              content:
+                user +
+                "\n\nIMPORTANT: Scan the ENTIRE numbered code and return a SEPARATE correction block for EVERY distinct mistake you find (up to 10). Do NOT stop after the first 1–2 fixes. If there are 5 mistakes, return 5 correction blocks.",
+            },
           ],
           response_format: { type: "json_object" },
+          max_tokens: 4000,
         }),
       });
 
