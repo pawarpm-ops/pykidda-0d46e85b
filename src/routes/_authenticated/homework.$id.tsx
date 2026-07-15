@@ -9,6 +9,7 @@ import {
   submitHomework,
 } from "@/lib/homework.functions";
 import { cancelPython, loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
+import { recordDailyStreakVisit } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/homework/$id")({
   head: () => ({
