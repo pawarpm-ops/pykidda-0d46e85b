@@ -2,11 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Pencil, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   adminListHomework,
   adminCreateHomework,
   adminDeleteHomework,
+  adminGenerateHomeworkWithAi,
 } from "@/lib/homework.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/homework")({
@@ -29,7 +31,8 @@ function AdminHomeworkList() {
   const deleteFn = useServerFn(adminDeleteHomework);
 
   const [tab, setTab] = useState<Tab>("published");
-  const [creating, setCreating] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+  const [showAi, setShowAi] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -54,7 +57,7 @@ function AdminHomeworkList() {
         },
       });
       setNewTitle("");
-      setCreating(false);
+      setShowManual(false);
       navigate({ to: "/admin/homework/$id", params: { id: res.id } });
     } finally {
       setBusy(false);
@@ -79,35 +82,56 @@ function AdminHomeworkList() {
               Create multi-question homework, publish it, and grade student submissions.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to="/admin"
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"
-            >
-              ← Back to admin
-            </Link>
-            <button
-              onClick={() => setCreating((v) => !v)}
-              className="rounded-md px-4 py-1.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-              style={{ backgroundImage: "var(--gradient-sunrise)" }}
-            >
-              + New Homework
-            </button>
-          </div>
+          <Link
+            to="/admin"
+            className="rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"
+          >
+            ← Back to admin
+          </Link>
         </div>
 
-        {creating && (
+        {/* Two entry cards */}
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <button
+            onClick={() => { setShowManual(true); setShowAi(false); }}
+            className="group text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-accent hover:scale-[1.02] hover:shadow-[var(--shadow-warm)]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-accent/15 p-3 text-accent"><Pencil size={22} /></div>
+              <h3 className="text-lg font-bold">Create Homework Manually</h3>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Start with a title, then add questions yourself — description, sample I/O, test cases, marks, and due date.
+            </p>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-accent group-hover:underline">Open manual form →</p>
+          </button>
+          <button
+            onClick={() => { setShowAi(true); setShowManual(false); }}
+            className="group text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-[var(--shadow-warm)]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-primary/15 p-3 text-primary"><Sparkles size={22} /></div>
+              <h3 className="text-lg font-bold">Create Homework with AI</h3>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Give AI a topic, difficulty, and question count — it drafts a full homework you can review, edit, and publish.
+            </p>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-primary group-hover:underline">Open AI generator →</p>
+          </button>
+        </div>
+
+        {showManual && (
           <div className="mt-4 rounded-xl border border-accent/40 bg-accent/5 p-4">
             <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Homework title
             </label>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <input
                 autoFocus
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="e.g. Unit 3 — Functions & Recursion"
-                className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+                className="flex-1 min-w-[220px] rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
                 onKeyDown={(e) => e.key === "Enter" && handleCreate()}
               />
               <button
@@ -119,10 +143,7 @@ function AdminHomeworkList() {
                 Create
               </button>
               <button
-                onClick={() => {
-                  setCreating(false);
-                  setNewTitle("");
-                }}
+                onClick={() => { setShowManual(false); setNewTitle(""); }}
                 className="rounded-md border border-border bg-background px-3 py-2 text-sm"
               >
                 Cancel
@@ -131,7 +152,18 @@ function AdminHomeworkList() {
           </div>
         )}
 
-        <div className="mt-6 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
+        {showAi && (
+          <AiHomeworkDialog
+            onClose={() => setShowAi(false)}
+            onCreated={(id) => {
+              setShowAi(false);
+              navigate({ to: "/admin/homework/$id", params: { id } });
+            }}
+          />
+        )}
+
+        {/* Tabs + list */}
+        <div className="mt-8 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
           {(["draft", "published", "closed"] as Tab[]).map((t) => (
             <button
               key={t}
@@ -150,10 +182,10 @@ function AdminHomeworkList() {
 
         {isLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
         {!isLoading && filtered.length === 0 && (
-          <div className="mt-8 rounded-xl border border-dashed border-border bg-card p-8 text-center">
+          <div className="mt-6 rounded-xl border border-dashed border-border bg-card p-8 text-center">
             <p className="text-lg font-semibold">No {tab} homework yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {tab === "draft" ? "Create a new homework to get started." : "Nothing in this bucket."}
+              {tab === "draft" ? "Use one of the options above to get started." : "Nothing in this bucket."}
             </p>
           </div>
         )}
@@ -207,6 +239,162 @@ function AdminHomeworkList() {
           ))}
         </ul>
       </main>
+    </div>
+  );
+}
+
+function AiHomeworkDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (id: string) => void;
+}) {
+  const generateFn = useServerFn(adminGenerateHomeworkWithAi);
+  const [title, setTitle] = useState("");
+  const [topic, setTopic] = useState("");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [count, setCount] = useState(3);
+  const [marks, setMarks] = useState(10);
+  const [instructions, setInstructions] = useState("");
+  const [publish, setPublish] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function handleGenerate() {
+    if (!title.trim() || !topic.trim() || busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await generateFn({
+        data: {
+          title: title.trim(),
+          topic: topic.trim(),
+          difficulty,
+          count,
+          marks_per_question: marks,
+          instructions: instructions.trim(),
+          publish,
+        },
+      });
+      onCreated(res.id);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not generate homework.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded-xl border border-primary/40 bg-primary/5 p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles size={18} className="text-primary" />
+          <h3 className="text-base font-bold">Generate homework with AI</h3>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          ← Close
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground sm:col-span-2">
+          Homework title
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Loops & Functions Practice"
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-primary"
+          />
+        </label>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground sm:col-span-2">
+          Topic
+          <input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g. Recursion basics — factorial, Fibonacci, sum of digits"
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-primary"
+          />
+        </label>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Difficulty
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as "easy" | "medium" | "hard")}
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-primary"
+          >
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Number of questions
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={count}
+            onChange={(e) => setCount(Math.max(1, Math.min(10, Number(e.target.value) || 1)))}
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-primary"
+          />
+        </label>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Marks per question
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={marks}
+            onChange={(e) => setMarks(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-primary"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={publish}
+            onChange={(e) => setPublish(e.target.checked)}
+          />
+          Publish immediately
+        </label>
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground sm:col-span-2">
+          Extra instructions (optional)
+          <textarea
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            rows={3}
+            placeholder="Style, syllabus context, constraints…"
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-primary"
+          />
+        </label>
+      </div>
+
+      {err && (
+        <p className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {err}
+        </p>
+      )}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          onClick={handleGenerate}
+          disabled={busy || !title.trim() || !topic.trim()}
+          className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
+          style={{ backgroundImage: "var(--gradient-sunrise)" }}
+        >
+          {busy ? "Generating…" : "Generate homework"}
+        </button>
+        <button
+          onClick={onClose}
+          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }

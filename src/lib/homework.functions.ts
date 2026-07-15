@@ -730,3 +730,153 @@ export const adminFinalizeCheck = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// ================== AI GENERATION ==================
+
+const AiGenerateInput = z.object({
+  title: z.string().trim().min(1).max(200),
+  topic: z.string().trim().min(1).max(400),
+  difficulty: DifficultyEnum.default("medium"),
+  count: z.number().int().min(1).max(10).default(3),
+  marks_per_question: z.number().int().min(1).max(100).default(10),
+  instructions: z.string().max(4000).default(""),
+  publish: z.boolean().default(false),
+});
+
+const AiHwQuestion = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  input_format: z.string().default(""),
+  output_format: z.string().default(""),
+  sample_input: z.string().default(""),
+  sample_output: z.string().default(""),
+  hints: z.string().default(""),
+  starter_code: z.string().default(""),
+  difficulty: DifficultyEnum.default("medium"),
+  marks: z.number().int().min(1).max(100).default(10),
+});
+
+export const adminGenerateHomeworkWithAi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => AiGenerateInput.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as Ctx);
+    const { supabase, userId } = context as Ctx;
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("AI is not configured on this project.");
+
+    const sys = `You are an expert Python teacher creating homework for engineering students.
+Return ONLY a JSON object of this exact shape (no markdown):
+{
+  "questions": [
+    {
+      "title": "short title",
+      "description": "clear multi-line problem statement",
+      "input_format": "how input is provided (may be empty)",
+      "output_format": "expected output shape",
+      "sample_input": "example input as it would be typed",
+      "sample_output": "example output — no trailing newline",
+      "hints": "brief teacher-only hint",
+      "starter_code": "optional short Python skeleton with a TODO",
+      "difficulty": "easy" | "medium" | "hard",
+      "marks": integer
+    }
+  ]
+}
+Rules:
+- Produce EXACTLY ${data.count} coding questions on the topic below.
+- Difficulty target: "${data.difficulty}".
+- Each question ~${data.marks_per_question} marks.
+- All Python must run on plain CPython/Pyodide: no file I/O, no plotting, no pandas.`;
+
+    const user = `Homework title: ${data.title}
+Topic: ${data.topic}
+${data.instructions.trim() ? `Extra instructions:\n"""\n${data.instructions.slice(0, 4000)}\n"""` : ""}`;
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: user },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (res.status === 429) throw new Error("AI is busy right now — please try again in a moment.");
+    if (res.status === 402) throw new Error("AI credits exhausted. Please top up in Settings → Plans & credits.");
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`AI could not generate homework right now. (${res.status}) ${t.slice(0, 160)}`);
+    }
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = json.choices?.[0]?.message?.content ?? "";
+    let parsed: { questions?: unknown[] };
+    try { parsed = JSON.parse(content); } catch {
+      const m = content.match(/\{[\s\S]*\}/);
+      if (!m) throw new Error("AI returned an unreadable response. Please try again.");
+      parsed = JSON.parse(m[0]);
+    }
+    const rawQs = Array.isArray(parsed.questions) ? parsed.questions : [];
+    const questions = rawQs
+      .map((q) => {
+        const r = AiHwQuestion.safeParse({
+          marks: data.marks_per_question,
+          difficulty: data.difficulty,
+          ...(q as object),
+        });
+        return r.success ? r.data : null;
+      })
+      .filter((q): q is z.infer<typeof AiHwQuestion> => q !== null);
+    if (questions.length === 0) {
+      throw new Error("AI could not generate homework right now. Please try again.");
+    }
+
+    // Create homework row
+    const { data: hw, error: hwErr } = await supabase
+      .from("homework")
+      .insert({
+        title: data.title,
+        description: `AI-generated homework on: ${data.topic}`,
+        instructions: data.instructions || null,
+        status: data.publish ? "published" : "draft",
+        allow_late_submission: true,
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+    if (hwErr) throw new Error(hwErr.message);
+
+    // Insert questions
+    const rows = questions.map((q, i) => ({
+      homework_id: hw.id,
+      question_order: i + 1,
+      question_type: "coding" as const,
+      title: q.title,
+      description: q.description,
+      marks: q.marks,
+      difficulty: q.difficulty,
+      input_format: q.input_format || null,
+      output_format: q.output_format || null,
+      sample_input: q.sample_input || null,
+      sample_output: q.sample_output || null,
+      hints: q.hints || null,
+      starter_code: q.starter_code || null,
+      test_cases: [],
+    }));
+    const { error: qErr } = await supabase.from("homework_questions").insert(rows);
+    if (qErr) throw new Error(qErr.message);
+
+    await logAdminActivity(supabase, {
+      actionType: "homework.ai_generated",
+      description: `AI-generated homework: ${data.title} (${questions.length} questions)`,
+      moduleName: "homework",
+      targetId: hw.id,
+      targetTitle: data.title,
+      metadata: { count: questions.length, difficulty: data.difficulty },
+    });
+
+    return { id: hw.id, question_count: questions.length };
+  });
