@@ -343,9 +343,11 @@ function AnalyticsPage() {
             </button>
             <button
               onClick={() => {
-                if (confirm("Reset all your analytics on this device?")) {
+                if (confirm("Reset locally cached analytics on this device? (Server data is preserved.)")) {
                   clearProgress(userId);
-                  setA(computeAnalytics(getProgress(userId)));
+                  const local = getProgress(userId);
+                  setRaw(local);
+                  setA(computeAnalytics(local));
                 }
               }}
               className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-destructive hover:text-destructive transition"
