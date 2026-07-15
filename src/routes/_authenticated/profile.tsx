@@ -338,9 +338,9 @@ function ProfilePage() {
                       </div>
                       <p className="text-sm text-muted-foreground truncate">{email}</p>
                       {studentUniqueId && (
-                        <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-accent/50 bg-accent/15 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-accent-foreground dark:text-foreground">
-                          <span className="opacity-90">Student ID:</span>
-                          <span className="tracking-wider">{studentUniqueId}</span>
+                        <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-accent/50 bg-accent/15 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-foreground">
+                          <span className="text-muted-foreground">Student ID:</span>
+                          <span className="tracking-wider text-foreground">{studentUniqueId}</span>
                         </p>
                       )}
                     </div>
