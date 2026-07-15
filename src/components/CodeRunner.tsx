@@ -320,16 +320,6 @@ export function CodeRunner({
         >
           {busy ? (pyReady ? "Running…" : "Loading Python…") : "Run Tests"}
         </button>
-        {onSubmit && (
-          <button
-            onClick={handleSubmit}
-            disabled={busy}
-            className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
-            style={{ backgroundImage: "var(--gradient-sunrise)" }}
-          >
-            {busy ? "Working…" : submitLabel}
-          </button>
-        )}
         {busy && (
           <button
             onClick={handleStop}
