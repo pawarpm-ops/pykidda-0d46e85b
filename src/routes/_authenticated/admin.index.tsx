@@ -37,7 +37,7 @@ import { logAdminActionClient } from "@/lib/audit-log-client";
 import { BadgesGrid } from "@/components/BadgesGrid";
 
 
-export const Route = createFileRoute("/_authenticated/admin")({
+export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({
     meta: [
       { title: "Admin · PY Kidda" },

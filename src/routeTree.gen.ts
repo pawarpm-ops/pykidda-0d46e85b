@@ -23,12 +23,12 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
 import { Route as AuthenticatedHomeworkIndexRouteImport } from './routes/_authenticated/homework.index'
 import { Route as AuthenticatedAssignmentsIndexRouteImport } from './routes/_authenticated/assignments.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as MockTestsTestIdWarningRouteImport } from './routes/mock-tests.$testId.warning'
 import { Route as MockTestsTestIdRunRouteImport } from './routes/mock-tests.$testId.run'
 import { Route as MockTestsTestIdResultRouteImport } from './routes/mock-tests.$testId.result'
@@ -119,11 +119,6 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
@@ -154,6 +149,11 @@ const AuthenticatedAssignmentsIndexRoute =
     path: '/assignments/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const MockTestsTestIdWarningRoute = MockTestsTestIdWarningRouteImport.update({
   id: '/mock-tests/$testId/warning',
   path: '/mock-tests/$testId/warning',
@@ -194,15 +194,15 @@ const AuthenticatedAdminAiMockRoute =
   } as any)
 const AuthenticatedAdminHomeworkRoute =
   AuthenticatedAdminHomeworkRouteImport.update({
-    id: '/homework',
-    path: '/homework',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    id: '/admin/homework',
+    path: '/admin/homework',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminAssignmentsRoute =
   AuthenticatedAdminAssignmentsRouteImport.update({
-    id: '/assignments',
-    path: '/assignments',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    id: '/admin/assignments',
+    path: '/admin/assignments',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
@@ -252,7 +252,6 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -272,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/assignments/': typeof AuthenticatedAssignmentsIndexRoute
   '/homework/': typeof AuthenticatedHomeworkIndexRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
@@ -289,7 +289,6 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -309,6 +308,7 @@ export interface FileRoutesByTo {
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/assignments': typeof AuthenticatedAssignmentsIndexRoute
   '/homework': typeof AuthenticatedHomeworkIndexRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
@@ -328,7 +328,6 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -348,6 +347,7 @@ export interface FileRoutesById {
   '/mock-tests/$testId/result': typeof MockTestsTestIdResultRoute
   '/mock-tests/$testId/run': typeof MockTestsTestIdRunRoute
   '/mock-tests/$testId/warning': typeof MockTestsTestIdWarningRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/assignments/': typeof AuthenticatedAssignmentsIndexRoute
   '/_authenticated/homework/': typeof AuthenticatedHomeworkIndexRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
@@ -367,7 +367,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin'
     | '/analytics'
     | '/leaderboard'
     | '/notifications'
@@ -387,6 +386,7 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/admin/'
     | '/assignments/'
     | '/homework/'
     | '/practice/'
@@ -404,7 +404,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/admin'
     | '/analytics'
     | '/leaderboard'
     | '/notifications'
@@ -424,6 +423,7 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/admin'
     | '/assignments'
     | '/homework'
     | '/practice'
@@ -442,7 +442,6 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
-    | '/_authenticated/admin'
     | '/_authenticated/analytics'
     | '/_authenticated/leaderboard'
     | '/_authenticated/notifications'
@@ -462,6 +461,7 @@ export interface FileRouteTypes {
     | '/mock-tests/$testId/result'
     | '/mock-tests/$testId/run'
     | '/mock-tests/$testId/warning'
+    | '/_authenticated/admin/'
     | '/_authenticated/assignments/'
     | '/_authenticated/homework/'
     | '/_authenticated/practice/'
@@ -593,13 +593,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/.well-known/oauth-protected-resource': {
       id: '/.well-known/oauth-protected-resource'
       path: '/.well-known/oauth-protected-resource'
@@ -633,6 +626,13 @@ declare module '@tanstack/react-router' {
       path: '/assignments'
       fullPath: '/assignments/'
       preLoaderRoute: typeof AuthenticatedAssignmentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/mock-tests/$testId/warning': {
@@ -686,17 +686,17 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/admin/homework': {
       id: '/_authenticated/admin/homework'
-      path: '/homework'
+      path: '/admin/homework'
       fullPath: '/admin/homework'
       preLoaderRoute: typeof AuthenticatedAdminHomeworkRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/assignments': {
       id: '/_authenticated/admin/assignments'
-      path: '/assignments'
+      path: '/admin/assignments'
       fullPath: '/admin/assignments'
       preLoaderRoute: typeof AuthenticatedAdminAssignmentsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
@@ -764,31 +764,20 @@ const AuthenticatedAdminHomeworkRouteWithChildren =
     AuthenticatedAdminHomeworkRouteChildren,
   )
 
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminAssignmentsRoute: typeof AuthenticatedAdminAssignmentsRoute
-  AuthenticatedAdminHomeworkRoute: typeof AuthenticatedAdminHomeworkRouteWithChildren
-}
-
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminAssignmentsRoute: AuthenticatedAdminAssignmentsRoute,
-  AuthenticatedAdminHomeworkRoute: AuthenticatedAdminHomeworkRouteWithChildren,
-}
-
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedStreakJourneyRoute: typeof AuthenticatedStreakJourneyRoute
   AuthenticatedTeacherCommentsRoute: typeof AuthenticatedTeacherCommentsRoute
+  AuthenticatedAdminAssignmentsRoute: typeof AuthenticatedAdminAssignmentsRoute
+  AuthenticatedAdminHomeworkRoute: typeof AuthenticatedAdminHomeworkRouteWithChildren
   AuthenticatedAdminAiMockRoute: typeof AuthenticatedAdminAiMockRoute
   AuthenticatedAssignmentsIdRoute: typeof AuthenticatedAssignmentsIdRoute
   AuthenticatedHomeworkIdRoute: typeof AuthenticatedHomeworkIdRoute
   AuthenticatedPracticeQidRoute: typeof AuthenticatedPracticeQidRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAssignmentsIndexRoute: typeof AuthenticatedAssignmentsIndexRoute
   AuthenticatedHomeworkIndexRoute: typeof AuthenticatedHomeworkIndexRoute
   AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
@@ -796,17 +785,19 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedStreakJourneyRoute: AuthenticatedStreakJourneyRoute,
   AuthenticatedTeacherCommentsRoute: AuthenticatedTeacherCommentsRoute,
+  AuthenticatedAdminAssignmentsRoute: AuthenticatedAdminAssignmentsRoute,
+  AuthenticatedAdminHomeworkRoute: AuthenticatedAdminHomeworkRouteWithChildren,
   AuthenticatedAdminAiMockRoute: AuthenticatedAdminAiMockRoute,
   AuthenticatedAssignmentsIdRoute: AuthenticatedAssignmentsIdRoute,
   AuthenticatedHomeworkIdRoute: AuthenticatedHomeworkIdRoute,
   AuthenticatedPracticeQidRoute: AuthenticatedPracticeQidRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAssignmentsIndexRoute: AuthenticatedAssignmentsIndexRoute,
   AuthenticatedHomeworkIndexRoute: AuthenticatedHomeworkIndexRoute,
   AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
