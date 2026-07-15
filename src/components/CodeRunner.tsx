@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import type { CodeQuestion } from "@/lib/questions";
 import {
@@ -7,7 +7,7 @@ import {
   outputsMatch,
   runPython,
 } from "@/lib/pyodide-runner";
-import { explainAndFix } from "@/lib/ai-feedback.functions";
+import { explainAndFix, type AiFeedback } from "@/lib/ai-feedback.functions";
 import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 
 
@@ -29,6 +29,13 @@ type Props = {
   compact?: boolean;
 };
 
+// Simple hash so we can cache AI explanations per (code + failing-test signature).
+function hashKey(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+  return String(h >>> 0);
+}
+
 export function CodeRunner({
   question,
   initialCode,
@@ -48,7 +55,8 @@ export function CodeRunner({
   const [showSolution, setShowSolution] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [aiResult, setAiResult] = useState<{ explanation: string; fixedCode: string } | null>(null);
+  const [aiResult, setAiResult] = useState<AiFeedback | null>(null);
+  const aiCacheRef = useRef<Map<string, AiFeedback>>(new Map());
   const explainFn = useServerFn(explainAndFix);
   const codeRef = useRef(code);
   codeRef.current = code;
@@ -67,6 +75,9 @@ export function CodeRunner({
     (next: string) => {
       setCode(next);
       onChangeCode?.(next);
+      // Clear AI panel when the student edits code.
+      setAiResult(null);
+      setAiError(null);
     },
     [onChangeCode],
   );
@@ -82,7 +93,6 @@ export function CodeRunner({
     setAiResult(null);
     setAiError(null);
     try {
-      // Ensure runtime is loaded; this resolves immediately if already ready.
       await loadPyodideOnce();
       setPyReady(true);
     } catch (e) {
@@ -135,36 +145,59 @@ export function CodeRunner({
     if (out && onSubmit) onSubmit(out);
   }, [runAll, onSubmit]);
 
+  // Cache key for this exact code + failing test signature.
+  const aiCacheKey = useMemo(() => {
+    if (!outcome) return null;
+    const failing = outcome.results.filter((r) => !r.passed);
+    if (failing.length === 0) return null;
+    const sig = failing
+      .slice(0, 5)
+      .map((r) => `${r.reason ?? ""}|${r.stdin ?? ""}|${r.expected}|${r.actual}|${r.stderr}`)
+      .join("§");
+    return hashKey(outcome.code + "\n---\n" + sig);
+  }, [outcome]);
+
   const handleExplain = useCallback(async () => {
-    if (!outcome) return;
+    if (!outcome || !aiCacheKey) return;
+    const cached = aiCacheRef.current.get(aiCacheKey);
+    if (cached) {
+      setAiResult(cached);
+      setAiError(null);
+      return;
+    }
     setAiBusy(true);
     setAiError(null);
     try {
       const failing = outcome.results
         .filter((r) => !r.passed)
         .slice(0, 5)
-        .map((r) => ({ stdin: r.stdin ?? "", expected: r.expected, actual: r.actual, stderr: r.stderr }));
+        .map((r) => ({
+          stdin: r.stdin ?? "",
+          expected: r.expected,
+          actual: r.actual,
+          stderr: r.stderr,
+          reason: r.reason ?? "",
+        }));
       const res = await explainFn({
         data: {
           title: question.title,
           prompt: question.prompt,
-          userCode: codeRef.current,
+          userCode: outcome.code,
           referenceSolution: question.solution,
           failingTests: failing,
         },
       });
+      aiCacheRef.current.set(aiCacheKey, res);
       setAiResult(res);
     } catch (e) {
-      setAiError(e instanceof Error ? e.message : String(e));
+      setAiError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
       setAiBusy(false);
     }
-  }, [outcome, explainFn, question.title, question.prompt, question.solution]);
+  }, [outcome, aiCacheKey, explainFn, question.title, question.prompt, question.solution]);
 
-  const applyFix = useCallback(() => {
-    if (!aiResult) return;
-    setAndEmit(aiResult.fixedCode);
-  }, [aiResult, setAndEmit]);
+  // Only offer AI help for genuine code errors (not Pyodide load failures).
+  const canExplain = !!outcome && outcome.passedCount < outcome.totalCount && !pyError;
 
   return (
     <div className="flex flex-col gap-4">
@@ -310,51 +343,115 @@ export function CodeRunner({
             ))}
           </ul>
 
-          {outcome.passedCount < outcome.totalCount && (
+          {canExplain && (
             <div className="mt-4 border-t border-border pt-4">
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={handleExplain}
                   disabled={aiBusy}
-                  className="rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium text-accent-foreground disabled:opacity-50"
+                  aria-busy={aiBusy}
+                  className="group relative inline-flex items-center gap-2 rounded-lg border border-accent/50 bg-gradient-to-r from-accent/15 via-primary/10 to-accent/15 px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:scale-100 disabled:opacity-60 disabled:hover:scale-100"
                 >
-                  {aiBusy ? "Analyzing…" : aiResult ? "Re-analyze" : "💡 Know what's wrong"}
+                  <span aria-hidden className="text-base">✨</span>
+                  <span>{aiBusy ? "AI is examining your code…" : aiResult ? "Re-explain with AI" : "Explain Error with AI"}</span>
+                  {aiBusy && (
+                    <span className="ml-1 inline-flex gap-0.5" aria-hidden>
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent" />
+                    </span>
+                  )}
                 </button>
-                {aiResult && (
-                  <button
-                    onClick={applyFix}
-                    className="rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-                    style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                  >
-                    🔧 Fix this
-                  </button>
-                )}
               </div>
+
+              <div aria-live="polite" className="sr-only">
+                {aiBusy ? "AI is examining your code" : aiError ? `Error: ${aiError}` : aiResult ? "AI explanation ready" : ""}
+              </div>
+
               {aiError && (
                 <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                   {aiError}
                 </div>
               )}
-              {aiResult && (
-                <div className="mt-3 space-y-3">
-                  <div className="rounded-md border border-accent/30 bg-accent/5 p-3 text-sm">
-                    <p className="mb-1 font-semibold">What went wrong</p>
-                    <p className="whitespace-pre-wrap leading-relaxed">{aiResult.explanation}</p>
-                  </div>
-                  <div>
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                      Suggested fix (click "Fix this" to apply)
-                    </p>
-                    <pre className="overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
-{aiResult.fixedCode}
-                    </pre>
-                  </div>
-                </div>
+
+              {aiResult && !aiBusy && (
+                <AiTutorPanel result={aiResult} />
               )}
             </div>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+function AiTutorPanel({ result }: { result: AiFeedback }) {
+  return (
+    <section
+      aria-label="AI tutor explanation"
+      className="mt-4 overflow-hidden rounded-xl border-2 border-accent/40 bg-gradient-to-br from-accent/5 via-background to-primary/5 shadow-md transition-transform duration-300 motion-reduce:transition-none animate-in fade-in zoom-in-95"
+    >
+      <header className="flex items-center gap-2 border-b border-accent/20 bg-accent/10 px-4 py-2.5">
+        <span aria-hidden className="text-lg">🤖</span>
+        <h3 className="text-sm font-bold uppercase tracking-wider text-accent-foreground">AI Tutor</h3>
+        <span className="ml-auto rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive">
+          {result.errorTypeFriendly || result.errorType}
+        </span>
+      </header>
+
+      <div className="space-y-4 p-4 text-sm leading-relaxed">
+        {(result.whereLine || result.whereSnippet) && (
+          <Section title="📍 Where it happened">
+            <p>
+              {result.whereLine != null && (
+                <>Likely around <strong>line {String(result.whereLine)}</strong>. </>
+              )}
+            </p>
+            {result.whereSnippet && (
+              <pre className="mt-1 overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-2 font-mono text-xs text-[oklch(0.97_0.005_85)]">{result.whereSnippet}</pre>
+            )}
+          </Section>
+        )}
+
+        <Section title="💬 What Python is telling you">
+          <p className="whitespace-pre-wrap">{result.pythonSays}</p>
+        </Section>
+
+        <Section title="🧠 Why it happened">
+          <p className="whitespace-pre-wrap">{result.whyItHappened}</p>
+        </Section>
+
+        {result.howToFix?.length > 0 && (
+          <Section title="🛠️ How to correct it">
+            <ol className="ml-5 list-decimal space-y-1">
+              {result.howToFix.map((step, i) => (
+                <li key={i} className="whitespace-pre-wrap">{step}</li>
+              ))}
+            </ol>
+          </Section>
+        )}
+
+        {result.miniExample && result.miniExample.trim() && (
+          <Section title="📘 Small example">
+            <pre className="overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 font-mono text-xs text-[oklch(0.97_0.005_85)]">{result.miniExample}</pre>
+          </Section>
+        )}
+
+        <Section title="➡️ Try this next">
+          <p className="whitespace-pre-wrap">{result.tryThisNext}</p>
+        </Section>
+      </div>
+    </section>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details open className="group rounded-md border border-border/60 bg-card/60 p-3">
+      <summary className="cursor-pointer list-none font-semibold text-foreground marker:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded">
+        {title}
+      </summary>
+      <div className="mt-2 text-muted-foreground">{children}</div>
+    </details>
   );
 }
