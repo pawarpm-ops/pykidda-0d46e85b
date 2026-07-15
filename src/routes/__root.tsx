@@ -289,6 +289,7 @@ function AuthGate({ children }: { children: ReactNode }) {
           {isDashboardRoute && <WhatsNewPopups />}
           {!isSecureRoute && <InactivityLogout />}
           <BadgeToaster />
+          <DailyStreakToaster />
         </>
       )}
     </>
