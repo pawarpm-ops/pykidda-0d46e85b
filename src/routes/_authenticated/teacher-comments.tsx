@@ -91,7 +91,9 @@ function TeacherCommentsPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteHeader />
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
       <header className="mb-6">
         <button
           type="button"
