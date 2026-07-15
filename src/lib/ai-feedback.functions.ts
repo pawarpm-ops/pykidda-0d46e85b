@@ -96,8 +96,28 @@ OUTPUT — return ONLY a single JSON object matching this exact shape, no markdo
   "whyItHappened": "Explain the programming concept or logic mistake in simple language (2-5 sentences).",
   "howToFix": ["Step 1 focused on the student's code", "Step 2", "..."],
   "miniExample": "Optional minimal generic snippet (NOT the full answer). Empty string if not helpful.",
-  "tryThisNext": "One concrete next action for the student."
-}`;
+  "tryThisNext": "One concrete next action for the student.",
+  "corrections": [
+    {
+      "startLine": <first line number of the exact original block from the student's numbered code>,
+      "endLine": <last line number of that original block (same as startLine for single-line fixes)>,
+      "originalCode": "The exact original line(s) from the student's code — verbatim, preserving spaces/indentation, WITHOUT the line-number prefix. Max 5 lines.",
+      "replacementCode": "Corrected replacement for ONLY that block. Max 5 lines. Preserve indentation.",
+      "explanation": "One short reason for this change (one sentence).",
+      "confidence": "high" | "medium" | "low"
+    }
+  ]
+}
+
+CORRECTIONS RULES (very important):
+- Return AT MOST 3 correction blocks; each block covers AT MOST 5 original and 5 replacement lines.
+- "originalCode" MUST be an EXACT substring of the student's code (line-for-line, same indentation, no line numbers) starting at startLine and ending at endLine.
+- Never return the whole program or reproduce the reference solution.
+- For clear syntax / indentation / NameError / small runtime errors → propose the smallest one-line or few-line correction with "high" confidence.
+- For output-mismatch / logic bugs → propose a targeted correction ONLY when confidence is "high" or "medium". Otherwise return "corrections": [].
+- For timeout / output-limit → point to the likely loop or print line and propose a minimal condition/print fix only if reasonably confident, else "corrections": [].
+- If unsure, return "corrections": [] and rely on the explanation.`;
+
 
       const numberedCode = numberLines(cap(data.userCode, 8000));
       const failingText = data.failingTests
