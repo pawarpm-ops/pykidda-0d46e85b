@@ -41,7 +41,18 @@ function AdminHomeworkList() {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this homework? This cannot be undone.")) return;
-    await deleteFn({ data: { id } });
+    try {
+      await deleteFn({ data: { id } });
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      if (/submission\(s\)/i.test(msg) || /force=true/i.test(msg)) {
+        if (!confirm(`${msg}\n\nDelete anyway, including all submissions?`)) return;
+        await deleteFn({ data: { id, force: true } });
+      } else {
+        alert(msg);
+        return;
+      }
+    }
     await refetch();
   }
 
