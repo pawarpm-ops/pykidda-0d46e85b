@@ -21,6 +21,15 @@ const Input = z.object({
     .max(5),
 });
 
+const Correction = z.object({
+  startLine: z.number().int().positive(),
+  endLine: z.number().int().positive(),
+  originalCode: z.string().max(1000),
+  replacementCode: z.string().max(1000),
+  explanation: z.string().max(400),
+  confidence: z.enum(["high", "medium", "low"]).default("medium"),
+});
+
 const Output = z.object({
   errorType: z.string(),
   errorTypeFriendly: z.string(),
@@ -31,7 +40,9 @@ const Output = z.object({
   howToFix: z.array(z.string()).max(8),
   miniExample: z.string().default(""),
   tryThisNext: z.string(),
+  corrections: z.array(Correction).max(3).default([]),
 });
+
 
 export type AiFeedback = z.infer<typeof Output>;
 
@@ -85,8 +96,28 @@ OUTPUT — return ONLY a single JSON object matching this exact shape, no markdo
   "whyItHappened": "Explain the programming concept or logic mistake in simple language (2-5 sentences).",
   "howToFix": ["Step 1 focused on the student's code", "Step 2", "..."],
   "miniExample": "Optional minimal generic snippet (NOT the full answer). Empty string if not helpful.",
-  "tryThisNext": "One concrete next action for the student."
-}`;
+  "tryThisNext": "One concrete next action for the student.",
+  "corrections": [
+    {
+      "startLine": <first line number of the exact original block from the student's numbered code>,
+      "endLine": <last line number of that original block (same as startLine for single-line fixes)>,
+      "originalCode": "The exact original line(s) from the student's code — verbatim, preserving spaces/indentation, WITHOUT the line-number prefix. Max 5 lines.",
+      "replacementCode": "Corrected replacement for ONLY that block. Max 5 lines. Preserve indentation.",
+      "explanation": "One short reason for this change (one sentence).",
+      "confidence": "high" | "medium" | "low"
+    }
+  ]
+}
+
+CORRECTIONS RULES (very important):
+- Return AT MOST 3 correction blocks; each block covers AT MOST 5 original and 5 replacement lines.
+- "originalCode" MUST be an EXACT substring of the student's code (line-for-line, same indentation, no line numbers) starting at startLine and ending at endLine.
+- Never return the whole program or reproduce the reference solution.
+- For clear syntax / indentation / NameError / small runtime errors → propose the smallest one-line or few-line correction with "high" confidence.
+- For output-mismatch / logic bugs → propose a targeted correction ONLY when confidence is "high" or "medium". Otherwise return "corrections": [].
+- For timeout / output-limit → point to the likely loop or print line and propose a minimal condition/print fix only if reasonably confident, else "corrections": [].
+- If unsure, return "corrections": [] and rely on the explanation.`;
+
 
       const numberedCode = numberLines(cap(data.userCode, 8000));
       const failingText = data.failingTests
@@ -148,7 +179,22 @@ Analyse and respond with the JSON object described in the system message.`;
         if (!m) throw new Error("AI returned an unreadable response. Please try again.");
         parsed = JSON.parse(m[0]);
       }
-      return Output.parse(parsed);
+      const validated = Output.parse(parsed);
+      // Server-side: strip any correction that doesn't literally match the submitted code,
+      // that covers the whole program, or that has out-of-range line numbers.
+      const codeLines = data.userCode.split("\n");
+      const totalLines = codeLines.length;
+      const safeCorrections = validated.corrections.filter((c) => {
+        if (c.startLine < 1 || c.endLine < c.startLine || c.endLine > totalLines) return false;
+        const span = c.endLine - c.startLine + 1;
+        if (span > 5) return false;
+        // Reject "whole program" replacements.
+        if (span >= totalLines) return false;
+        const actual = codeLines.slice(c.startLine - 1, c.endLine).join("\n");
+        return actual === c.originalCode;
+      });
+      return { ...validated, corrections: safeCorrections };
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
