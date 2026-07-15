@@ -305,7 +305,7 @@ function AdminPage() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
-        <main className="mx-auto max-w-7xl px-6 py-10">Loading admin dashboard…</main>
+        <main className="mx-auto w-full max-w-[1600px] px-4 md:px-8 py-10">Loading admin dashboard…</main>
       </div>
     );
   }
