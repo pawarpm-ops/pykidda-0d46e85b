@@ -314,6 +314,18 @@ export const submitHomework = createServerFn({ method: "POST" })
     }
 
     const submissionId = await ensureSubmission(supabase, userId, hw.id);
+
+    // One-time submission: reject if already submitted/late/checked/returned.
+    const { data: existing, error: exErr } = await supabase
+      .from("homework_submissions")
+      .select("status")
+      .eq("id", submissionId)
+      .maybeSingle();
+    if (exErr) throw new Error(exErr.message);
+    if (existing && ["submitted", "late", "checked", "returned"].includes(existing.status)) {
+      throw new Error("You have already submitted this homework.");
+    }
+
     const { error } = await supabase
       .from("homework_submissions")
       .update({
