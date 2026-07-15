@@ -35,6 +35,9 @@ type DbQ = {
 };
 
 function PracticeListPage() {
+  useEffect(() => {
+    void recordStreakActivity("practice_opened");
+  }, []);
   const listFn = useServerFn(listPublishedPracticeQuestions);
   const { data: dbQs } = useQuery({
     queryKey: ["practice-published"],
