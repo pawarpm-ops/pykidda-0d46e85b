@@ -76,6 +76,22 @@ function AdminHomeworkList() {
           </Link>
         </div>
 
+        {/* Homework / Practice switcher */}
+        <div className="mt-6 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
+          <span
+            className="rounded-md px-3 py-1.5 font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+            style={{ backgroundImage: "var(--gradient-sunrise)" }}
+          >
+            Homework
+          </span>
+          <Link
+            to="/admin/practice"
+            className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-secondary"
+          >
+            Practice
+          </Link>
+        </div>
+
         {/* Two entry cards */}
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <Link
