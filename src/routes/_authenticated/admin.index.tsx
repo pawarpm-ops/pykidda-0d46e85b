@@ -49,6 +49,7 @@ import {
   ScrollText,
   HeartPulse,
   FlaskConical,
+  ArrowLeft,
   type LucideIcon,
 } from "lucide-react";
 
