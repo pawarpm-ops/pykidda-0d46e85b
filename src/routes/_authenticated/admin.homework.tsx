@@ -6,7 +6,6 @@ import { Pencil, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   adminListHomework,
-  adminCreateHomework,
   adminDeleteHomework,
   adminGenerateHomeworkWithAi,
 } from "@/lib/homework.functions";
@@ -27,7 +26,6 @@ type Tab = "all" | "draft" | "published" | "closed";
 function AdminHomeworkList() {
   const navigate = useNavigate();
   const listFn = useServerFn(adminListHomework);
-  const createFn = useServerFn(adminCreateHomework);
   const deleteFn = useServerFn(adminDeleteHomework);
 
   const [tab, setTab] = useState<Tab>("all");
