@@ -179,7 +179,22 @@ Analyse and respond with the JSON object described in the system message.`;
         if (!m) throw new Error("AI returned an unreadable response. Please try again.");
         parsed = JSON.parse(m[0]);
       }
-      return Output.parse(parsed);
+      const validated = Output.parse(parsed);
+      // Server-side: strip any correction that doesn't literally match the submitted code,
+      // that covers the whole program, or that has out-of-range line numbers.
+      const codeLines = data.userCode.split("\n");
+      const totalLines = codeLines.length;
+      const safeCorrections = validated.corrections.filter((c) => {
+        if (c.startLine < 1 || c.endLine < c.startLine || c.endLine > totalLines) return false;
+        const span = c.endLine - c.startLine + 1;
+        if (span > 5) return false;
+        // Reject "whole program" replacements.
+        if (span >= totalLines) return false;
+        const actual = codeLines.slice(c.startLine - 1, c.endLine).join("\n");
+        return actual === c.originalCode;
+      });
+      return { ...validated, corrections: safeCorrections };
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
