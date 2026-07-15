@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { StreakCard } from "@/components/StreakCard";
 import { ProfileQrCard } from "@/components/ProfileQrCard";
 import { BadgesGrid } from "@/components/BadgesGrid";
+import { YourNextBadges } from "@/components/YourNextBadges";
 import { DEFAULT_PUBLIC_SETTINGS, type PublicProfileSettings } from "@/lib/publicProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { restartTutorial } from "@/components/OnboardingTutorial";
@@ -330,6 +331,8 @@ function ProfilePage() {
         <div className="mt-8">
           <StreakCard />
         </div>
+
+        <YourNextBadges />
 
         {userId && <BadgesGrid studentId={userId} />}
 

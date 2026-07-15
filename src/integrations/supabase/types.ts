@@ -467,35 +467,56 @@ export type Database = {
         Row: {
           badge_key: string
           badge_name: string
+          category: string
           created_at: string
           description: string
           icon: string
           id: string
+          is_secret: boolean
+          motivational_message: string | null
+          rarity: string
           rule_type: string
           sort_order: number
+          target_value: number | null
           threshold: number | null
+          tier: string
+          unlock_hint: string | null
         }
         Insert: {
           badge_key: string
           badge_name: string
+          category?: string
           created_at?: string
           description: string
           icon: string
           id?: string
+          is_secret?: boolean
+          motivational_message?: string | null
+          rarity?: string
           rule_type: string
           sort_order?: number
+          target_value?: number | null
           threshold?: number | null
+          tier?: string
+          unlock_hint?: string | null
         }
         Update: {
           badge_key?: string
           badge_name?: string
+          category?: string
           created_at?: string
           description?: string
           icon?: string
           id?: string
+          is_secret?: boolean
+          motivational_message?: string | null
+          rarity?: string
           rule_type?: string
           sort_order?: number
+          target_value?: number | null
           threshold?: number | null
+          tier?: string
+          unlock_hint?: string | null
         }
         Relationships: []
       }
@@ -1133,27 +1154,33 @@ export type Database = {
           created_at: string
           earned_at: string
           id: string
+          metric_value: number | null
           source_id: string | null
           source_type: string | null
           student_id: string
+          trigger_activity: string | null
         }
         Insert: {
           badge_id: string
           created_at?: string
           earned_at?: string
           id?: string
+          metric_value?: number | null
           source_id?: string | null
           source_type?: string | null
           student_id: string
+          trigger_activity?: string | null
         }
         Update: {
           badge_id?: string
           created_at?: string
           earned_at?: string
           id?: string
+          metric_value?: number | null
           source_id?: string | null
           source_type?: string | null
           student_id?: string
+          trigger_activity?: string | null
         }
         Relationships: [
           {
@@ -1377,6 +1404,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_badge_overview: { Args: never; Returns: Json }
       assign_user_role: {
         Args: {
           _action?: string
@@ -1384,6 +1412,34 @@ export type Database = {
           _target_user: string
         }
         Returns: undefined
+      }
+      compute_badge_metrics: {
+        Args: { _user_id: string }
+        Returns: {
+          all_rounder: boolean
+          bug_hunter_count: number
+          clean_sweep_count: number
+          comeback: boolean
+          diff_mix: number
+          distinct_units: number
+          first_activity: number
+          first_code_run: number
+          hard_solved: number
+          homework_complete: number
+          homework_correction: number
+          homework_early: number
+          homework_on_time: number
+          homework_perfect: number
+          longest_streak: number
+          mock_best: number
+          mock_count: number
+          mock_improve_15: number
+          mock_personal_best: boolean
+          mock_rising: number
+          never_give_up: boolean
+          practice_solved: number
+          tests_passed: number
+        }[]
       }
       evaluate_and_award_badges: {
         Args: { _event_type?: string }
@@ -1397,6 +1453,42 @@ export type Database = {
       }
       generate_public_profile_id: { Args: never; Returns: string }
       generate_student_unique_id: { Args: never; Returns: string }
+      get_badge_progress: {
+        Args: { _user_id?: string }
+        Returns: {
+          badge_key: string
+          badge_name: string
+          category: string
+          current_value: number
+          description: string
+          earned: boolean
+          earned_at: string
+          icon: string
+          is_secret: boolean
+          motivational_message: string
+          progress_pct: number
+          rarity: string
+          sort_order: number
+          target_value: number
+          tier: string
+          unlock_hint: string
+        }[]
+      }
+      get_next_badge_targets: {
+        Args: { _limit?: number }
+        Returns: {
+          badge_key: string
+          badge_name: string
+          category: string
+          current_value: number
+          icon: string
+          motivational_message: string
+          progress_pct: number
+          target_value: number
+          tier: string
+          unlock_hint: string
+        }[]
+      }
       get_public_student_profile: {
         Args: { _public_id: string }
         Returns: Json
