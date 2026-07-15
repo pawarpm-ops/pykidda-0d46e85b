@@ -120,12 +120,20 @@ export function SiteHeader() {
     setMenuOpen(false);
   }, [pathname]);
 
+  const isAdminRoute = pathname.startsWith("/admin");
+
   useEffect(() => {
+    if (isAdminRoute) {
+      document.body.classList.remove("has-sidebar");
+      return;
+    }
     document.body.classList.add("has-sidebar");
     return () => document.body.classList.remove("has-sidebar");
-  }, []);
+  }, [isAdminRoute]);
 
   const items = NAV_ITEMS.filter((i) => !i.authOnly || email);
+
+  if (isAdminRoute) return null;
 
   const isActive = (to: string) =>
     to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(to + "/");
