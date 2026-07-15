@@ -25,6 +25,11 @@ function PracticeSolvePage() {
 
   const question = useMemo(() => QUESTIONS.find((q) => q.id === qid), [qid]);
 
+  useEffect(() => {
+    if (!question) return;
+    void recordDailyStreakVisit("practice_opened", question.id);
+  }, [question]);
+
   const handleSubmit = useCallback(
     async (outcome: RunOutcome) => {
       if (!question) return;
