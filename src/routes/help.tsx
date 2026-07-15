@@ -371,6 +371,7 @@ function HelpPage() {
           Report a problem
         </button>
       </div>
+      </div>
     </div>
   );
 }
