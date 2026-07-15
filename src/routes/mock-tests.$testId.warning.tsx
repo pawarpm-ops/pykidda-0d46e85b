@@ -83,8 +83,9 @@ function Warning() {
       setAuthChecked(true);
       const fromMeta = data.session.user.user_metadata?.full_name as string | undefined;
       setName(getStudentName() !== "Student" ? getStudentName() : fromMeta || "");
+      if (test) void recordDailyStreakVisit("mock_opened", testId);
     });
-  }, [navigate]);
+  }, [navigate, test, testId]);
 
 
   useEffect(() => {
