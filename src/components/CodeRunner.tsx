@@ -87,9 +87,24 @@ export function CodeRunner({
       // Clear AI panel when the student edits code.
       setAiResult(null);
       setAiError(null);
+      setAiSnapshot(null);
+      setCorrectorDismissed(false);
+      setApplyNotice(null);
     },
     [onChangeCode],
   );
+
+  // Programmatic setter used by "Accept" — updates the editor without wiping
+  // the AI panel so the student still sees the explanation next to the diff.
+  const setCodeInternal = useCallback(
+    (next: string) => {
+      setCode(next);
+      codeRef.current = next;
+      onChangeCode?.(next);
+    },
+    [onChangeCode],
+  );
+
 
   const stoppedRef = useRef(false);
 
