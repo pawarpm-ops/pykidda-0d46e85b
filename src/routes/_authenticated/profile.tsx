@@ -253,7 +253,46 @@ function ProfilePage() {
                 </span>
               )}
               <div className="min-w-0">
-                <p className="font-semibold truncate">{displayName || "Unnamed kidda"}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold truncate">{displayName || "Unnamed kidda"}</p>
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+                    style={{
+                      borderColor:
+                        presenceStatus === "active"
+                          ? "oklch(0.65 0.15 145 / 0.4)"
+                          : presenceStatus === "idle"
+                            ? "oklch(0.75 0.15 85 / 0.4)"
+                            : "oklch(0.6 0 0 / 0.3)",
+                      color:
+                        presenceStatus === "active"
+                          ? "oklch(0.5 0.15 145)"
+                          : presenceStatus === "idle"
+                            ? "oklch(0.55 0.15 70)"
+                            : "oklch(0.5 0 0)",
+                      backgroundColor:
+                        presenceStatus === "active"
+                          ? "oklch(0.65 0.15 145 / 0.1)"
+                          : presenceStatus === "idle"
+                            ? "oklch(0.75 0.15 85 / 0.1)"
+                            : "oklch(0.6 0 0 / 0.08)",
+                    }}
+                    aria-label={`Status: ${presenceStatus}`}
+                  >
+                    <span
+                      className={`inline-block h-2 w-2 rounded-full ${presenceStatus === "active" ? "animate-pulse" : ""}`}
+                      style={{
+                        backgroundColor:
+                          presenceStatus === "active"
+                            ? "oklch(0.65 0.18 145)"
+                            : presenceStatus === "idle"
+                              ? "oklch(0.75 0.18 80)"
+                              : "oklch(0.55 0 0)",
+                      }}
+                    />
+                    {presenceStatus.charAt(0).toUpperCase() + presenceStatus.slice(1)}
+                  </span>
+                </div>
                 <p className="text-sm text-muted-foreground truncate">{email}</p>
                 {studentUniqueId && (
                   <p className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-accent">
@@ -263,6 +302,41 @@ function ProfilePage() {
                 )}
               </div>
             </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium">Status</span>
+              <div className="inline-flex rounded-lg border border-input bg-background p-1 w-fit" role="radiogroup" aria-label="Presence status">
+                {(["active", "idle", "offline"] as const).map((s) => {
+                  const selected = presenceStatus === s;
+                  const dotColor =
+                    s === "active"
+                      ? "oklch(0.65 0.18 145)"
+                      : s === "idle"
+                        ? "oklch(0.75 0.18 80)"
+                        : "oklch(0.55 0 0)";
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      disabled={savingStatus}
+                      onClick={() => { if (!selected) void updatePresenceStatus(s); }}
+                      className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                        selected ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: dotColor }} />
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="text-xs text-muted-foreground">
+                Let others know if you're around. Shown on your public profile.
+              </span>
+            </div>
+
 
 
             <label className="flex flex-col gap-1">
