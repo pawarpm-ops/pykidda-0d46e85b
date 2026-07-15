@@ -136,59 +136,68 @@ function AdminPracticePage() {
           </div>
         )}
 
-        <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-          {filtered.map((r) => (
-            <li key={r.id}>
-              <div className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-base font-semibold leading-tight line-clamp-2">{r.title}</h2>
-                  <span className="shrink-0 rounded-full border border-border bg-secondary/40 px-2 py-0.5 text-[10px] font-semibold capitalize">
-                    {r.status}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-3">{r.prompt}</p>
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                  <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5">
-                    Unit {r.unit}
-                  </span>
-                  <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5">
-                    {r.marks} marks
-                  </span>
-                  {r.difficulty && (
-                    <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5 capitalize">
-                      {r.difficulty}
-                    </span>
-                  )}
-                  <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5">
-                    {r.test_count} test{r.test_count === 1 ? "" : "s"}
-                  </span>
-                </div>
-                <div className="mt-auto flex flex-wrap gap-2">
-                  <button
-                    onClick={() => toggleStatus(r)}
-                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:border-accent/60"
-                  >
-                    {r.status === "published" ? "Unpublish" : "Publish"}
-                  </button>
-                  <button
-                    onClick={() =>
-                      navigate({ to: "/practice/$qid", params: { qid: `db-${r.id}` } })
-                    }
-                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:border-accent/60"
-                  >
-                    Preview
-                  </button>
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-destructive hover:border-destructive/60"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </li>
+        <div className="mt-6 space-y-8">
+          {grouped.map(([unit, rows]) => (
+            <section key={unit}>
+              <h2 className="text-lg font-semibold">
+                <span className="text-accent">Unit {unit}</span>
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {rows.length} question{rows.length === 1 ? "" : "s"}
+                </span>
+              </h2>
+              <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                {rows.map((r) => (
+                  <li key={r.id}>
+                    <div className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-base font-semibold leading-tight line-clamp-2">{r.title}</h3>
+                        <span className="shrink-0 rounded-full border border-border bg-secondary/40 px-2 py-0.5 text-[10px] font-semibold capitalize">
+                          {r.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-3">{r.prompt}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                        <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5">
+                          {r.marks} marks
+                        </span>
+                        {r.difficulty && (
+                          <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5 capitalize">
+                            {r.difficulty}
+                          </span>
+                        )}
+                        <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5">
+                          {r.test_count} test{r.test_count === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                      <div className="mt-auto flex flex-wrap gap-2">
+                        <button
+                          onClick={() => toggleStatus(r)}
+                          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:border-accent/60"
+                        >
+                          {r.status === "published" ? "Unpublish" : "Publish"}
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate({ to: "/practice/$qid", params: { qid: `db-${r.id}` } })
+                          }
+                          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs hover:border-accent/60"
+                        >
+                          Preview
+                        </button>
+                        <button
+                          onClick={() => handleDelete(r.id)}
+                          className="rounded-md border border-border bg-background px-3 py-1.5 text-xs text-destructive hover:border-destructive/60"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       </main>
     </div>
   );
