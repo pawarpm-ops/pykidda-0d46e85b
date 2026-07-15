@@ -404,7 +404,15 @@ export function CodeRunner({
               </div>
 
               <div aria-live="polite" className="sr-only">
-                {aiBusy ? "AI is examining your code" : aiError ? `Error: ${aiError}` : aiResult ? "AI explanation ready" : ""}
+                {aiBusy
+                  ? "AI is examining your code"
+                  : aiError
+                    ? `Error: ${aiError}`
+                    : applyNotice
+                      ? applyNotice
+                      : aiResult
+                        ? "AI explanation ready"
+                        : ""}
               </div>
 
               {aiError && (
@@ -414,7 +422,19 @@ export function CodeRunner({
               )}
 
               {aiResult && !aiBusy && (
-                <AiTutorPanel result={aiResult} />
+                <AiTutorPanel
+                  result={aiResult}
+                  snapshot={aiSnapshot}
+                  currentCode={code}
+                  correctorDismissed={correctorDismissed}
+                  correctionsFresh={correctionsFresh}
+                  applyNotice={applyNotice}
+                  busy={busy}
+                  failingTests={outcome.results.filter((r) => !r.passed)}
+                  onAccept={handleAccept}
+                  onAcceptRun={handleAcceptAndRun}
+                  onCancel={handleCancelCorrector}
+                />
               )}
             </div>
           )}
