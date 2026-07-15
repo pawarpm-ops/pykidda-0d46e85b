@@ -36,10 +36,10 @@ import { Route as AuthenticatedPracticeQidRouteImport } from './routes/_authenti
 import { Route as AuthenticatedHomeworkIdRouteImport } from './routes/_authenticated/homework.$id'
 import { Route as AuthenticatedAssignmentsIdRouteImport } from './routes/_authenticated/assignments.$id'
 import { Route as AuthenticatedAdminAiMockRouteImport } from './routes/_authenticated/admin_.ai-mock'
-import { Route as AuthenticatedAdminHomeworkRouteImport } from './routes/_authenticated/admin.homework'
 import { Route as AuthenticatedAdminAssignmentsRouteImport } from './routes/_authenticated/admin.assignments'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as AuthenticatedAdminHomeworkIndexRouteImport } from './routes/_authenticated/admin.homework.index'
 import { Route as MockTestsAiTestIdWarningRouteImport } from './routes/mock-tests.ai.$testId.warning'
 import { Route as MockTestsAiTestIdTakeRouteImport } from './routes/mock-tests.ai.$testId.take'
 import { Route as MockTestsAiTestIdResultRouteImport } from './routes/mock-tests.ai.$testId.result'
@@ -193,12 +193,6 @@ const AuthenticatedAdminAiMockRoute =
     path: '/admin/ai-mock',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminHomeworkRoute =
-  AuthenticatedAdminHomeworkRouteImport.update({
-    id: '/admin/homework',
-    path: '/admin/homework',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminAssignmentsRoute =
   AuthenticatedAdminAssignmentsRouteImport.update({
     id: '/admin/assignments',
@@ -216,6 +210,12 @@ const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
   path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminHomeworkIndexRoute =
+  AuthenticatedAdminHomeworkIndexRouteImport.update({
+    id: '/admin/homework/',
+    path: '/admin/homework/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const MockTestsAiTestIdWarningRoute =
   MockTestsAiTestIdWarningRouteImport.update({
     id: '/mock-tests/ai/$testId/warning',
@@ -240,15 +240,15 @@ const AuthenticatedMockTestsScheduledTestIdRoute =
   } as any)
 const AuthenticatedAdminHomeworkNewRoute =
   AuthenticatedAdminHomeworkNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedAdminHomeworkRoute,
+    id: '/admin/homework/new',
+    path: '/admin/homework/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminHomeworkIdRoute =
   AuthenticatedAdminHomeworkIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedAdminHomeworkRoute,
+    id: '/admin/homework/$id',
+    path: '/admin/homework/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -270,7 +270,6 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/assignments': typeof AuthenticatedAdminAssignmentsRoute
-  '/admin/homework': typeof AuthenticatedAdminHomeworkRouteWithChildren
   '/admin/ai-mock': typeof AuthenticatedAdminAiMockRoute
   '/assignments/$id': typeof AuthenticatedAssignmentsIdRoute
   '/homework/$id': typeof AuthenticatedHomeworkIdRoute
@@ -288,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
   '/mock-tests/ai/$testId/warning': typeof MockTestsAiTestIdWarningRoute
+  '/admin/homework/': typeof AuthenticatedAdminHomeworkIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -308,7 +308,6 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/assignments': typeof AuthenticatedAdminAssignmentsRoute
-  '/admin/homework': typeof AuthenticatedAdminHomeworkRouteWithChildren
   '/admin/ai-mock': typeof AuthenticatedAdminAiMockRoute
   '/assignments/$id': typeof AuthenticatedAssignmentsIdRoute
   '/homework/$id': typeof AuthenticatedHomeworkIdRoute
@@ -326,6 +325,7 @@ export interface FileRoutesByTo {
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
   '/mock-tests/ai/$testId/warning': typeof MockTestsAiTestIdWarningRoute
+  '/admin/homework': typeof AuthenticatedAdminHomeworkIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -348,7 +348,6 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/assignments': typeof AuthenticatedAdminAssignmentsRoute
-  '/_authenticated/admin/homework': typeof AuthenticatedAdminHomeworkRouteWithChildren
   '/_authenticated/admin_/ai-mock': typeof AuthenticatedAdminAiMockRoute
   '/_authenticated/assignments/$id': typeof AuthenticatedAssignmentsIdRoute
   '/_authenticated/homework/$id': typeof AuthenticatedHomeworkIdRoute
@@ -366,6 +365,7 @@ export interface FileRoutesById {
   '/mock-tests/ai/$testId/result': typeof MockTestsAiTestIdResultRoute
   '/mock-tests/ai/$testId/take': typeof MockTestsAiTestIdTakeRoute
   '/mock-tests/ai/$testId/warning': typeof MockTestsAiTestIdWarningRoute
+  '/_authenticated/admin/homework/': typeof AuthenticatedAdminHomeworkIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -388,7 +388,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/assignments'
-    | '/admin/homework'
     | '/admin/ai-mock'
     | '/assignments/$id'
     | '/homework/$id'
@@ -406,6 +405,7 @@ export interface FileRouteTypes {
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
     | '/mock-tests/ai/$testId/warning'
+    | '/admin/homework/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -426,7 +426,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/assignments'
-    | '/admin/homework'
     | '/admin/ai-mock'
     | '/assignments/$id'
     | '/homework/$id'
@@ -444,6 +443,7 @@ export interface FileRouteTypes {
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
     | '/mock-tests/ai/$testId/warning'
+    | '/admin/homework'
   id:
     | '__root__'
     | '/'
@@ -465,7 +465,6 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/assignments'
-    | '/_authenticated/admin/homework'
     | '/_authenticated/admin_/ai-mock'
     | '/_authenticated/assignments/$id'
     | '/_authenticated/homework/$id'
@@ -483,6 +482,7 @@ export interface FileRouteTypes {
     | '/mock-tests/ai/$testId/result'
     | '/mock-tests/ai/$testId/take'
     | '/mock-tests/ai/$testId/warning'
+    | '/_authenticated/admin/homework/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -697,13 +697,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAiMockRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/homework': {
-      id: '/_authenticated/admin/homework'
-      path: '/admin/homework'
-      fullPath: '/admin/homework'
-      preLoaderRoute: typeof AuthenticatedAdminHomeworkRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin/assignments': {
       id: '/_authenticated/admin/assignments'
       path: '/admin/assignments'
@@ -724,6 +717,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/.lovable/oauth/consent'
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/homework/': {
+      id: '/_authenticated/admin/homework/'
+      path: '/admin/homework'
+      fullPath: '/admin/homework/'
+      preLoaderRoute: typeof AuthenticatedAdminHomeworkIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/mock-tests/ai/$testId/warning': {
       id: '/mock-tests/ai/$testId/warning'
@@ -755,36 +755,20 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/admin/homework/new': {
       id: '/_authenticated/admin/homework/new'
-      path: '/new'
+      path: '/admin/homework/new'
       fullPath: '/admin/homework/new'
       preLoaderRoute: typeof AuthenticatedAdminHomeworkNewRouteImport
-      parentRoute: typeof AuthenticatedAdminHomeworkRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/homework/$id': {
       id: '/_authenticated/admin/homework/$id'
-      path: '/$id'
+      path: '/admin/homework/$id'
       fullPath: '/admin/homework/$id'
       preLoaderRoute: typeof AuthenticatedAdminHomeworkIdRouteImport
-      parentRoute: typeof AuthenticatedAdminHomeworkRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
-
-interface AuthenticatedAdminHomeworkRouteChildren {
-  AuthenticatedAdminHomeworkIdRoute: typeof AuthenticatedAdminHomeworkIdRoute
-  AuthenticatedAdminHomeworkNewRoute: typeof AuthenticatedAdminHomeworkNewRoute
-}
-
-const AuthenticatedAdminHomeworkRouteChildren: AuthenticatedAdminHomeworkRouteChildren =
-  {
-    AuthenticatedAdminHomeworkIdRoute: AuthenticatedAdminHomeworkIdRoute,
-    AuthenticatedAdminHomeworkNewRoute: AuthenticatedAdminHomeworkNewRoute,
-  }
-
-const AuthenticatedAdminHomeworkRouteWithChildren =
-  AuthenticatedAdminHomeworkRoute._addFileChildren(
-    AuthenticatedAdminHomeworkRouteChildren,
-  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
@@ -794,7 +778,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStreakJourneyRoute: typeof AuthenticatedStreakJourneyRoute
   AuthenticatedTeacherCommentsRoute: typeof AuthenticatedTeacherCommentsRoute
   AuthenticatedAdminAssignmentsRoute: typeof AuthenticatedAdminAssignmentsRoute
-  AuthenticatedAdminHomeworkRoute: typeof AuthenticatedAdminHomeworkRouteWithChildren
   AuthenticatedAdminAiMockRoute: typeof AuthenticatedAdminAiMockRoute
   AuthenticatedAssignmentsIdRoute: typeof AuthenticatedAssignmentsIdRoute
   AuthenticatedHomeworkIdRoute: typeof AuthenticatedHomeworkIdRoute
@@ -803,7 +786,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssignmentsIndexRoute: typeof AuthenticatedAssignmentsIndexRoute
   AuthenticatedHomeworkIndexRoute: typeof AuthenticatedHomeworkIndexRoute
   AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
+  AuthenticatedAdminHomeworkIdRoute: typeof AuthenticatedAdminHomeworkIdRoute
+  AuthenticatedAdminHomeworkNewRoute: typeof AuthenticatedAdminHomeworkNewRoute
   AuthenticatedMockTestsScheduledTestIdRoute: typeof AuthenticatedMockTestsScheduledTestIdRoute
+  AuthenticatedAdminHomeworkIndexRoute: typeof AuthenticatedAdminHomeworkIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -814,7 +800,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStreakJourneyRoute: AuthenticatedStreakJourneyRoute,
   AuthenticatedTeacherCommentsRoute: AuthenticatedTeacherCommentsRoute,
   AuthenticatedAdminAssignmentsRoute: AuthenticatedAdminAssignmentsRoute,
-  AuthenticatedAdminHomeworkRoute: AuthenticatedAdminHomeworkRouteWithChildren,
   AuthenticatedAdminAiMockRoute: AuthenticatedAdminAiMockRoute,
   AuthenticatedAssignmentsIdRoute: AuthenticatedAssignmentsIdRoute,
   AuthenticatedHomeworkIdRoute: AuthenticatedHomeworkIdRoute,
@@ -823,8 +808,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssignmentsIndexRoute: AuthenticatedAssignmentsIndexRoute,
   AuthenticatedHomeworkIndexRoute: AuthenticatedHomeworkIndexRoute,
   AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
+  AuthenticatedAdminHomeworkIdRoute: AuthenticatedAdminHomeworkIdRoute,
+  AuthenticatedAdminHomeworkNewRoute: AuthenticatedAdminHomeworkNewRoute,
   AuthenticatedMockTestsScheduledTestIdRoute:
     AuthenticatedMockTestsScheduledTestIdRoute,
+  AuthenticatedAdminHomeworkIndexRoute: AuthenticatedAdminHomeworkIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -10,7 +10,7 @@ import {
   adminGenerateHomeworkWithAi,
 } from "@/lib/homework.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/homework")({
+export const Route = createFileRoute("/_authenticated/admin/homework/")({
   head: () => ({
     meta: [
       { title: "Admin · Homework · PY Kidda" },
