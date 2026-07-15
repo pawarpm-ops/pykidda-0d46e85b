@@ -367,7 +367,13 @@ function AdminPage() {
             {(["overview", "students", "activity", "streaks", "announce", "reports", "reviews", "homework", "audit", "health"] as const).map((t) => (
               <button
                 key={t}
-                onClick={() => setTab(t)}
+                onClick={() => {
+                  if (t === "homework") {
+                    navigate({ to: "/admin/homework" });
+                  } else {
+                    setTab(t);
+                  }
+                }}
                 className={`px-3 py-1.5 rounded transition ${
                   tab === t
                     ? "font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
