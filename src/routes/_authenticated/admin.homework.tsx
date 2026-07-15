@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/admin/homework")({
   ssr: false,
 });
 
-type Tab = "draft" | "published" | "closed";
+type Tab = "all" | "draft" | "published" | "closed";
 
 function AdminHomeworkList() {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ function AdminHomeworkList() {
   const createFn = useServerFn(adminCreateHomework);
   const deleteFn = useServerFn(adminDeleteHomework);
 
-  const [tab, setTab] = useState<Tab>("published");
+  const [tab, setTab] = useState<Tab>("all");
   const [showManual, setShowManual] = useState(false);
   const [showAi, setShowAi] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -42,7 +42,7 @@ function AdminHomeworkList() {
   });
 
   type HRow = Awaited<ReturnType<typeof adminListHomework>>[number];
-  const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => h.status === tab);
+  const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => tab === "all" || h.status === tab);
 
   async function handleCreate() {
     if (!newTitle.trim() || busy) return;
@@ -164,7 +164,7 @@ function AdminHomeworkList() {
 
         {/* Tabs + list */}
         <div className="mt-8 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
-          {(["draft", "published", "closed"] as Tab[]).map((t) => (
+          {(["all", "draft", "published", "closed"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
