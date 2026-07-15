@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest, submitAiMockAttempt } from "@/lib/ai-mock.functions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 import { recordStreakActivity } from "@/lib/streaks";
+import { syncMyScore } from "@/lib/leaderboard";
 import {
   clearTestStarted,
   getTestStartedAt,
@@ -165,6 +166,7 @@ function TakeAiMock() {
           },
         });
         void recordStreakActivity("mock_test_attempted", testId);
+        void syncMyScore();
         sessionStorage.setItem(`pykidda:ai-mock-result:${res.attempt_id}`, JSON.stringify(res));
         clearTestStarted(testId);
         navigate({ to: "/mock-tests/ai/$testId/result", params: { testId }, search: { attempt: res.attempt_id } });

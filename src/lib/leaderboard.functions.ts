@@ -1,36 +1,43 @@
-// Server-side leaderboard sync. Computes the user's score from the
-// source-of-truth DB tables (practice_attempts, mock_results) — never from
-// client-supplied values — and writes it to leaderboard_scores via the
-// admin client (client-side writes to leaderboard_scores are forbidden
-// by RLS so the computed score cannot be tampered with).
+// Server-side leaderboard sync. Ranking is based on the student's SCHEDULED
+// mock-test scores only — not normal mock tests, practice questions, or
+// homework. The score is computed server-side from the source-of-truth
+// ai_mock_attempts / ai_mock_tests tables via the admin client (client-side
+// writes to leaderboard_scores are forbidden by RLS so the computed score
+// cannot be tampered with).
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { QUESTIONS } from "./questions";
 
 export const syncMyScoreServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId, claims } = context;
+    const { userId, claims } = context;
 
-    // Read user's own attempts via RLS-scoped client (owner-only).
-    const [{ data: practice, error: pErr }, { data: mocks, error: mErr }] = await Promise.all([
-      supabase.from("practice_attempts").select("question_id,solved").eq("user_id", userId),
-      supabase.from("mock_results").select("percentage").eq("user_id", userId),
-    ]);
-    if (pErr) throw new Error(pErr.message);
-    if (mErr) throw new Error(mErr.message);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const solvedIds = new Set<string>();
-    for (const a of practice ?? []) if (a.solved) solvedIds.add(a.question_id);
+    // Pull this user's attempts that belong to a scheduled ai_mock_test.
+    const { data: attempts, error: aErr } = await supabaseAdmin
+      .from("ai_mock_attempts")
+      .select("percentage, test_id, ai_mock_tests!inner(test_kind)")
+      .eq("user_id", userId)
+      .eq("ai_mock_tests.test_kind", "scheduled");
+    if (aErr) throw new Error(aErr.message);
 
-    let practiceScore = 0;
-    for (const id of solvedIds) {
-      const q = QUESTIONS.find((x) => x.id === id);
-      if (q) practiceScore += q.marks;
+    const rows = (attempts ?? []) as Array<{ percentage: number | null; test_id: string }>;
+    const bestByTest = new Map<string, number>();
+    for (const r of rows) {
+      const pct = r.percentage ?? 0;
+      const cur = bestByTest.get(r.test_id) ?? 0;
+      if (pct > cur) bestByTest.set(r.test_id, pct);
     }
-    const mockBest = (mocks ?? []).length ? Math.max(...(mocks ?? []).map((m) => m.percentage)) : 0;
-    const mockBonus = Math.round(mockBest / 5);
-    const score = practiceScore + mockBonus;
+    // Score = sum of best percentage per scheduled test attempted.
+    // (This rewards attempting more scheduled tests AND scoring higher.)
+    let score = 0;
+    let mockBest = 0;
+    for (const pct of bestByTest.values()) {
+      score += pct;
+      if (pct > mockBest) mockBest = pct;
+    }
+    const mocksTaken = bestByTest.size;
 
     // Display name from the JWT claims (server-trusted).
     const meta = (claims?.user_metadata ?? {}) as Record<string, unknown>;
@@ -42,20 +49,19 @@ export const syncMyScoreServer = createServerFn({ method: "POST" })
       "Anonymous";
     const avatarUrl = (meta?.avatar_url as string | undefined) ?? null;
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: upErr } = await supabaseAdmin.from("leaderboard_scores").upsert(
       {
         user_id: userId,
         display_name: displayName,
         avatar_url: avatarUrl,
         score,
-        solved_count: solvedIds.size,
+        solved_count: mocksTaken,
         mock_best: mockBest,
-        mocks_taken: (mocks ?? []).length,
+        mocks_taken: mocksTaken,
       },
       { onConflict: "user_id" },
     );
     if (upErr) throw new Error(upErr.message);
 
-    return { score, solvedCount: solvedIds.size, mockBest, mocksTaken: (mocks ?? []).length };
+    return { score, solvedCount: mocksTaken, mockBest, mocksTaken };
   });
