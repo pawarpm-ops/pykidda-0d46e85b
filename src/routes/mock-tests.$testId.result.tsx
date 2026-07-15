@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getMockTest, getQuestion } from "@/lib/questions";
 import { loadResult, type AttemptResult, type QuestionAttempt } from "@/lib/test-session";
 import { getMyMockResult } from "@/lib/mock-results.functions";
+import { MockAiCorrector } from "@/components/MockAiCorrector";
 
 const SearchSchema = z.object({ attempt: z.string().optional() });
 
