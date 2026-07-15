@@ -95,7 +95,10 @@ function HomeworkDetailPage() {
 
   const questions = (data?.questions ?? []) as Question[];
   const submission = data?.submission ?? null;
-  const readOnly = submission?.status === "checked";
+  const submittedStatuses = ["submitted", "late", "checked", "returned"];
+  const alreadySubmitted = submission ? submittedStatuses.includes(submission.status) : false;
+  const isChecked = submission?.status === "checked";
+  const readOnly = alreadySubmitted; // once submitted, no more edits/resubmission
   const overdue = data?.homework.due_at
     ? new Date(data.homework.due_at) < new Date()
     : false;
