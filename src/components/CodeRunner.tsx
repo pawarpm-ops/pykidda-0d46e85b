@@ -10,6 +10,9 @@ import {
 import { explainAndFix, type AiFeedback } from "@/lib/ai-feedback.functions";
 import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 
+type Correction = AiFeedback["corrections"][number];
+
+
 
 export type RunOutcome = {
   code: string;
