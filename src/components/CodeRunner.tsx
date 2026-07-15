@@ -495,7 +495,50 @@ export function CodeRunner({
   );
 }
 
-function AiTutorPanel({ result }: { result: AiFeedback }) {
+type FailingTest = RunOutcome["results"][number];
+
+function AiTutorPanel({
+  result,
+  snapshot,
+  currentCode,
+  correctorDismissed,
+  correctionsFresh,
+  applyNotice,
+  busy,
+  failingTests,
+  onAccept,
+  onAcceptRun,
+  onCancel,
+}: {
+  result: AiFeedback;
+  snapshot: string | null;
+  currentCode: string;
+  correctorDismissed: boolean;
+  correctionsFresh: boolean;
+  applyNotice: string | null;
+  busy: boolean;
+  failingTests: FailingTest[];
+  onAccept: () => void;
+  onAcceptRun: () => void;
+  onCancel: () => void;
+}) {
+  const showCorrector =
+    !correctorDismissed && result.corrections && result.corrections.length > 0;
+  const isStale = snapshot != null && currentCode !== snapshot;
+
+  // Deduplicate identical tracebacks across failing tests.
+  const dedupedTracebacks = useMemo(() => {
+    const seen = new Set<string>();
+    const out: { text: string; label?: string }[] = [];
+    for (const t of failingTests) {
+      const key = (t.stderr || "").trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push({ text: t.stderr, label: t.label });
+    }
+    return out;
+  }, [failingTests]);
+
   return (
     <section
       aria-label="AI tutor explanation"
@@ -510,6 +553,32 @@ function AiTutorPanel({ result }: { result: AiFeedback }) {
       </header>
 
       <div className="space-y-4 p-4 text-sm leading-relaxed">
+        {showCorrector && (
+          <AiCorrector
+            corrections={result.corrections}
+            isStale={isStale}
+            correctionsFresh={correctionsFresh}
+            applyNotice={applyNotice}
+            busy={busy}
+            onAccept={onAccept}
+            onAcceptRun={onAcceptRun}
+            onCancel={onCancel}
+          />
+        )}
+
+        {dedupedTracebacks.length > 0 && (
+          <details className="group rounded-md border border-destructive/30 bg-destructive/5 p-3">
+            <summary className="cursor-pointer list-none font-semibold text-destructive marker:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive rounded">
+              ⚠️ Error details {dedupedTracebacks.length > 1 ? `(${dedupedTracebacks.length})` : ""}
+            </summary>
+            <div className="mt-2 space-y-2">
+              {dedupedTracebacks.map((t, i) => (
+                <TracebackBlock key={i} text={t.text} label={t.label} />
+              ))}
+            </div>
+          </details>
+        )}
+
         {(result.whereLine || result.whereSnippet) && (
           <Section title="📍 Where it happened">
             <p>
@@ -554,6 +623,202 @@ function AiTutorPanel({ result }: { result: AiFeedback }) {
     </section>
   );
 }
+
+function TracebackBlock({ text, label }: { text: string; label?: string }) {
+  // Highlight the exception name in red inline while preserving whitespace.
+  const lines = text.split("\n");
+  return (
+    <div>
+      {label && <p className="mb-1 text-xs font-semibold text-muted-foreground">{label}</p>}
+      <pre className="overflow-auto rounded-md border border-destructive/30 bg-[oklch(0.18_0.02_250)] p-2 font-mono text-xs leading-relaxed text-[oklch(0.97_0.005_85)]">
+{lines.map((ln, i) => {
+  const m = ln.match(/^([A-Z][A-Za-z_]*Error|Exception|Warning|SyntaxError|IndentationError)(:.*)?$/);
+  if (m) {
+    return (
+      <div key={i}>
+        <span className="font-bold text-red-400">{m[1]}</span>
+        {m[2] && <span className="text-red-300">{m[2]}</span>}
+      </div>
+    );
+  }
+  return <div key={i}>{ln || "\u00A0"}</div>;
+})}
+      </pre>
+    </div>
+  );
+}
+
+function AiCorrector({
+  corrections,
+  isStale,
+  correctionsFresh,
+  applyNotice,
+  busy,
+  onAccept,
+  onAcceptRun,
+  onCancel,
+}: {
+  corrections: Correction[];
+  isStale: boolean;
+  correctionsFresh: boolean;
+  applyNotice: string | null;
+  busy: boolean;
+  onAccept: () => void;
+  onAcceptRun: () => void;
+  onCancel: () => void;
+}) {
+  const disabled = busy || isStale || !correctionsFresh;
+  return (
+    <section
+      aria-label="AI Corrector"
+      className="overflow-hidden rounded-lg border border-primary/40 bg-card/80 shadow-sm motion-reduce:transition-none animate-in fade-in"
+    >
+      <header className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-primary/5 px-3 py-2">
+        <span aria-hidden className="text-base">✨</span>
+        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">AI Corrector</h4>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-foreground/80">
+          {corrections.length} suggestion{corrections.length === 1 ? "" : "s"}
+        </span>
+        {isStale && (
+          <span className="ml-auto rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+            stale — code changed
+          </span>
+        )}
+      </header>
+
+      <div className="space-y-3 p-3">
+        {corrections.map((c, i) => (
+          <CorrectionDiff key={i} correction={c} />
+        ))}
+
+        {applyNotice && (
+          <div
+            role="status"
+            className={`rounded-md border px-3 py-2 text-xs ${
+              applyNotice.startsWith("Applied")
+                ? "border-[oklch(0.65_0.15_145)]/40 bg-[oklch(0.65_0.15_145)]/10 text-[oklch(0.45_0.15_145)]"
+                : "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+            }`}
+          >
+            {applyNotice}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <button
+            type="button"
+            onClick={onAccept}
+            disabled={disabled}
+            aria-label="Accept the AI corrections and apply them to the editor"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-[oklch(0.65_0.15_145)]/50 bg-[oklch(0.65_0.15_145)]/10 px-3 py-2 text-sm font-semibold text-[oklch(0.35_0.15_145)] transition-colors hover:bg-[oklch(0.65_0.15_145)]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.55_0.15_145)] disabled:cursor-not-allowed disabled:opacity-50 dark:text-[oklch(0.85_0.15_145)]"
+          >
+            ✓ Accept
+          </button>
+          <button
+            type="button"
+            onClick={onAcceptRun}
+            disabled={disabled}
+            aria-label="Accept the AI corrections and immediately run the tests"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-transform hover:scale-[1.01] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:scale-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+            style={{ backgroundImage: "var(--gradient-sunrise)" }}
+          >
+            ▶ Accept &amp; Run
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Dismiss the AI corrections without changing your code"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            ✕ Cancel
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const CONFIDENCE_STYLES: Record<Correction["confidence"], string> = {
+  high: "border-[oklch(0.65_0.15_145)]/50 bg-[oklch(0.65_0.15_145)]/10 text-[oklch(0.35_0.15_145)] dark:text-[oklch(0.85_0.15_145)]",
+  medium: "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  low: "border-muted-foreground/40 bg-muted/40 text-muted-foreground",
+};
+
+function CorrectionDiff({ correction }: { correction: Correction }) {
+  const originalLines = correction.originalCode.split("\n");
+  const replacementLines = correction.replacementCode.split("\n");
+  const rangeLabel =
+    correction.startLine === correction.endLine
+      ? `Line ${correction.startLine}`
+      : `Lines ${correction.startLine}–${correction.endLine}`;
+  return (
+    <div className="overflow-hidden rounded-md border border-border/70 bg-background/60">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-muted/40 px-3 py-1.5 text-xs">
+        <span className="font-semibold text-foreground">Suggested correction · {rangeLabel}</span>
+        <span
+          className={`ml-auto rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${CONFIDENCE_STYLES[correction.confidence]}`}
+        >
+          {correction.confidence} confidence
+        </span>
+      </div>
+      <div className="overflow-x-auto font-mono text-xs leading-relaxed">
+        {originalLines.map((ln, i) => (
+          <DiffRow key={`o-${i}`} kind="del" lineNo={correction.startLine + i} text={ln} />
+        ))}
+        {replacementLines.map((ln, i) => (
+          <DiffRow key={`n-${i}`} kind="add" lineNo={correction.startLine + i} text={ln} />
+        ))}
+      </div>
+      {correction.explanation && (
+        <p className="border-t border-border/60 bg-card/60 px-3 py-2 text-xs text-muted-foreground">
+          {correction.explanation}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function DiffRow({
+  kind,
+  lineNo,
+  text,
+}: {
+  kind: "del" | "add";
+  lineNo: number;
+  text: string;
+}) {
+  const isDel = kind === "del";
+  return (
+    <div
+      className={`flex items-start gap-0 whitespace-pre ${
+        isDel
+          ? "bg-red-500/15 text-red-900 dark:bg-red-500/20 dark:text-red-100"
+          : "bg-emerald-500/15 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-100"
+      }`}
+    >
+      <span
+        aria-hidden
+        className={`select-none border-r border-border/40 px-2 py-0.5 text-right tabular-nums ${
+          isDel ? "text-red-700/70 dark:text-red-300/70" : "text-emerald-700/70 dark:text-emerald-300/70"
+        }`}
+        style={{ minWidth: "3ch" }}
+      >
+        {lineNo}
+      </span>
+      <span
+        aria-hidden
+        className={`select-none px-2 py-0.5 font-bold ${
+          isDel ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300"
+        }`}
+      >
+        {isDel ? "−" : "+"}
+      </span>
+      <span className="py-0.5 pr-3">{text || "\u00A0"}</span>
+      <span className="sr-only">{isDel ? "removed line" : "added line"}</span>
+    </div>
+  );
+}
+
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
