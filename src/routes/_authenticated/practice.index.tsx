@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/SiteHeader";
 import { QUESTIONS, type CodeQuestion } from "@/lib/questions";
+import { listPublishedPracticeQuestions } from "@/lib/practice-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/practice/")({
   head: () => ({
@@ -18,7 +21,25 @@ export const Route = createFileRoute("/_authenticated/practice/")({
   ssr: false,
 });
 
+type DbQ = {
+  id: string;
+  unit: number;
+  title: string;
+  prompt: string;
+  starter_code: string;
+  tests: unknown[];
+  hint: string | null;
+  solution: string | null;
+  marks: number;
+};
+
 function PracticeListPage() {
+  const listFn = useServerFn(listPublishedPracticeQuestions);
+  const { data: dbQs } = useQuery({
+    queryKey: ["practice-published"],
+    queryFn: () => listFn() as Promise<DbQ[]>,
+  });
+
   const grouped = useMemo(() => {
     const g = new Map<number, CodeQuestion[]>();
     for (const q of QUESTIONS) {
@@ -26,8 +47,25 @@ function PracticeListPage() {
       arr.push(q);
       g.set(q.unit, arr);
     }
+    for (const r of dbQs ?? []) {
+      const testCount = Array.isArray(r.tests) ? r.tests.length : 0;
+      const q: CodeQuestion = {
+        id: `db-${r.id}`,
+        unit: r.unit,
+        title: r.title,
+        prompt: r.prompt,
+        starterCode: r.starter_code ?? "",
+        tests: Array.from({ length: testCount }, () => ({ expected: "" })),
+        hint: r.hint ?? "",
+        solution: r.solution ?? "",
+        marks: r.marks,
+      };
+      const arr = g.get(q.unit) ?? [];
+      arr.push(q);
+      g.set(q.unit, arr);
+    }
     return Array.from(g.entries()).sort((a, b) => a[0] - b[0]);
-  }, []);
+  }, [dbQs]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -85,6 +123,11 @@ function PracticeListPage() {
                         <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5">
                           {q.tests.length} test{q.tests.length === 1 ? "" : "s"}
                         </span>
+                        {q.id.startsWith("db-") && (
+                          <span className="rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-primary">
+                            AI
+                          </span>
+                        )}
                       </div>
                     </Link>
                   </li>
