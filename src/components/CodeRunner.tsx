@@ -439,55 +439,27 @@ export function CodeRunner({
             </div>
           )}
 
-          <ul className={`${canExplain ? "mt-4 border-t border-border pt-4" : "mt-3"} space-y-2 text-sm`}>
-            {outcome.results.map((r, i) => (
-              <li
-                key={i}
-                className={`rounded border p-2 ${
-                  r.passed
-                    ? "border-[oklch(0.65_0.15_145)]/40 bg-[oklch(0.65_0.15_145)]/10"
-                    : "border-destructive/40 bg-destructive/5"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Test {i + 1}{r.label ? ` · ${r.label}` : ""}</span>
-                  <span className={r.passed ? "text-[oklch(0.45_0.15_145)]" : "text-destructive"}>
-                    {r.passed ? "PASS" : "FAIL"}
-                  </span>
-                </div>
-                {!r.passed && (
-                  <div className="mt-2 grid gap-1 font-mono text-xs">
-                    {r.reason === "output_limit" && (
-                      <div className="not-italic font-sans rounded border border-orange-500/50 bg-orange-500/10 px-2 py-1 text-orange-700 dark:text-orange-300">
-                        <span className="inline-block rounded bg-orange-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white mr-2">Output Limit Exceeded</span>
-                        Your program printed too much output (limit: 200 lines / 10,000 chars). Please check your loop or reduce print statements.
-                      </div>
-                    )}
-                    {r.reason === "timeout" && (
-                      <div className="not-italic font-sans rounded border border-orange-500/50 bg-orange-500/10 px-2 py-1 text-orange-700 dark:text-orange-300">
-                        <span className="inline-block rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white mr-2">Time Limit Exceeded</span>
-                        Your code took too long to run. Check for infinite loops.
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-muted-foreground">expected: </span>
-                      <pre className="inline whitespace-pre-wrap">{r.expected || "(empty)"}</pre>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">your output: </span>
-                      <pre className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap rounded bg-muted/50 p-2">{r.actual || "(empty)"}</pre>
-                    </div>
-                    {r.stderr && (
-                      <div className="text-destructive">
-                        <span className="text-muted-foreground">stderr: </span>
-                        <pre className="inline whitespace-pre-wrap">{r.stderr}</pre>
-                      </div>
-                    )}
+          {(() => {
+            const limitHit = outcome.results.find((r) => r.reason === "output_limit");
+            const timeoutHit = outcome.results.find((r) => r.reason === "timeout");
+            if (!limitHit && !timeoutHit) return null;
+            return (
+              <div className={`${canExplain ? "mt-4 border-t border-border pt-4" : "mt-3"} space-y-2 text-sm`}>
+                {limitHit && (
+                  <div className="rounded border border-orange-500/50 bg-orange-500/10 px-2 py-1 text-orange-700 dark:text-orange-300">
+                    <span className="inline-block rounded bg-orange-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white mr-2">Output Limit Exceeded</span>
+                    Your program printed too much output (limit: 200 lines / 10,000 chars). Please check your loop or reduce print statements.
                   </div>
                 )}
-              </li>
-            ))}
-          </ul>
+                {timeoutHit && (
+                  <div className="rounded border border-orange-500/50 bg-orange-500/10 px-2 py-1 text-orange-700 dark:text-orange-300">
+                    <span className="inline-block rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white mr-2">Time Limit Exceeded</span>
+                    Your code took too long to run. Check for infinite loops.
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
         </div>
       )}
