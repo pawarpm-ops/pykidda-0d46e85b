@@ -111,6 +111,23 @@ function ProfilePage() {
     void savePrivacy(qrEnabled, next);
   }
 
+  async function updatePresenceStatus(next: "active" | "idle" | "offline") {
+    if (!userId) return;
+    const prev = presenceStatus;
+    setPresenceStatus(next);
+    setSavingStatus(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ presence_status: next })
+      .eq("id", userId);
+    setSavingStatus(false);
+    if (error) {
+      setPresenceStatus(prev);
+      toast.error(error.message);
+    } else {
+      toast.success(`Status set to ${next}`);
+    }
+
   function toggleQrEnabled() {
     const next = !qrEnabled;
     setQrEnabled(next);
