@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getMockTest, getQuestion } from "@/lib/questions";
 import { loadResult, type AttemptResult, type QuestionAttempt } from "@/lib/test-session";
 import { getMyMockResult } from "@/lib/mock-results.functions";
+import { MockAiCorrector } from "@/components/MockAiCorrector";
 
 const SearchSchema = z.object({ attempt: z.string().optional() });
 
@@ -301,6 +302,18 @@ function AttemptCard({ attempt: a, index, tab }: { attempt: QuestionAttempt; ind
             </pre>
           </div>
         </div>
+      )}
+
+      {q && !allPassed && a.code.trim() && (
+        <MockAiCorrector
+          title={q.title}
+          prompt={q.prompt}
+          userCode={a.code}
+          referenceSolution={q.solution ?? ""}
+          failingTests={a.results
+            .filter((r) => !r.passed)
+            .map((r) => ({ expected: r.expected, actual: r.actual, stderr: r.stderr }))}
+        />
       )}
     </li>
   );
