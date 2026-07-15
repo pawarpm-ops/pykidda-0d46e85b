@@ -216,7 +216,9 @@ function HelpPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12">
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteHeader />
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12">
       {/* Header */}
       <div className="mb-8">
         <Button
