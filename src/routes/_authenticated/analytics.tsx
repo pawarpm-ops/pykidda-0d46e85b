@@ -135,19 +135,49 @@ function downloadCSV(filename: string, rows: (string | number)[][]) {
 function AnalyticsPage() {
   const [a, setA] = useState<Analytics | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [raw, setRaw] = useState<{ practice: ReturnType<typeof getProgress>["practice"]; mocks: ReturnType<typeof getProgress>["mocks"] }>({ practice: [], mocks: [] });
   const [testFilter, setTestFilter] = useState<string>("all");
   const [unitFilter, setUnitFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<"7" | "30" | "90" | "all">("all");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
       const uid = data.user?.id ?? null;
+      if (cancelled) return;
       setUserId(uid);
-      setA(computeAnalytics(getProgress(uid)));
-    });
-  }, []);
 
-  const raw = useMemo(() => getProgress(userId), [userId, a]);
+      const local = getProgress(uid);
+      let merged = local;
+
+      if (uid) {
+        try {
+          const remote = await getMyAnalyticsData();
+          // Merge: dedupe practice by (questionId + at), mocks by (testId + at)
+          const pKey = (p: { questionId: string; at: number }) => `${p.questionId}|${p.at}`;
+          const mKey = (m: { testId: string; at: number }) => `${m.testId}|${m.at}`;
+          const pMap = new Map(local.practice.map((p) => [pKey(p), p]));
+          for (const p of remote.practice) if (!pMap.has(pKey(p))) pMap.set(pKey(p), p);
+          const mMap = new Map(local.mocks.map((m) => [mKey(m), m]));
+          for (const m of remote.mocks) if (!mMap.has(mKey(m))) mMap.set(mKey(m), m);
+          merged = {
+            practice: Array.from(pMap.values()).sort((x, y) => y.at - x.at),
+            mocks: Array.from(mMap.values()).sort((x, y) => y.at - x.at),
+          };
+        } catch (e) {
+          console.error("[analytics] DB hydrate failed", e);
+        }
+      }
+
+      if (cancelled) return;
+      setRaw(merged);
+      setA(computeAnalytics(merged));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Apply filters
   const filtered = useMemo(() => {
