@@ -8,7 +8,55 @@ export type StreakActivityType =
   | "mock_test_attempted"
   | "coding_question_solved"
   | "daily_challenge_completed"
-  | "homework_submitted";
+  | "homework_submitted"
+  // New "opened" events — these are the only ones that count toward the daily streak.
+  | "homework_opened"
+  | "practice_opened"
+  | "mock_opened"
+  | "scheduled_mock_opened";
+
+export type DailyStreakKind =
+  | "homework_opened"
+  | "practice_opened"
+  | "mock_opened"
+  | "scheduled_mock_opened";
+
+const OPENED_TODAY_KEY = "pk:streak-opened-date";
+
+/**
+ * Record a streak-qualifying "activity opened" event once per calendar day.
+ * Safe to call on every mount — the server dedupes per day; a localStorage
+ * flag also short-circuits repeat calls on refresh.
+ */
+export async function recordDailyStreakVisit(
+  kind: DailyStreakKind,
+  referenceId?: string,
+) {
+  try {
+    if (typeof window !== "undefined") {
+      const today = new Date().toISOString().slice(0, 10);
+      if (window.localStorage.getItem(OPENED_TODAY_KEY) === today) return;
+    }
+  } catch {
+    /* localStorage may be unavailable — fall through to server. */
+  }
+  const result = await recordStreakActivity(kind, referenceId);
+  try {
+    if (typeof window !== "undefined") {
+      const today = new Date().toISOString().slice(0, 10);
+      window.localStorage.setItem(OPENED_TODAY_KEY, today);
+    }
+  } catch {
+    /* no-op */
+  }
+  if (result?.is_new_day && typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("pk:daily-streak-counted", {
+        detail: { current_streak: result.current_streak },
+      }),
+    );
+  }
+}
 
 
 export type StreakRank = {
