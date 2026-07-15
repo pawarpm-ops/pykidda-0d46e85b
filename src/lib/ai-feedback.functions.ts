@@ -40,7 +40,7 @@ const Output = z.object({
   howToFix: z.array(z.string()).max(8),
   miniExample: z.string().default(""),
   tryThisNext: z.string(),
-  corrections: z.array(Correction).max(3).default([]),
+  corrections: z.array(Correction).max(10).default([]),
 });
 
 
@@ -110,13 +110,15 @@ OUTPUT — return ONLY a single JSON object matching this exact shape, no markdo
 }
 
 CORRECTIONS RULES (very important):
-- Return AT MOST 3 correction blocks; each block covers AT MOST 5 original and 5 replacement lines.
+- Identify EVERY distinct error in the student's code and return ONE correction block per distinct error. Do NOT stop after the first error — scan the whole program (syntax mistakes, wrong variable names, wrong operators, indentation, off-by-one, print/format issues, etc.) and cover them all.
+- Return up to 10 correction blocks; each block covers AT MOST 5 original and 5 replacement lines. Prefer many small targeted blocks over one big block.
+- Each correction MUST target a different location (non-overlapping startLine/endLine ranges). Merge only if two fixes truly belong on the same contiguous lines.
 - "originalCode" MUST be an EXACT substring of the student's code (line-for-line, same indentation, no line numbers) starting at startLine and ending at endLine.
 - Never return the whole program or reproduce the reference solution.
-- For clear syntax / indentation / NameError / small runtime errors → propose the smallest one-line or few-line correction with "high" confidence.
-- For output-mismatch / logic bugs → propose a targeted correction ONLY when confidence is "high" or "medium". Otherwise return "corrections": [].
-- For timeout / output-limit → point to the likely loop or print line and propose a minimal condition/print fix only if reasonably confident, else "corrections": [].
-- If unsure, return "corrections": [] and rely on the explanation.`;
+- For clear syntax / indentation / NameError / small runtime errors → propose the smallest correction with "high" confidence for each occurrence.
+- For output-mismatch / logic bugs → include a targeted correction ONLY when confidence is "high" or "medium" for that specific spot. Skip spots you are unsure about.
+- For timeout / output-limit → point to the likely loop or print line and propose a minimal condition/print fix only if reasonably confident.
+- If truly nothing is fixable with confidence, return "corrections": [] and rely on the explanation.`;
 
 
       const numberedCode = numberLines(cap(data.userCode, 8000));
