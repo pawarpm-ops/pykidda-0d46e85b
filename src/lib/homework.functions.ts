@@ -441,18 +441,51 @@ export const adminUpdateHomework = createServerFn({ method: "POST" })
     const { id, ...updates } = data;
     const { data: before } = await supabase
       .from("homework")
-      .select("status, title")
+      .select("status, title, due_at")
       .eq("id", id)
       .maybeSingle();
+    const publishTransition =
+      !!before &&
+      before.status !== "published" &&
+      updates.status === "published";
+    // Strict server-side validation on publish
+    if (publishTransition) {
+      const nextTitle = (updates.title ?? before?.title ?? "").trim();
+      if (!nextTitle) throw new Error("Homework title is required to publish.");
+      const dueRaw = updates.due_at ?? before?.due_at ?? null;
+      if (!dueRaw)
+        throw new Error("A valid due date is required to publish.");
+      const dueDate = new Date(dueRaw);
+      if (Number.isNaN(dueDate.getTime()))
+        throw new Error("Due date is invalid.");
+      if (dueDate.getTime() <= Date.now())
+        throw new Error("Due date must be in the future.");
+      const { supabaseAdmin } = await import(
+        "@/integrations/supabase/client.server"
+      );
+      const { data: qs, error: qErr } = await supabaseAdmin
+        .from("homework_questions")
+        .select(
+          "id, question_type, title, description, marks, test_cases, mcq_options, mcq_correct",
+        )
+        .eq("homework_id", id)
+        .order("question_order");
+      if (qErr) throw new Error(qErr.message);
+      const questions = (qs ?? []) as QRowForValidation[];
+      if (questions.length === 0)
+        throw new Error("Add at least one question before publishing.");
+      const errs: string[] = [];
+      questions.forEach((q, i) => errs.push(...validateQuestionForPublish(q, i)));
+      if (errs.length)
+        throw new Error(
+          "Cannot publish — fix these issues first:\n• " + errs.join("\n• "),
+        );
+    }
     const { error } = await supabase
       .from("homework")
       .update(updates)
       .eq("id", id);
     if (error) throw new Error(error.message);
-    const publishTransition =
-      !!before &&
-      before.status !== "published" &&
-      updates.status === "published";
     if (publishTransition) {
       await supabase.from("announcements").insert({
         author_id: userId,
@@ -478,7 +511,11 @@ export const adminUpdateHomework = createServerFn({ method: "POST" })
 
 export const adminDeleteHomework = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({ id: z.string().uuid(), force: z.boolean().optional() })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context as Ctx);
     const { supabase } = context as Ctx;
@@ -487,6 +524,18 @@ export const adminDeleteHomework = createServerFn({ method: "POST" })
       .select("title, status")
       .eq("id", data.id)
       .maybeSingle();
+    if (before?.status === "published" && !data.force) {
+      const { count } = await supabase
+        .from("homework_submissions")
+        .select("id", { count: "exact", head: true })
+        .eq("homework_id", data.id)
+        .in("status", ["submitted", "late", "checked", "returned"]);
+      if ((count ?? 0) > 0) {
+        throw new Error(
+          `This homework is published and has ${count} submission(s). Close it or pass force=true to delete anyway.`,
+        );
+      }
+    }
     const { error } = await supabase
       .from("homework")
       .delete()
@@ -502,6 +551,7 @@ export const adminDeleteHomework = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
 
 export const adminAddQuestion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
