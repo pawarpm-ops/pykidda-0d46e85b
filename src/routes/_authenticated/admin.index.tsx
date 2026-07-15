@@ -36,6 +36,21 @@ import { SystemHealthTab } from "@/components/SystemHealthTab";
 import { logAdminActionClient } from "@/lib/audit-log-client";
 import { BadgesGrid } from "@/components/BadgesGrid";
 import { AdminBadgesOverview } from "@/components/AdminBadgesOverview";
+import {
+  LayoutDashboard,
+  Users,
+  Activity as ActivityIcon,
+  Flame,
+  Award,
+  Megaphone,
+  FileText,
+  Star,
+  ClipboardList,
+  ScrollText,
+  HeartPulse,
+  FlaskConical,
+  type LucideIcon,
+} from "lucide-react";
 
 
 export const Route = createFileRoute("/_authenticated/admin/")({
