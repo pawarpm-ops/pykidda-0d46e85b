@@ -1,96 +1,85 @@
-# Admin/Teacher Activity Audit Log
+# Motivational Badges System
 
-## What we're building
-
-A `admin_activity_logs` table plus a reusable `logAdminActivity()` helper that admin/teacher server functions call after successful actions. A new **Activity Logs** tab in the Admin dashboard shows the logs with summary cards, filters, search, a detailed modal, and CSV/PDF export.
+Extend the existing `badges` / `student_badges` infrastructure — no second system, all previously earned badges preserved.
 
 ## 1. Database (single migration)
 
-Table `public.admin_activity_logs`:
+Extend existing `badges` table:
+- Add `tier` (`bronze|silver|gold|platinum|legendary`), `rarity` (`common|uncommon|rare|epic|legendary`), `category` (`getting_started|consistency|practice|debugging|homework|mock|exploration`), `is_secret bool`, `target_value int`, `progress_metric text`.
+- Keep existing `rule_type`/`threshold` for back-compat; extend `evaluate_and_award_badges` to handle new rule types.
 
-- `id` (uuid PK)
-- `actor_id` (uuid, FK-style to auth.users, indexed)
-- `actor_name`, `actor_email`, `actor_role` (text — snapshot at time of action)
-- `action_type` (text, indexed) — canonical slug, e.g. `homework.created`, `mock_test.published`, `student.roll_updated`, `notification.deleted`, `ai.homework_generated`
-- `action_description` (text) — human sentence like *"Dr. Pawar created homework: Python Loops Assignment"*
-- `module_name` (text, indexed) — one of: `homework`, `mock_test`, `announcement`, `notification`, `student`, `marks`, `report`, `settings`, `ai`
-- `target_id` (text), `target_title` (text)
-- `related_student_id` (uuid, indexed)
-- `old_value` (jsonb), `new_value` (jsonb) — nullable
-- `metadata` (jsonb) — free-form (ip, user_agent, extra ctx)
-- `status` (text, default `success`) — `success` | `failed`
-- `created_at` (timestamptz, default now(), indexed DESC)
+Extend `student_badges`:
+- Already unique on `(student_id, badge_id)` — keeps idempotency. Add `trigger_activity text` (already have `source_type`).
 
-Indexes: `created_at DESC`, `(actor_id, created_at DESC)`, `(module_name, created_at DESC)`, `(action_type, created_at DESC)`, `(related_student_id, created_at DESC)`.
+Seed ~50 new badges covering all 7 categories from the spec (upsert by `badge_key` so existing keys keep their `id` and earned rows).
 
-RLS + grants:
-- `GRANT SELECT ON ... TO authenticated; GRANT ALL ... TO service_role;` (no anon).
-- Enable RLS.
-- Policy: **admin sees all** (`has_role(auth.uid(),'admin')`).
-- Policy: teachers/authenticated users see **only their own** rows (`actor_id = auth.uid()`).
-- No INSERT/UPDATE/DELETE policies for `authenticated` — writes go through a `SECURITY DEFINER` RPC only. Service role (used by the logger server fn) bypasses RLS.
+New/extended RPCs (all SECURITY DEFINER, `auth.uid()` based):
+- `evaluate_and_award_badges(_event_type text)` — extend to compute new metrics:
+  - practice pass counts (tiered), unit-complete, distinct-units, clean-sweep (all tests first attempt), total test cases passed
+  - homework: on-time count tiers, perfect marks, resubmission improvement, complete-answers, early-finisher
+  - mock: attempts count tiers, score tiers, perfect, 3-in-a-row improvement, personal-best, +15pp improvement
+  - debugging: first ai-corrector use, 10 corrections, syntax+runtime+logic mix (from `practice_attempts` failure reasons if stored, else from ai-feedback logs)
+  - never-give-up (pass after ≥3 fails on same question), comeback-coder (return after gap)
+  - exploration: coding+mcq+written mix, 5 topics, all-rounder, hard-difficulty, difficulty-climber
+  - getting-started: first activity, first code run, first pass, first homework submit, first mock complete
+  - Returns newly-earned rows only.
+- `get_badge_progress(_user_id uuid)` — returns all badges with `earned`, `earned_at`, `current_value`, `target_value`, `progress_pct`.
+- `get_next_badge_targets(_user_id uuid, _limit int)` — top-3 closest unearned non-secret badges by percentage.
+- `admin_badge_overview()` — admin-only aggregates: most-earned, rarest, recent awards, students near milestones.
 
-RPC `public.log_admin_activity(...)` (SECURITY DEFINER):
-- Validates `auth.uid()` is set.
-- Snapshots actor name/email/role from `profiles` + `user_roles`.
-- Inserts a row and returns its id.
+Backfill: run `evaluate_and_award_badges` for all existing users via one-off `INSERT ... SELECT` pattern in migration (loop over user_ids via PL/pgSQL DO block).
 
-## 2. Server helper
+## 2. Server functions (`src/lib/badges.functions.ts`)
 
-New file `src/lib/audit-log.server.ts` exporting `logAdminActivity({ actionType, description, moduleName, targetId?, targetTitle?, relatedStudentId?, oldValue?, newValue?, metadata?, status? }, ctx)` — takes the caller's authenticated `supabase` client (from `requireSupabaseAuth`) and calls the RPC. Wrapped in try/catch so a logging failure never breaks the primary action; logs to console on failure.
+- `getMyBadgeProgress` (auth) — calls `get_badge_progress`.
+- `getMyNextTargets` (auth) — calls `get_next_badge_targets`.
+- `evaluateMyBadges` (auth) — calls `evaluate_and_award_badges`, returns newly earned.
+- `getAdminBadgeOverview` (auth + admin check) — calls `admin_badge_overview`.
 
-New server function `src/lib/audit-log.functions.ts`:
-- `listAuditLogs({ from?, to?, actorId?, module?, actionType?, studentId?, search?, limit?, offset? })` — admin only; returns `{ rows, total }`. Non-admins get their own rows only.
-- `getAuditLogSummary()` — admin-only counts for today: total, homework, mock_test, student, ai.
+Client hook `useBadgeEvaluator` triggers `evaluateMyBadges` after key events (practice solved, homework submitted, mock finished) — non-blocking, errors swallowed to console.
 
-## 3. Wire logging into existing admin actions
+## 3. UI
 
-Add `logAdminActivity(...)` calls after these succeed. All these server fns already use `requireSupabaseAuth`:
+**Badge Gallery** (`/badges` route, already exists — extend):
+- Header: total earned / total, completion %.
+- Filters: category, tier, rarity, earned/locked/in-progress.
+- Grid of `BadgeCard` with tier ring, icon, name, progress bar; locked = greyscale + lock icon; secret = "?" until earned.
+- Click → `BadgeDetailDialog` with description, unlock condition, progress, earned date.
 
-- Homework: `createHomework`, `updateHomework`, `publishHomework` / `unpublish`, `deleteHomework` (in `src/lib/homework.functions.ts`)
-- Mock tests: create/publish/update-schedule/delete, plus AI-generated (`src/lib/mock-tests.functions.ts`, `src/lib/ai-mock.functions.ts`)
-- Announcements: create + schedule (`src/lib/announcements.functions.ts` or equivalent)
-- Notifications: delete one / delete all
-- Students: assign roll number, update student info
-- Marks + teacher comments: grading server fns (homework/assignment/mock)
-- Report downloads: student-report-pdf, overview-pdf
-- Settings: result visibility, attempt limit
-- AI: generate homework, generate mock test, refine question
+**Dashboard section** `YourNextBadges` — 3 cards from `getMyNextTargets`.
 
-For each, capture old/new values where feasible (e.g. schedule change, marks change). No log on validation-failed paths.
+**Celebration** — `BadgeUnlockToast` using sonner + framer-motion scale-in + limited confetti; respects `prefers-reduced-motion`; dedupe via localStorage set of celebrated badge ids.
 
-## 4. Admin UI
+**Admin** — new tab in existing admin area: `AdminBadgesOverview` — most-earned, rarest, recent, near-milestone lists.
 
-New file `src/components/AuditLogsTab.tsx`, added as a tab in `src/routes/_authenticated/admin.tsx` (sidebar entry **📜 Activity Logs**).
+**Artwork** — CSS/SVG medallions with tier gradients (bronze/silver/gold/platinum/legendary), category-specific lucide icons (Rocket, Flame, Trophy, Bug, ClipboardCheck, Target, Compass). No image files — keeps bundle small and theme-aware.
 
-Layout:
-- 5 summary cards (Total today, Homework, Mock test, Student, AI).
-- Filter bar: date range (from/to), actor select (loaded from distinct actors), module select, action-type select, student search input, free-text search.
-- Table columns: Date & Time, Teacher/Admin (name + role badge), Module (icon + label), Action (badge), Target, Student (if any), Details (view button).
-- Row click → dialog modal with full details, JSON diff of old/new values, metadata block.
-- Export buttons: **CSV** (client-side from current filtered rows) and **PDF** (via existing `pdf-lib`/report util pattern; if not present, a simple `window.print()` fallback on a printable view).
-- Pagination (50/page).
+## 4. Files
 
-Uses existing dark-theme card + table components. Badges color-mapped per module.
+- `supabase/migrations/<ts>_motivational_badges.sql`
+- `src/lib/badges.functions.ts` (new)
+- `src/components/badges/BadgeMedallion.tsx`
+- `src/components/badges/BadgeCard.tsx`
+- `src/components/badges/BadgeDetailDialog.tsx`
+- `src/components/badges/BadgeUnlockToast.tsx`
+- `src/components/badges/YourNextBadges.tsx`
+- `src/components/badges/AdminBadgesOverview.tsx`
+- `src/hooks/useBadgeEvaluator.ts`
+- Edit existing badges route/page to use new gallery.
+- Wire `useBadgeEvaluator` into practice solve, homework submit, mock finish points.
+- Add admin badges tab route.
 
-## 5. Security
+## 5. Verification
 
-- All reads go through `listAuditLogs` server fn which enforces admin-vs-self.
-- All writes go through the SECURITY DEFINER RPC — no direct client writes possible.
-- No UPDATE/DELETE policies exposed to authenticated users → logs are immutable from the app.
+- Backfill produces correct counts against existing `practice_attempts`, `homework_submissions`, `mock_results`.
+- Trigger practice-solve → toast fires once, not on refresh.
+- Locked badges visible; secret badges hidden condition.
+- Reduced-motion disables confetti + scale.
+- Admin overview only accessible to admins (RLS on RPC via `has_role`).
+- Build + typecheck clean.
 
-## Technical Notes
+## Notes
 
-- The logger is best-effort; wrap each call in `try { await logAdminActivity(...) } catch (e) { console.error("[audit]", e) }` so failures never break the real mutation.
-- For AI actions, log after the AI response is stored, not on error.
-- `metadata.ip` from `getRequestIP()` and `metadata.user_agent` from `getRequestHeader("user-agent")` inside each server fn (small helper `captureRequestContext()` in `audit-log.server.ts`).
-- PDF export uses the same library pattern as existing report PDFs (will confirm on implementation and fall back to CSV-only if the library isn't Worker-safe on the client).
-- No new npm packages expected beyond what's already installed.
-
-## Rollout order
-
-1. Migration (table + RLS + RPC) — one call.
-2. `audit-log.server.ts` + `audit-log.functions.ts`.
-3. Instrument existing admin/teacher server fns with logging calls.
-4. `AuditLogsTab.tsx` + wire into admin sidebar.
-5. Verify: create homework → check log; change mock schedule → check old/new values; try as student → 403 empty; run typecheck.
+- No changes to streak-count rules, scoring, grading, or auth.
+- Existing `student_badges` rows preserved (upsert by `badge_key`).
+- All awarding server-side; client never inserts into `student_badges`.
