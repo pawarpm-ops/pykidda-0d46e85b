@@ -22,6 +22,7 @@ import { StreakUnlockModal } from "@/components/StreakUnlockModal";
 import { WhatsNewPopups } from "@/components/WhatsNewPopups";
 import { InactivityLogout } from "@/components/InactivityLogout";
 import { BadgeToaster } from "@/components/BadgeToaster";
+import { DailyStreakToaster } from "@/components/DailyStreakToaster";
 import { recordStreakActivity } from "@/lib/streaks";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { installGlobalErrorLogger, installSlowPageTracker } from "@/lib/system-health-client";
@@ -288,6 +289,7 @@ function AuthGate({ children }: { children: ReactNode }) {
           {isDashboardRoute && <WhatsNewPopups />}
           {!isSecureRoute && <InactivityLogout />}
           <BadgeToaster />
+          <DailyStreakToaster />
         </>
       )}
     </>

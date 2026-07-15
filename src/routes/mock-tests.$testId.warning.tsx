@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getMockTest, mockTestQuestions } from "@/lib/questions";
 import { getStudentName, markTestStarted, setStudentName } from "@/lib/test-session";
 import { supabase } from "@/integrations/supabase/client";
+import { recordDailyStreakVisit } from "@/lib/streaks";
 
 export const Route = createFileRoute("/mock-tests/$testId/warning")({
   head: () => ({
@@ -82,8 +83,9 @@ function Warning() {
       setAuthChecked(true);
       const fromMeta = data.session.user.user_metadata?.full_name as string | undefined;
       setName(getStudentName() !== "Student" ? getStudentName() : fromMeta || "");
+      if (test) void recordDailyStreakVisit("mock_opened", testId);
     });
-  }, [navigate]);
+  }, [navigate, test, testId]);
 
 
   useEffect(() => {

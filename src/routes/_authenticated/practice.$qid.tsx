@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { CodeRunner, type RunOutcome } from "@/components/CodeRunner";
 import { QUESTIONS } from "@/lib/questions";
 import { submitPracticeAttempt } from "@/lib/practice-attempts.functions";
+import { recordDailyStreakVisit } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/practice/$qid")({
   head: () => ({
@@ -23,6 +24,11 @@ function PracticeSolvePage() {
   const submitFn = useServerFn(submitPracticeAttempt);
 
   const question = useMemo(() => QUESTIONS.find((q) => q.id === qid), [qid]);
+
+  useEffect(() => {
+    if (!question) return;
+    void recordDailyStreakVisit("practice_opened", question.id);
+  }, [question]);
 
   const handleSubmit = useCallback(
     async (outcome: RunOutcome) => {

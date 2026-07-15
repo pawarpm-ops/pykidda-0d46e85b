@@ -185,10 +185,8 @@ export function StreakCard() {
 
       <p className="mt-4 text-sm text-white/80">
         {done
-          ? "Your Python flame is burning strong! Keep it up tomorrow. 🎉"
-          : cur > 0
-            ? "Your streak is waiting! Solve one question today to keep it alive."
-            : "Start your streak today — solve one Python question to light the flame."}
+          ? "Today's streak is counted. Keep it going tomorrow! 🎉"
+          : "Visit PY Kidda and open any Homework, Practice question, Mock Test or Scheduled Mock Test to keep your daily streak alive."}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/SiteHeader";
 import { listAiMockTests } from "@/lib/ai-mock.functions";
+import { recordDailyStreakVisit } from "@/lib/streaks";
 
 export const Route = createFileRoute("/_authenticated/mock-tests/scheduled/$testId")({
   head: () => ({ meta: [{ title: "Scheduled Mock Test · PY Kidda" }, { name: "robots", content: "noindex" }] }),
@@ -52,7 +53,11 @@ function ScheduledDetails() {
     (async () => {
       try {
         const rows = (await listFn({ data: { adminScope: false } })) as Row[];
-        setTest(rows.find((r) => r.id === testId) ?? null);
+        const found = rows.find((r) => r.id === testId) ?? null;
+        setTest(found);
+        if (found && found.test_kind === "scheduled") {
+          void recordDailyStreakVisit("scheduled_mock_opened", found.id);
+        }
       } finally {
         setLoading(false);
       }
