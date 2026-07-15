@@ -17,12 +17,31 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     // Server-side sanity checks — reject fabricated scores. The actual
     // Python execution happens in-browser (Pyodide) so we cannot re-verify
-    // the code here, but we DO enforce that the counters submitted are
-    // internally consistent with the question's real test-case count.
-    const q = QUESTIONS.find((x) => x.id === data.questionId);
-    if (!q) throw new Error("Unknown question");
-    if (data.unit !== q.unit) throw new Error("Unit mismatch");
-    if (data.total !== q.tests.length) throw new Error("Invalid total");
+    // the code, but we DO enforce that the counters submitted are internally
+    // consistent with the question's real test-case count.
+    let expectedUnit: number;
+    let expectedTotal: number;
+
+    if (data.questionId.startsWith("db-")) {
+      const uuid = data.questionId.slice(3);
+      const { data: row, error } = await context.supabase
+        .from("practice_questions")
+        .select("unit, tests, status")
+        .eq("id", uuid)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!row || row.status !== "published") throw new Error("Unknown question");
+      expectedUnit = row.unit as number;
+      expectedTotal = Array.isArray(row.tests) ? (row.tests as unknown[]).length : 0;
+    } else {
+      const q = QUESTIONS.find((x) => x.id === data.questionId);
+      if (!q) throw new Error("Unknown question");
+      expectedUnit = q.unit;
+      expectedTotal = q.tests.length;
+    }
+
+    if (data.unit !== expectedUnit) throw new Error("Unit mismatch");
+    if (data.total !== expectedTotal) throw new Error("Invalid total");
     if (data.passed > data.total) throw new Error("Invalid pass count");
     if (data.solved !== (data.passed === data.total && data.total > 0)) {
       throw new Error("Inconsistent solved flag");
@@ -39,9 +58,6 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
-    // Record streak activity when the student actually solves the question.
-    // Uses the authenticated user client so the RPC runs as the student
-    // (the SECURITY DEFINER function uses auth.uid()).
     if (data.solved) {
       try {
         await context.supabase.rpc("record_streak_activity", {
@@ -55,4 +71,3 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
-
