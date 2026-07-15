@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest, submitAiMockAttempt } from "@/lib/ai-mock.functions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 import { recordStreakActivity } from "@/lib/streaks";
+import { syncMyScore } from "@/lib/leaderboard";
 import {
   clearTestStarted,
   getTestStartedAt,
