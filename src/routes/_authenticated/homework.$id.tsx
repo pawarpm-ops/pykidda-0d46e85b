@@ -85,7 +85,9 @@ function HomeworkDetailPage() {
       };
     }
     setAnswers(map);
-  }, [data]);
+    // Fire-and-forget: student opened an eligible activity → daily streak.
+    void recordDailyStreakVisit("homework_opened", id);
+  }, [data, id]);
 
   useEffect(() => {
     loadPyodideOnce().then(() => setPyReady(true)).catch(() => setPyReady(false));
