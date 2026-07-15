@@ -152,5 +152,6 @@ function TeacherCommentsPage() {
         </ul>
       )}
     </main>
+    </div>
   );
 }
