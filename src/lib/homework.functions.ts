@@ -230,8 +230,8 @@ async function ensureSubmission(
     .eq("student_id", userId)
     .maybeSingle();
   if (existing) {
-    if (existing.status === "checked")
-      throw new Error("Homework already checked, cannot edit");
+    if (["submitted", "late", "checked", "returned"].includes(existing.status))
+      throw new Error("Homework already submitted, cannot edit");
     return existing.id;
   }
   const { data: inserted, error } = await supabase
