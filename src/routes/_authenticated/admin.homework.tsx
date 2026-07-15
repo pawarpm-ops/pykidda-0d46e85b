@@ -260,6 +260,36 @@ function AiHomeworkDialog({
   const [publish, setPublish] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [refFile, setRefFile] = useState<{
+    name: string;
+    mime: string;
+    size: number;
+    data_url: string;
+  } | null>(null);
+
+  const MAX_FILE_BYTES = 6 * 1024 * 1024; // 6 MB raw
+  const ACCEPTED = ".pdf,.txt,.md,.json,.csv,.png,.jpg,.jpeg,.webp";
+
+  async function onPickFile(f: File | null) {
+    setErr(null);
+    if (!f) { setRefFile(null); return; }
+    if (f.size > MAX_FILE_BYTES) {
+      setErr("File is too large. Please pick a file under 6 MB.");
+      return;
+    }
+    const data_url: string = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result ?? ""));
+      r.onerror = () => reject(r.error ?? new Error("Could not read file."));
+      r.readAsDataURL(f);
+    });
+    setRefFile({
+      name: f.name,
+      mime: f.type || "application/octet-stream",
+      size: f.size,
+      data_url,
+    });
+  }
 
   async function handleGenerate() {
     if (!title.trim() || !topic.trim() || busy) return;
@@ -275,6 +305,9 @@ function AiHomeworkDialog({
           marks_per_question: marks,
           instructions: instructions.trim(),
           publish,
+          reference_file: refFile
+            ? { name: refFile.name, mime: refFile.mime, data_url: refFile.data_url }
+            : null,
         },
       });
       onCreated(res.id);
@@ -284,6 +317,7 @@ function AiHomeworkDialog({
       setBusy(false);
     }
   }
+
 
   return (
     <div className="mt-4 rounded-xl border border-primary/40 bg-primary/5 p-5">
