@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@tanstack/react-router";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export const Route = createFileRoute("/help")({
   head: () => ({
