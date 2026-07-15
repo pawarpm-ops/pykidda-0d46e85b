@@ -381,21 +381,8 @@ function AdminPage() {
           </div>
         </div>
 
-        {(() => {
-          const adminTabs: { key: typeof tab; label: string; icon: LucideIcon }[] = [
-            { key: "overview", label: "Overview", icon: LayoutDashboard },
-            { key: "students", label: "Students", icon: Users },
-            { key: "activity", label: "Activity logs", icon: ActivityIcon },
-            { key: "streaks", label: "Streaks", icon: Flame },
-            { key: "badges", label: "Badges", icon: Award },
-            { key: "announce", label: "Announcements", icon: Megaphone },
-            { key: "reports", label: "Reports", icon: FileText },
-            { key: "reviews", label: "Reviews", icon: Star },
-            { key: "audit", label: "Audit log", icon: ScrollText },
-            { key: "health", label: "System Health", icon: HeartPulse },
-          ];
-          return null;
-        })()}
+
+
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
           <nav
