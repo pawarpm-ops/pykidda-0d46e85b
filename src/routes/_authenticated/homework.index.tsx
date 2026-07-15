@@ -66,12 +66,27 @@ function HomeworkListPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-6 py-8">
+        <div className="mb-4 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
+          <span
+            className="rounded-md px-3 py-1.5 font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+            style={{ backgroundImage: "var(--gradient-sunrise)" }}
+          >
+            Homework
+          </span>
+          <Link
+            to="/practice"
+            className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-secondary"
+          >
+            Practice
+          </Link>
+        </div>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Homework 📚</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Complete each homework — answer all questions, then submit before the deadline.
           </p>
         </div>
+
 
         <div className="mt-6 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
           {(["pending", "submitted", "checked"] as Tab[]).map((t) => (
