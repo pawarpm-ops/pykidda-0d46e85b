@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest } from "@/lib/ai-mock.functions";
 import { getStudentName, markTestStarted, setStudentName } from "@/lib/test-session";
 import { supabase } from "@/integrations/supabase/client";
+import { recordDailyStreakVisit } from "@/lib/streaks";
 
 export const Route = createFileRoute("/mock-tests/ai/$testId/warning")({
   head: () => ({
