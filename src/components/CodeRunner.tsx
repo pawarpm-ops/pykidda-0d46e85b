@@ -293,7 +293,45 @@ export function CodeRunner({
               Tests passed: <span className="tabular-nums">{outcome.passedCount}/{outcome.totalCount}</span>
             </p>
           </div>
-          <ul className="mt-3 space-y-2 text-sm">
+
+          {canExplain && (
+            <div className="mt-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleExplain}
+                  disabled={aiBusy}
+                  aria-busy={aiBusy}
+                  className="group relative inline-flex items-center gap-2 rounded-lg border border-accent/50 bg-gradient-to-r from-accent/15 via-primary/10 to-accent/15 px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:scale-100 disabled:opacity-60 disabled:hover:scale-100"
+                >
+                  <span aria-hidden className="text-base">✨</span>
+                  <span>{aiBusy ? "AI is examining your code…" : aiResult ? "Re-explain with AI" : "Explain Error with AI"}</span>
+                  {aiBusy && (
+                    <span className="ml-1 inline-flex gap-0.5" aria-hidden>
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent" />
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <div aria-live="polite" className="sr-only">
+                {aiBusy ? "AI is examining your code" : aiError ? `Error: ${aiError}` : aiResult ? "AI explanation ready" : ""}
+              </div>
+
+              {aiError && (
+                <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  {aiError}
+                </div>
+              )}
+
+              {aiResult && !aiBusy && (
+                <AiTutorPanel result={aiResult} />
+              )}
+            </div>
+          )}
+
+          <ul className={`${canExplain ? "mt-4 border-t border-border pt-4" : "mt-3"} space-y-2 text-sm`}>
             {outcome.results.map((r, i) => (
               <li
                 key={i}
@@ -343,42 +381,6 @@ export function CodeRunner({
             ))}
           </ul>
 
-          {canExplain && (
-            <div className="mt-4 border-t border-border pt-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={handleExplain}
-                  disabled={aiBusy}
-                  aria-busy={aiBusy}
-                  className="group relative inline-flex items-center gap-2 rounded-lg border border-accent/50 bg-gradient-to-r from-accent/15 via-primary/10 to-accent/15 px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:scale-100 disabled:opacity-60 disabled:hover:scale-100"
-                >
-                  <span aria-hidden className="text-base">✨</span>
-                  <span>{aiBusy ? "AI is examining your code…" : aiResult ? "Re-explain with AI" : "Explain Error with AI"}</span>
-                  {aiBusy && (
-                    <span className="ml-1 inline-flex gap-0.5" aria-hidden>
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent" />
-                    </span>
-                  )}
-                </button>
-              </div>
-
-              <div aria-live="polite" className="sr-only">
-                {aiBusy ? "AI is examining your code" : aiError ? `Error: ${aiError}` : aiResult ? "AI explanation ready" : ""}
-              </div>
-
-              {aiError && (
-                <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                  {aiError}
-                </div>
-              )}
-
-              {aiResult && !aiBusy && (
-                <AiTutorPanel result={aiResult} />
-              )}
-            </div>
-          )}
         </div>
       )}
     </div>
