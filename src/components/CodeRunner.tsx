@@ -59,10 +59,16 @@ export function CodeRunner({
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState<AiFeedback | null>(null);
-  const aiCacheRef = useRef<Map<string, AiFeedback>>(new Map());
+  // Snapshot of the exact code sent to the AI — used to detect stale suggestions
+  // and to safely apply corrections at the right line numbers.
+  const [aiSnapshot, setAiSnapshot] = useState<string | null>(null);
+  const [correctorDismissed, setCorrectorDismissed] = useState(false);
+  const [applyNotice, setApplyNotice] = useState<string | null>(null);
+  const aiCacheRef = useRef<Map<string, { result: AiFeedback; snapshot: string }>>(new Map());
   const explainFn = useServerFn(explainAndFix);
   const codeRef = useRef(code);
   codeRef.current = code;
+
 
   useEffect(() => {
     let mounted = true;
