@@ -550,10 +550,6 @@ function AdminPage() {
 
         {tab === "homework" && (
           <section className="mt-6">
-            <details className="mt-4 rounded-lg border border-border bg-card p-3 text-xs text-muted-foreground">
-              <summary className="cursor-pointer font-semibold">Legacy single-question homework (read-only)</summary>
-              <div className="mt-3"><HomeworkAdminTab /></div>
-            </details>
           </section>
         )}
 
