@@ -187,9 +187,12 @@ export function CodeRunner({
 
   const handleExplain = useCallback(async () => {
     if (!outcome || !aiCacheKey) return;
+    setCorrectorDismissed(false);
+    setApplyNotice(null);
     const cached = aiCacheRef.current.get(aiCacheKey);
     if (cached) {
-      setAiResult(cached);
+      setAiResult(cached.result);
+      setAiSnapshot(cached.snapshot);
       setAiError(null);
       return;
     }
@@ -206,23 +209,80 @@ export function CodeRunner({
           stderr: r.stderr,
           reason: r.reason ?? "",
         }));
+      const snapshot = outcome.code;
       const res = await explainFn({
         data: {
           title: question.title,
           prompt: question.prompt,
-          userCode: outcome.code,
+          userCode: snapshot,
           referenceSolution: question.solution,
           failingTests: failing,
         },
       });
-      aiCacheRef.current.set(aiCacheKey, res);
+      aiCacheRef.current.set(aiCacheKey, { result: res, snapshot });
       setAiResult(res);
+      setAiSnapshot(snapshot);
     } catch (e) {
       setAiError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
       setAiBusy(false);
     }
   }, [outcome, aiCacheKey, explainFn, question.title, question.prompt, question.solution]);
+
+  const correctionsFresh = useMemo(() => {
+    if (!aiResult || aiSnapshot == null) return false;
+    if (code !== aiSnapshot) return false;
+    const lines = code.split("\n");
+    return aiResult.corrections.every((c) => {
+      if (c.startLine < 1 || c.endLine > lines.length || c.endLine < c.startLine) return false;
+      return lines.slice(c.startLine - 1, c.endLine).join("\n") === c.originalCode;
+    });
+  }, [aiResult, aiSnapshot, code]);
+
+  const applyCorrections = useCallback((): string | null => {
+    if (!aiResult || aiSnapshot == null) return null;
+    if (code !== aiSnapshot) {
+      setApplyNotice("Your code changed after this suggestion was created. Run it again to get an updated correction.");
+      return null;
+    }
+    const sorted = [...aiResult.corrections].sort((a, b) => b.startLine - a.startLine);
+    let lines = code.split("\n");
+    let applied = 0;
+    for (const c of sorted) {
+      if (c.startLine < 1 || c.endLine > lines.length || c.endLine < c.startLine) continue;
+      const actual = lines.slice(c.startLine - 1, c.endLine).join("\n");
+      if (actual !== c.originalCode) continue;
+      const replacement = c.replacementCode.split("\n");
+      lines = [...lines.slice(0, c.startLine - 1), ...replacement, ...lines.slice(c.endLine)];
+      applied++;
+    }
+    if (applied === 0) {
+      setApplyNotice("Your code changed after this suggestion was created. Run it again to get an updated correction.");
+      return null;
+    }
+    const next = lines.join("\n");
+    setCodeInternal(next);
+    setApplyNotice(`Applied ${applied} AI correction${applied === 1 ? "" : "s"} to your code.`);
+    return next;
+  }, [aiResult, aiSnapshot, code, setCodeInternal]);
+
+  const handleAccept = useCallback(() => {
+    applyCorrections();
+  }, [applyCorrections]);
+
+  const handleAcceptAndRun = useCallback(async () => {
+    const next = applyCorrections();
+    if (next == null) return;
+    setAiResult(null);
+    setAiError(null);
+    setAiSnapshot(null);
+    await runAll();
+  }, [applyCorrections, runAll]);
+
+  const handleCancelCorrector = useCallback(() => {
+    setCorrectorDismissed(true);
+    setApplyNotice(null);
+  }, []);
 
   // Only offer AI help for genuine code errors (not Pyodide load failures).
   const canExplain = !!outcome && outcome.passedCount < outcome.totalCount && !pyError;
