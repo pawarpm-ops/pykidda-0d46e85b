@@ -323,7 +323,14 @@ function HomeworkDetailPage() {
         )}
 
         <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-border pt-6">
-          {!readOnly && (
+          {readOnly ? (
+            <button
+              disabled
+              className="rounded-md border border-border bg-secondary/40 px-4 py-2 text-sm font-semibold text-muted-foreground cursor-not-allowed"
+            >
+              Already submitted ✅
+            </button>
+          ) : (
             <button
               onClick={() => setConfirmOpen(true)}
               disabled={overdue && !hw.allow_late_submission}
@@ -338,7 +345,13 @@ function HomeworkDetailPage() {
             </button>
           )}
           <span className="text-xs text-muted-foreground">
-            {savedAt ? `Draft saved at ${savedAt}` : readOnly ? "Checked — read-only" : "Autosaves as you type"}
+            {savedAt
+              ? `Draft saved at ${savedAt}`
+              : isChecked
+                ? "Checked — read-only"
+                : alreadySubmitted
+                  ? "Submitted — read-only"
+                  : "Autosaves as you type"}
           </span>
         </div>
       </main>
