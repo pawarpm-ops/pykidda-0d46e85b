@@ -172,8 +172,23 @@ export function CodeRunner({
 
   const handleRunAndSubmit = useCallback(async () => {
     const out = await runAll();
-    if (out && onSubmit) onSubmit(out);
+    if (!out) return;
+    if (onSubmit) onSubmit(out);
+    const solved = out.passedCount === out.totalCount && out.totalCount > 0;
+    if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+    setPopup(solved ? "success" : "fail");
+    popupTimerRef.current = setTimeout(
+      () => setPopup(null),
+      solved ? 2000 : 2500,
+    );
   }, [runAll, onSubmit]);
+
+  useEffect(() => {
+    return () => {
+      if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+    };
+  }, []);
+
 
 
   // Cache key for this exact code + failing test signature.
