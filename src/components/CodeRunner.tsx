@@ -64,6 +64,8 @@ export function CodeRunner({
   const [aiSnapshot, setAiSnapshot] = useState<string | null>(null);
   const [correctorDismissed, setCorrectorDismissed] = useState(false);
   const [applyNotice, setApplyNotice] = useState<string | null>(null);
+  const [popup, setPopup] = useState<"success" | "fail" | null>(null);
+  const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const aiCacheRef = useRef<Map<string, { result: AiFeedback; snapshot: string }>>(new Map());
   const explainFn = useServerFn(explainAndFix);
   const codeRef = useRef(code);
@@ -170,8 +172,23 @@ export function CodeRunner({
 
   const handleRunAndSubmit = useCallback(async () => {
     const out = await runAll();
-    if (out && onSubmit) onSubmit(out);
+    if (!out) return;
+    if (onSubmit) onSubmit(out);
+    const solved = out.passedCount === out.totalCount && out.totalCount > 0;
+    if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+    setPopup(solved ? "success" : "fail");
+    popupTimerRef.current = setTimeout(
+      () => setPopup(null),
+      solved ? 2000 : 2500,
+    );
   }, [runAll, onSubmit]);
+
+  useEffect(() => {
+    return () => {
+      if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+    };
+  }, []);
+
 
 
   // Cache key for this exact code + failing test signature.
@@ -517,9 +534,64 @@ export function CodeRunner({
 
         </div>
       )}
+
+      {popup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          role="dialog"
+          aria-live="assertive"
+          onClick={() => {
+            if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+            setPopup(null);
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-sm rounded-2xl border-2 p-6 text-center shadow-2xl animate-in zoom-in-95 duration-300 ${
+              popup === "success"
+                ? "border-emerald-400/60 bg-gradient-to-br from-emerald-500/20 via-background to-emerald-400/10"
+                : "border-amber-400/60 bg-gradient-to-br from-amber-500/20 via-background to-red-400/10"
+            }`}
+          >
+            {popup === "success" ? (
+              <>
+                <div className="mx-auto mb-3 text-5xl animate-bounce">🎉</div>
+                <h3 className="text-2xl font-extrabold text-emerald-500">
+                  Congratulations!
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  All tests passed. Great job — your solution is correct!
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto mb-3 text-5xl">💪</div>
+                <h3 className="text-2xl font-extrabold text-amber-500">
+                  You need to work hard!
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Some tests didn't pass. Don't give up — let's find out what's wrong.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (popupTimerRef.current) clearTimeout(popupTimerRef.current);
+                    setPopup(null);
+                    void handleExplain();
+                  }}
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg border border-accent/50 bg-gradient-to-r from-accent/20 via-primary/15 to-accent/20 px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-transform hover:scale-[1.03]"
+                >
+                  ✨ See what's wrong
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 type FailingTest = RunOutcome["results"][number];
 
