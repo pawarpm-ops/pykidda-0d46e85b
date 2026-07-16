@@ -297,56 +297,119 @@ export function CodeRunner({
         </div>
       )}
 
-      <div className="rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner">
-        <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
-          <span className="font-mono uppercase tracking-widest opacity-70">solution.py</span>
-          <span className="opacity-60">
-            {pyError ? "Python: error" : pyReady ? "Python: ready" : "Python: loading… (first run ~10s)"}
-          </span>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-3">
+          <div className="rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner">
+            <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
+              <span className="font-mono uppercase tracking-widest opacity-70">solution.py</span>
+              <span className="opacity-60">
+                {pyError ? "Python: error" : pyReady ? "Python: ready" : "Python: loading… (first run ~10s)"}
+              </span>
+            </div>
+            <PythonCodeEditor
+              value={code}
+              onChange={setAndEmit}
+              rows={compact ? 12 : 16}
+              className="px-1 py-1"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleRunAndSubmit}
+              disabled={busy}
+              className="rounded-md border border-accent/50 bg-accent/10 px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-50 hover:bg-accent/20"
+            >
+              {busy ? (pyReady ? "Running…" : "Loading Python…") : submitLabel ? `Run Tests & ${submitLabel}` : "Run Tests"}
+            </button>
+            {busy && (
+              <button
+                onClick={handleStop}
+                className="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20"
+              >
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive" />
+                Stop Execution
+              </button>
+            )}
+            {allowHint && (
+              <button
+                onClick={() => setShowHint((v) => !v)}
+                className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+              >
+                {showHint ? "Hide hint" : "Show hint"}
+              </button>
+            )}
+            {allowSolution && (
+              <button
+                onClick={() => setShowSolution((v) => !v)}
+                className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+              >
+                {showSolution ? "Hide solution" : "Show solution"}
+              </button>
+            )}
+          </div>
         </div>
-        <PythonCodeEditor
-          value={code}
-          onChange={setAndEmit}
-          rows={compact ? 12 : 16}
-          className="px-1 py-1"
-        />
 
+        <div className="flex flex-col rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner min-h-[280px]">
+          <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
+            <span className="font-mono uppercase tracking-widest opacity-70">output</span>
+            {outcome && (
+              <span className="opacity-70 tabular-nums">
+                {outcome.passedCount}/{outcome.totalCount} passed
+              </span>
+            )}
+          </div>
+          <div className="flex-1 overflow-auto p-3 font-mono text-xs">
+            {busy && !outcome && (
+              <div className="opacity-70">Running your code…</div>
+            )}
+            {!busy && !outcome && (
+              <div className="opacity-60">
+                Click <span className="font-semibold">Run Tests</span> to execute your code. Output for each test case will appear here.
+              </div>
+            )}
+            {outcome && (
+              <div className="space-y-3">
+                {outcome.results.map((r, i) => (
+                  <div key={i} className="rounded border border-white/10 bg-white/5 p-2">
+                    <div className="mb-1 flex items-center justify-between text-[11px]">
+                      <span className="font-semibold">
+                        {r.label ?? `Test ${i + 1}`}
+                      </span>
+                      <span className={r.passed ? "text-emerald-400" : "text-red-400"}>
+                        {r.passed ? "✓ passed" : "✗ failed"}
+                      </span>
+                    </div>
+                    {r.stdin && (
+                      <div className="mb-1">
+                        <div className="opacity-60">stdin:</div>
+                        <pre className="whitespace-pre-wrap break-words">{r.stdin}</pre>
+                      </div>
+                    )}
+                    <div className="mb-1">
+                      <div className="opacity-60">your output:</div>
+                      <pre className="whitespace-pre-wrap break-words">{r.actual || <span className="opacity-50">(no output)</span>}</pre>
+                    </div>
+                    {!r.passed && (
+                      <div className="mb-1">
+                        <div className="opacity-60">expected:</div>
+                        <pre className="whitespace-pre-wrap break-words text-emerald-300">{r.expected}</pre>
+                      </div>
+                    )}
+                    {r.stderr && (
+                      <div>
+                        <div className="opacity-60">error:</div>
+                        <pre className="whitespace-pre-wrap break-words text-red-300">{r.stderr}</pre>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={runAll}
-          disabled={busy}
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium disabled:opacity-50"
-        >
-          {busy ? (pyReady ? "Running…" : "Loading Python…") : "Run Tests"}
-        </button>
-        {busy && (
-          <button
-            onClick={handleStop}
-            className="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20"
-          >
-            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive" />
-            Stop Execution
-          </button>
-        )}
-        {allowHint && (
-          <button
-            onClick={() => setShowHint((v) => !v)}
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-          >
-            {showHint ? "Hide hint" : "Show hint"}
-          </button>
-        )}
-        {allowSolution && (
-          <button
-            onClick={() => setShowSolution((v) => !v)}
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-          >
-            {showSolution ? "Hide solution" : "Show solution"}
-          </button>
-        )}
-      </div>
 
       {showHint && (
         <div className="rounded-md border border-accent/30 bg-accent/5 p-3 text-sm">
