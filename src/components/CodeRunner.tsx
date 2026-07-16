@@ -65,6 +65,7 @@ export function CodeRunner({
   const [correctorDismissed, setCorrectorDismissed] = useState(false);
   const [applyNotice, setApplyNotice] = useState<string | null>(null);
   const [popup, setPopup] = useState<"success" | "fail" | null>(null);
+  const [plainOutput, setPlainOutput] = useState<{ stdout: string; stderr: string } | null>(null);
   const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const aiCacheRef = useRef<Map<string, { result: AiFeedback; snapshot: string }>>(new Map());
   const explainFn = useServerFn(explainAndFix);
@@ -116,6 +117,7 @@ export function CodeRunner({
     stoppedRef.current = false;
     setBusy(true);
     setOutcome(null);
+    setPlainOutput(null);
     setAiResult(null);
     setAiError(null);
     setAiSnapshot(null);
@@ -130,6 +132,9 @@ export function CodeRunner({
       setBusy(false);
       return null;
     }
+    // First, run the code plainly (no stdin) so the student sees their actual output.
+    const plain = await runPython(codeRef.current, "", { timeoutMs: 8000 });
+    setPlainOutput({ stdout: plain.stdout, stderr: plain.stderr });
     const results: RunOutcome["results"] = [];
     let passedCount = 0;
     for (const tc of question.tests) {
@@ -370,62 +375,35 @@ export function CodeRunner({
         <div className="flex flex-col rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner min-h-[280px]">
           <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
             <span className="font-mono uppercase tracking-widest opacity-70">output</span>
-            {outcome && (
-              <span className="opacity-70 tabular-nums">
-                {outcome.passedCount}/{outcome.totalCount} passed
-              </span>
+            {plainOutput && (
+              <span className="opacity-60">program output</span>
             )}
           </div>
           <div className="flex-1 overflow-auto p-3 font-mono text-xs">
-            {busy && !outcome && (
+            {busy && !plainOutput && (
               <div className="opacity-70">Running your code…</div>
             )}
-            {!busy && !outcome && (
+            {!busy && !plainOutput && (
               <div className="opacity-60">
-                Click <span className="font-semibold">Run Tests</span> to execute your code. Output for each test case will appear here.
+                Click <span className="font-semibold">Run Tests</span> to run your code. The program output will appear here.
               </div>
             )}
-            {outcome && (
-              <div className="space-y-3">
-                {outcome.results.map((r, i) => (
-                  <div key={i} className="rounded border border-white/10 bg-white/5 p-2">
-                    <div className="mb-1 flex items-center justify-between text-[11px]">
-                      <span className="font-semibold">
-                        {r.label ?? `Test ${i + 1}`}
-                      </span>
-                      <span className={r.passed ? "text-emerald-400" : "text-red-400"}>
-                        {r.passed ? "✓ passed" : "✗ failed"}
-                      </span>
-                    </div>
-                    {r.stdin && (
-                      <div className="mb-1">
-                        <div className="opacity-60">stdin:</div>
-                        <pre className="whitespace-pre-wrap break-words">{r.stdin}</pre>
-                      </div>
-                    )}
-                    <div className="mb-1">
-                      <div className="opacity-60">your output:</div>
-                      <pre className="whitespace-pre-wrap break-words">{r.actual || <span className="opacity-50">(no output)</span>}</pre>
-                    </div>
-                    {!r.passed && (
-                      <div className="mb-1">
-                        <div className="opacity-60">expected:</div>
-                        <pre className="whitespace-pre-wrap break-words text-emerald-300">{r.expected}</pre>
-                      </div>
-                    )}
-                    {r.stderr && (
-                      <div>
-                        <div className="opacity-60">error:</div>
-                        <pre className="whitespace-pre-wrap break-words text-red-300">{r.stderr}</pre>
-                      </div>
-                    )}
-                  </div>
-                ))}
+            {plainOutput && (
+              <div className="space-y-2">
+                {plainOutput.stdout ? (
+                  <pre className="whitespace-pre-wrap break-words">{plainOutput.stdout}</pre>
+                ) : (
+                  !plainOutput.stderr && <div className="opacity-50">(no output)</div>
+                )}
+                {plainOutput.stderr && (
+                  <pre className="whitespace-pre-wrap break-words text-red-300">{plainOutput.stderr}</pre>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
+
 
 
       {showHint && (
