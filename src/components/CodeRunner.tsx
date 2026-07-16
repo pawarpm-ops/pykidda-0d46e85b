@@ -117,6 +117,7 @@ export function CodeRunner({
     stoppedRef.current = false;
     setBusy(true);
     setOutcome(null);
+    setPlainOutput(null);
     setAiResult(null);
     setAiError(null);
     setAiSnapshot(null);
