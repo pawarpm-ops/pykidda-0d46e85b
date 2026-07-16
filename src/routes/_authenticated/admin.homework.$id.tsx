@@ -388,36 +388,41 @@ function AddQuestionForm({
   onAdded: () => Promise<unknown> | void;
 }) {
   const addFn = useServerFn(adminAddQuestion);
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [title, setTitle] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [starterCode, setStarterCode] = useState("");
+  const [expectedAnswer, setExpectedAnswer] = useState("");
   const [marks, setMarks] = useState("5");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function handleSave() {
     setErr(null);
-    if (!question.trim()) {
-      setErr("Please write the question.");
+    if (!title.trim()) {
+      setErr("Please give the coding question a title.");
       return;
     }
-    if (!answer.trim()) {
-      setErr("Please write the expected answer.");
+    if (!prompt.trim()) {
+      setErr("Please write the problem statement.");
       return;
     }
     const marksNum = Math.max(1, Math.min(100, Number(marks) || 1));
     setBusy(true);
     try {
-      const trimmedQ = question.trim();
       await addFn({
         data: {
           homework_id: homeworkId,
           question_order: nextOrder,
-          question_type: "descriptive",
-          title: trimmedQ.slice(0, 120),
-          description: trimmedQ,
+          question_type: "coding",
+          title: title.trim().slice(0, 120),
+          description: prompt.trim(),
           marks: marksNum,
-          difficulty: "easy",
-          test_cases: makeExpectedAnswerPayload(answer.trim()),
+          difficulty,
+          starter_code: starterCode,
+          test_cases: expectedAnswer.trim()
+            ? makeExpectedAnswerPayload(expectedAnswer.trim())
+            : [],
         },
       });
       await onAdded();
@@ -431,7 +436,7 @@ function AddQuestionForm({
   return (
     <div className="rounded-xl border-2 border-accent/50 bg-accent/5 p-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-bold">New question</h3>
+        <h3 className="text-base font-bold">New coding question</h3>
         <button
           onClick={onCancel}
           className="rounded-md border border-border bg-background p-1 text-xs text-muted-foreground hover:text-foreground"
@@ -440,42 +445,82 @@ function AddQuestionForm({
           <X size={14} />
         </button>
       </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Only coding questions can be added manually.
+      </p>
 
       <div className="mt-4 grid gap-4">
         <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Question
-          <textarea
-            autoFocus
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            rows={4}
-            placeholder="Write the question exactly as the student will see it."
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
-          />
-        </label>
-
-        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Expected answer <span className="text-[10px] normal-case text-muted-foreground/70">(only visible to you — used as a reference while grading)</span>
-          <textarea
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            rows={4}
-            placeholder="What answer do you expect from the student?"
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
-          />
-        </label>
-
-        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Marks
+          Title
           <input
-            type="number"
-            min={1}
-            max={100}
-            value={marks}
-            onChange={(e) => setMarks(e.target.value)}
-            className="mt-1 w-28 rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Reverse a string"
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
           />
         </label>
+
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Problem statement
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={5}
+            placeholder="Describe the problem the student needs to solve in code."
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
+          />
+        </label>
+
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Starter code <span className="text-[10px] normal-case text-muted-foreground/70">(optional — pre-filled in the student's editor)</span>
+          <textarea
+            value={starterCode}
+            onChange={(e) => setStarterCode(e.target.value)}
+            rows={5}
+            spellCheck={false}
+            placeholder={"# Write your solution below\n"}
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs normal-case tracking-normal text-foreground outline-none focus:border-accent"
+          />
+        </label>
+
+        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Reference solution <span className="text-[10px] normal-case text-muted-foreground/70">(only visible to you — used while grading)</span>
+          <textarea
+            value={expectedAnswer}
+            onChange={(e) => setExpectedAnswer(e.target.value)}
+            rows={5}
+            spellCheck={false}
+            placeholder="Paste the expected working solution."
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs normal-case tracking-normal text-foreground outline-none focus:border-accent"
+          />
+        </label>
+
+        <div className="flex flex-wrap gap-4">
+          <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Marks
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={marks}
+              onChange={(e) => setMarks(e.target.value)}
+              className="mt-1 w-28 rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
+            />
+          </label>
+          <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Difficulty
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value as "easy" | "medium" | "hard")}
+              className="mt-1 block rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       {err && (
