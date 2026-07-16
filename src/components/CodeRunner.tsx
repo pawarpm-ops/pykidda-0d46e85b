@@ -65,6 +65,7 @@ export function CodeRunner({
   const [correctorDismissed, setCorrectorDismissed] = useState(false);
   const [applyNotice, setApplyNotice] = useState<string | null>(null);
   const [popup, setPopup] = useState<"success" | "fail" | null>(null);
+  const [plainOutput, setPlainOutput] = useState<{ stdout: string; stderr: string } | null>(null);
   const popupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const aiCacheRef = useRef<Map<string, { result: AiFeedback; snapshot: string }>>(new Map());
   const explainFn = useServerFn(explainAndFix);
