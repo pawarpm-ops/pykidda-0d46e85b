@@ -531,57 +531,77 @@ function QuestionCard({
             <label className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Your Python code</label>
             <span className="text-xs text-muted-foreground">{pyReady ? "Python: ready" : "Python: loading…"}</span>
           </div>
-          <div className="mt-1 rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner">
-            <textarea
-              value={state.student_code}
-              onChange={(e) => onChange({ student_code: e.target.value })}
-              disabled={readOnly}
-              spellCheck={false}
-              rows={14}
-              className="block w-full resize-y bg-transparent px-4 py-3 font-mono text-sm leading-relaxed outline-none"
-              style={{ tabSize: 4 }}
-              onKeyDown={(e) => {
-                if (e.key === "Tab") {
-                  e.preventDefault();
-                  const el = e.currentTarget;
-                  const s = el.selectionStart;
-                  const next = state.student_code.slice(0, s) + "    " + state.student_code.slice(el.selectionEnd);
-                  onChange({ student_code: next });
-                  requestAnimationFrame(() => {
-                    el.selectionStart = el.selectionEnd = s + 4;
-                  });
-                }
-              }}
-            />
-          </div>
-          <div className="mt-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Output</p>
-            <pre className="mt-1 min-h-[5rem] overflow-auto rounded-md border border-border bg-secondary/40 p-2 text-xs whitespace-pre-wrap">
-              {state.execution_output || "(no output yet)"}
-            </pre>
-          </div>
-          {!readOnly && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button
-                onClick={onRun}
-                disabled={running}
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium disabled:opacity-50"
-              >
-                {running ? "Running…" : "▶ Run code"}
-              </button>
-              {running && (
-                <button
-                  onClick={() => cancelPython()}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20"
-                >
-                  <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive" />
-                  Stop Execution
-                </button>
+          <div className="mt-1 grid gap-3 lg:grid-cols-2">
+            {/* Left: code editor + actions */}
+            <div className="flex flex-col gap-3">
+              <div className="rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner">
+                <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
+                  <span className="font-mono uppercase tracking-widest opacity-70">solution.py</span>
+                </div>
+                <textarea
+                  value={state.student_code}
+                  onChange={(e) => onChange({ student_code: e.target.value })}
+                  disabled={readOnly}
+                  spellCheck={false}
+                  rows={14}
+                  className="block w-full resize-y bg-transparent px-4 py-3 font-mono text-sm leading-relaxed outline-none"
+                  style={{ tabSize: 4 }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Tab") {
+                      e.preventDefault();
+                      const el = e.currentTarget;
+                      const s = el.selectionStart;
+                      const next = state.student_code.slice(0, s) + "    " + state.student_code.slice(el.selectionEnd);
+                      onChange({ student_code: next });
+                      requestAnimationFrame(() => {
+                        el.selectionStart = el.selectionEnd = s + 4;
+                      });
+                    }
+                  }}
+                />
+              </div>
+              {!readOnly && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={onRun}
+                    disabled={running}
+                    className="rounded-md border border-accent/50 bg-accent/10 px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-50 hover:bg-accent/20"
+                  >
+                    {running ? "Running…" : "▶ Run code"}
+                  </button>
+                  {running && (
+                    <button
+                      onClick={() => cancelPython()}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20"
+                    >
+                      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive" />
+                      Stop Execution
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-          )}
+
+            {/* Right: output panel */}
+            <div className="flex flex-col rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner min-h-[280px]">
+              <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
+                <span className="font-mono uppercase tracking-widest opacity-70">output</span>
+                {state.execution_output && <span className="opacity-60">program output</span>}
+              </div>
+              <div className="flex-1 overflow-auto p-3 font-mono text-xs">
+                {state.execution_output ? (
+                  <pre className="whitespace-pre-wrap break-words">{state.execution_output}</pre>
+                ) : (
+                  <div className="opacity-60">
+                    Click <span className="font-semibold">Run code</span> to run your code. The program output will appear here.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
+
 
       {gradedAnswer && gradedAnswer.checked_status === "checked" && (
         <div className="mt-4 rounded-md border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/10 p-3 text-sm">
