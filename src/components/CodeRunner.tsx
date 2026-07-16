@@ -168,10 +168,11 @@ export function CodeRunner({
     cancelPython();
   }, []);
 
-  const handleSubmit = useCallback(async () => {
+  const handleRunAndSubmit = useCallback(async () => {
     const out = await runAll();
     if (out && onSubmit) onSubmit(out);
   }, [runAll, onSubmit]);
+
 
   // Cache key for this exact code + failing test signature.
   const aiCacheKey = useMemo(() => {
