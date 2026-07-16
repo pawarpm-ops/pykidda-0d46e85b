@@ -95,9 +95,11 @@ function PracticeListPage() {
         <div className="mt-8 space-y-8">
           {grouped.map(([unit, qs]) => (
             <section key={unit}>
-              <h2 className="text-lg font-semibold">
-                <span className="text-accent">Unit {unit}</span>
-                <span className="ml-2 text-xs font-normal text-muted-foreground">
+              <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
+                <span className="inline-flex items-center rounded-md border border-accent/50 bg-accent/15 px-2.5 py-1 text-sm font-bold text-foreground shadow-sm dark:bg-accent/25 dark:text-accent-foreground">
+                  Unit {unit}
+                </span>
+                <span className="text-xs font-normal text-muted-foreground">
                   {qs.length} question{qs.length === 1 ? "" : "s"}
                 </span>
               </h2>
