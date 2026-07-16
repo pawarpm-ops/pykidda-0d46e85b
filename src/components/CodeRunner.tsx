@@ -132,8 +132,10 @@ export function CodeRunner({
       setBusy(false);
       return null;
     }
-    // First, run the code plainly (no stdin) so the student sees their actual output.
-    const plain = await runPython(codeRef.current, "", { timeoutMs: 8000 });
+    // First, run the code plainly so the student sees their actual output.
+    // Use the first test case's stdin (if any) so programs that call input() don't EOF.
+    const plainStdin = question.tests[0]?.stdin ?? "";
+    const plain = await runPython(codeRef.current, plainStdin, { timeoutMs: 8000 });
     setPlainOutput({ stdout: plain.stdout, stderr: plain.stderr });
     const results: RunOutcome["results"] = [];
     let passedCount = 0;
