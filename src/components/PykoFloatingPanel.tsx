@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouterState } from "@tanstack/react-router";
 import { pykoChat } from "@/lib/pyko/router.functions";
+import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
@@ -52,10 +53,9 @@ export function PykoFloatingPanel() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open Pyko AI"
-          className="fixed bottom-5 left-5 z-40 flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground shadow-lg hover:scale-105 transition"
-          style={{ backgroundImage: "var(--gradient-sunrise, linear-gradient(135deg,#f97316,#ef4444))" }}
+          className="fixed bottom-5 left-5 z-40 flex h-16 w-16 items-center justify-center rounded-full bg-card shadow-lg hover:scale-105 transition overflow-hidden border border-border"
         >
-          <span className="text-2xl">✨</span>
+          <img src={pykoMascot.url} alt="Pyko" className="h-full w-full object-cover" />
         </button>
       )}
 
