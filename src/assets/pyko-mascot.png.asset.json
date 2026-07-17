@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "asset_id": "cf2c9db3-cb5c-49b8-8e4d-19034f0f3b0b",
+  "asset_id": "9ee6d0da-6d18-4f47-b2f1-2160c12a277d",
   "project_id": "2359da18-e5c2-45fe-ae67-7c573fbd7952",
-  "url": "/__l5e/assets-v1/cf2c9db3-cb5c-49b8-8e4d-19034f0f3b0b/pyko-mascot.png",
-  "r2_key": "a/v1/2359da18-e5c2-45fe-ae67-7c573fbd7952/cf2c9db3-cb5c-49b8-8e4d-19034f0f3b0b/pyko-mascot.png",
-  "original_filename": "pyko-mascot.png",
-  "size": 66506,
+  "url": "/__l5e/assets-v1/9ee6d0da-6d18-4f47-b2f1-2160c12a277d/pyko-mascot-nobg.png",
+  "r2_key": "a/v1/2359da18-e5c2-45fe-ae67-7c573fbd7952/9ee6d0da-6d18-4f47-b2f1-2160c12a277d/pyko-mascot-nobg.png",
+  "original_filename": "pyko-mascot-nobg.png",
+  "size": 677738,
   "content_type": "image/png",
-  "created_at": "2026-07-17T10:12:21Z"
+  "created_at": "2026-07-17T10:26:54Z"
 }
