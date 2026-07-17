@@ -307,3 +307,8 @@
     box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 45%, transparent);
   }
 }
+
+@keyframes pyko-thinking {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-3px) rotate(6deg); }
+}
