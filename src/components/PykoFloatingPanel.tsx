@@ -52,7 +52,7 @@ export function PykoFloatingPanel() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open Pyko AI"
-          className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground shadow-lg hover:scale-105 transition"
+          className="fixed bottom-5 left-5 z-40 flex h-14 w-14 items-center justify-center rounded-full text-primary-foreground shadow-lg hover:scale-105 transition"
           style={{ backgroundImage: "var(--gradient-sunrise, linear-gradient(135deg,#f97316,#ef4444))" }}
         >
           <span className="text-2xl">✨</span>
@@ -60,7 +60,7 @@ export function PykoFloatingPanel() {
       )}
 
       {open && (
-        <div className="fixed bottom-5 right-5 z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+        <div className="fixed bottom-5 left-5 z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border px-3 py-2" style={{ backgroundImage: "var(--gradient-sunrise, linear-gradient(135deg,#f97316,#ef4444))" }}>
             <div className="text-primary-foreground">
               <p className="text-sm font-bold">Pyko AI</p>
