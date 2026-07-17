@@ -1118,6 +1118,197 @@ export type Database = {
         }
         Relationships: []
       }
+      pyko_budget_counters: {
+        Row: {
+          day: string
+          request_count: number
+          token_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          day: string
+          request_count?: number
+          token_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          day?: string
+          request_count?: number
+          token_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pyko_conversations: {
+        Row: {
+          archived: boolean
+          created_at: string
+          id: string
+          mode: string
+          page_context: Json
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          id?: string
+          mode: string
+          page_context?: Json
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          id?: string
+          mode?: string
+          page_context?: Json
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pyko_feature_flags: {
+        Row: {
+          config: Json
+          description: string | null
+          enabled: boolean
+          key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          config?: Json
+          description?: string | null
+          enabled?: boolean
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          config?: Json
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      pyko_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          feedback: string | null
+          id: string
+          latency_ms: number | null
+          mode: string
+          model: string | null
+          prompt_version: string | null
+          role: string
+          safe_source_ids: Json | null
+          tool_calls: Json | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          latency_ms?: number | null
+          mode: string
+          model?: string | null
+          prompt_version?: string | null
+          role: string
+          safe_source_ids?: Json | null
+          tool_calls?: Json | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          latency_ms?: number | null
+          mode?: string
+          model?: string | null
+          prompt_version?: string | null
+          role?: string
+          safe_source_ids?: Json | null
+          tool_calls?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pyko_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "pyko_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pyko_telemetry: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          feedback_status: string | null
+          id: string
+          latency_ms: number | null
+          mode: string
+          model: string | null
+          prompt_version: string | null
+          provider: string | null
+          response_status: string | null
+          safe_source_ids: Json | null
+          tool_names: string[] | null
+          trace_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          feedback_status?: string | null
+          id?: string
+          latency_ms?: number | null
+          mode: string
+          model?: string | null
+          prompt_version?: string | null
+          provider?: string | null
+          response_status?: string | null
+          safe_source_ids?: Json | null
+          tool_names?: string[] | null
+          trace_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          feedback_status?: string | null
+          id?: string
+          latency_ms?: number | null
+          mode?: string
+          model?: string | null
+          prompt_version?: string | null
+          provider?: string | null
+          response_status?: string | null
+          safe_source_ids?: Json | null
+          tool_names?: string[] | null
+          trace_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       streak_activity_logs: {
         Row: {
           activity_date: string
