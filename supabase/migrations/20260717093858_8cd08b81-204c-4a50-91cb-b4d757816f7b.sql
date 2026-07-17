@@ -1,0 +1,1 @@
+UPDATE public.pyko_feature_flags SET enabled = true WHERE key IN ('pyko_ai_enabled','pyko_mode_guide');

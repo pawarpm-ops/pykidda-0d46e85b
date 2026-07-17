@@ -27,6 +27,7 @@ import { StreakWarningToaster } from "@/components/StreakWarningToaster";
 import { recordStreakActivity } from "@/lib/streaks";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { installGlobalErrorLogger, installSlowPageTracker } from "@/lib/system-health-client";
+import { PykoFloatingPanel } from "@/components/PykoFloatingPanel";
 
 function NotFoundComponent() {
   return (
@@ -297,7 +298,7 @@ function AuthGate({ children }: { children: ReactNode }) {
           <BadgeToaster />
           <DailyStreakToaster />
           <StreakWarningToaster />
-
+          {!isSecureRoute && <PykoFloatingPanel />}
         </>
       )}
     </>
