@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouterState } from "@tanstack/react-router";
 import { pykoChat } from "@/lib/pyko/router.functions";
+import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
