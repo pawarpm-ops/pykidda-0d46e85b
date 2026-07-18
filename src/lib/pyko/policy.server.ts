@@ -36,70 +36,76 @@ export async function assertPykoEnabled(
   }
 }
 
-// Reject Tutor / Corrector / Coach requests while the student has an
-// in-progress mock attempt. Only technical support-style modes (guide) are
-// allowed to bypass — but even guide should not answer answer-seeking
-// questions during an assessment. The gateway calls this for every request.
+// Assessment lockout — server-tracked via pyko_assessment_sessions. Blocks
+// EVERY mode including guide while a mock/AI/scheduled test is active.
 export async function assertNotInActiveAssessment(
   supabase: SupabaseClient,
   userId: string,
-  mode: string,
 ): Promise<void> {
-  // Always safe: pure "guide" style navigation help.
-  if (mode === "guide") return;
-
-  const { data, error } = await supabase
-    .from("ai_mock_attempts")
-    .select("id")
-    .eq("user_id", userId)
-    .is("submitted_at", null)
-    .limit(1);
+  const { data, error } = await supabase.rpc("pyko_has_active_assessment", { _user_id: userId });
   if (error) {
     throw new PykoPolicyError("assessment_check_failed", "Pyko can't verify your assessment status.", 503);
   }
-  if ((data ?? []).length > 0) {
+  if (data === true) {
     throw new PykoPolicyError(
       "assessment_locked",
-      "Pyko is paused during an active mock test. Submit or exit the test to continue.",
+      "Pyko is paused during an active test. Submit or exit the test to continue.",
       423,
     );
   }
 }
 
-// Very conservative daily budget: 60 requests per user per day by default.
-// Uses the admin client (service role) — students cannot write these counters.
+// Restrict privileged modes to authorised roles.
+export async function assertModeAllowedForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  mode: string,
+): Promise<void> {
+  if (mode !== "teacher") return;
+  const { data, error } = await supabase.rpc("has_any_role", {
+    _user_id: userId,
+    _roles: ["admin", "super_admin"],
+  });
+  if (error) throw new PykoPolicyError("role_check_failed", "Pyko can't verify your permissions.", 503);
+  if (data !== true) {
+    throw new PykoPolicyError("mode_forbidden", "Teacher mode is restricted to staff.", 403);
+  }
+}
+
+// Conservative daily budget: 60 requests/day, 10 requests/minute.
+// Enforced atomically via SQL function to prevent races.
 export const PYKO_DAILY_REQUEST_LIMIT = 60;
+export const PYKO_PER_MINUTE_LIMIT = 10;
 
 export async function enforceAndIncrementBudget(
   admin: SupabaseClient,
   userId: string,
   limit: number = PYKO_DAILY_REQUEST_LIMIT,
-): Promise<{ used: number; limit: number }> {
+  perMinuteLimit: number = PYKO_PER_MINUTE_LIMIT,
+): Promise<{ used: number; limit: number; perMinuteUsed: number }> {
   const today = new Date().toISOString().slice(0, 10);
-  const { data: existing, error: readErr } = await admin
-    .from("pyko_budget_counters")
-    .select("request_count")
-    .eq("user_id", userId)
-    .eq("day", today)
-    .maybeSingle();
-  if (readErr) throw new PykoPolicyError("budget_read_failed", "Pyko is unavailable.", 503);
-
-  const used = existing?.request_count ?? 0;
-  if (used >= limit) {
+  const { data, error } = await admin.rpc("pyko_touch_budget", {
+    _user_id: userId,
+    _day: today,
+    _limit: limit,
+    _per_minute_limit: perMinuteLimit,
+  });
+  if (error) throw new PykoPolicyError("budget_write_failed", "Pyko is unavailable.", 503);
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new PykoPolicyError("budget_write_failed", "Pyko is unavailable.", 503);
+  if (row.allowed === false) {
+    if (row.reason === "per_minute_limit") {
+      throw new PykoPolicyError(
+        "rate_limited",
+        "You're sending messages too quickly. Please wait a moment.",
+        429,
+      );
+    }
     throw new PykoPolicyError(
       "budget_exceeded",
       "You've reached today's Pyko request limit. Please try again tomorrow.",
       429,
     );
   }
-
-  const { error: upErr } = await admin
-    .from("pyko_budget_counters")
-    .upsert(
-      { user_id: userId, day: today, request_count: used + 1, updated_at: new Date().toISOString() },
-      { onConflict: "user_id,day" },
-    );
-  if (upErr) throw new PykoPolicyError("budget_write_failed", "Pyko is unavailable.", 503);
-
-  return { used: used + 1, limit };
+  return { used: row.used ?? 0, limit, perMinuteUsed: row.per_minute_used ?? 0 };
 }

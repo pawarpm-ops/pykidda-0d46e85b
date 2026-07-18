@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest, submitAiMockAttempt } from "@/lib/ai-mock.functions";
+import { startPykoAssessment, endPykoAssessment } from "@/lib/pyko/assessment.functions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 import { recordStreakActivity } from "@/lib/streaks";
 import { syncMyScore } from "@/lib/leaderboard";
@@ -74,6 +75,8 @@ function TakeAiMock() {
   const navigate = useNavigate();
   const getFn = useServerFn(getStudentAiTest);
   const submitFn = useServerFn(submitAiMockAttempt);
+  const pykoStart = useServerFn(startPykoAssessment);
+  const pykoEnd = useServerFn(endPykoAssessment);
 
   const [allowed, setAllowed] = useState<boolean | null>(null);
   useEffect(() => {
@@ -120,11 +123,22 @@ function TakeAiMock() {
         startedAtRef.current = persisted;
         const elapsed = Math.max(0, Math.floor((Date.now() - persisted) / 1000));
         setRemaining(Math.max(0, (test as Test).duration_sec - elapsed));
+
+        void pykoStart({
+          data: {
+            assessmentId: `ai:${testId}`,
+            type: "ai",
+            durationMinutes: Math.max(1, Math.ceil((test as Test).duration_sec / 60) + 5),
+          },
+        }).catch(() => { /* non-blocking */ });
       } catch (e) {
         setLoadError((e as Error).message);
       }
     })();
-  }, [getFn, testId, allowed]);
+    return () => {
+      void pykoEnd({ data: { assessmentId: `ai:${testId}`, reason: "abandoned" } }).catch(() => { /* noop */ });
+    };
+  }, [getFn, testId, allowed, pykoStart, pykoEnd]);
 
   const submit = useCallback(
     async (submission_type: "normal" | "auto-violation" = "normal", violation_reason?: string) => {
@@ -167,6 +181,7 @@ function TakeAiMock() {
         });
         void recordStreakActivity("mock_test_attempted", testId);
         void syncMyScore();
+        void pykoEnd({ data: { assessmentId: `ai:${testId}`, reason: "completed" } }).catch(() => { /* noop */ });
         sessionStorage.setItem(`pykidda:ai-mock-result:${res.attempt_id}`, JSON.stringify(res));
         clearTestStarted(testId);
         navigate({ to: "/mock-tests/ai/$testId/result", params: { testId }, search: { attempt: res.attempt_id } });
@@ -176,7 +191,7 @@ function TakeAiMock() {
         setSubmitting(false);
       }
     },
-    [navigate, submitFn, testId, test],
+    [navigate, submitFn, testId, test, pykoEnd],
   );
 
   // Timer

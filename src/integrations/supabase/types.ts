@@ -1118,25 +1118,73 @@ export type Database = {
         }
         Relationships: []
       }
+      pyko_assessment_sessions: {
+        Row: {
+          assessment_id: string
+          assessment_type: string
+          completed_at: string | null
+          expires_at: string | null
+          id: string
+          last_activity_at: string
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          assessment_id: string
+          assessment_type: string
+          completed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          last_activity_at?: string
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          assessment_id?: string
+          assessment_type?: string
+          completed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          last_activity_at?: string
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pyko_budget_counters: {
         Row: {
           day: string
+          minute_bucket: string | null
+          minute_count: number
           request_count: number
           token_count: number
+          tokens_in: number
+          tokens_out: number
           updated_at: string
           user_id: string
         }
         Insert: {
           day: string
+          minute_bucket?: string | null
+          minute_count?: number
           request_count?: number
           token_count?: number
+          tokens_in?: number
+          tokens_out?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           day?: string
+          minute_bucket?: string | null
+          minute_count?: number
           request_count?: number
           token_count?: number
+          tokens_in?: number
+          tokens_out?: number
           updated_at?: string
           user_id?: string
         }
@@ -1756,6 +1804,36 @@ export type Database = {
           _user_email?: string
         }
         Returns: string
+      }
+      pyko_end_assessment: {
+        Args: { _assessment_id: string; _reason?: string }
+        Returns: undefined
+      }
+      pyko_has_active_assessment: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      pyko_start_assessment: {
+        Args: {
+          _assessment_id: string
+          _duration_minutes?: number
+          _type: string
+        }
+        Returns: string
+      }
+      pyko_touch_budget: {
+        Args: {
+          _day: string
+          _limit: number
+          _per_minute_limit: number
+          _user_id: string
+        }
+        Returns: {
+          allowed: boolean
+          per_minute_used: number
+          reason: string
+          used: number
+        }[]
       }
       record_streak_activity: {
         Args: { _activity_type: string; _reference_id?: string }

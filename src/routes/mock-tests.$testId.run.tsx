@@ -18,6 +18,7 @@ import {
   type SanitizedMockTest,
   type SanitizedMockQuestion,
 } from "@/lib/mock-secure.functions";
+import { startPykoAssessment, endPykoAssessment } from "@/lib/pyko/assessment.functions";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
   head: () => ({
@@ -61,6 +62,8 @@ function RunTest() {
   const navigate = useNavigate();
   const fetchTest = useServerFn(getStudentMockTest);
   const submitAttempt = useServerFn(submitGradedMockAttempt);
+  const pykoStart = useServerFn(startPykoAssessment);
+  const pykoEnd = useServerFn(endPykoAssessment);
 
   const [test, setTest] = useState<SanitizedMockTest | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -116,7 +119,19 @@ function RunTest() {
     startedAt.current = persistedStartedAt;
     const elapsed = Math.max(0, Math.floor((Date.now() - persistedStartedAt) / 1000));
     setRemaining(Math.max(0, test.durationSec - elapsed));
-  }, [test, testId, allowed]);
+    // Register Pyko assessment lock; failures must not block the test.
+    void pykoStart({
+      data: {
+        assessmentId: `standard:${testId}`,
+        type: "standard",
+        durationMinutes: Math.max(1, Math.ceil(test.durationSec / 60) + 5),
+      },
+    }).catch(() => { /* non-blocking */ });
+    return () => {
+      // Best-effort release on unmount (submit path also calls this).
+      void pykoEnd({ data: { assessmentId: `standard:${testId}`, reason: "abandoned" } }).catch(() => { /* noop */ });
+    };
+  }, [test, testId, allowed, pykoStart, pykoEnd]);
 
   useEffect(() => {
     if (!test) return;
@@ -182,6 +197,7 @@ function RunTest() {
         });
         void syncMyScore();
         void recordStreakActivity("mock_test_attempted", testId);
+        void pykoEnd({ data: { assessmentId: `standard:${testId}`, reason: "completed" } }).catch(() => { /* noop */ });
         clearTestStarted(testId);
         navigate({
           to: "/mock-tests/$testId/result",
@@ -195,7 +211,7 @@ function RunTest() {
         alert(`Submission failed: ${e instanceof Error ? e.message : "unknown error"}`);
       }
     },
-    [navigate, questions, test, testId, submitAttempt],
+    [navigate, questions, test, testId, submitAttempt, pykoEnd],
   );
 
   // Timer

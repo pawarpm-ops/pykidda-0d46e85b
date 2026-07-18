@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouterState } from "@tanstack/react-router";
 import { pykoChat } from "@/lib/pyko/router.functions";
@@ -8,9 +8,19 @@ type Msg = { id: string; role: "user" | "assistant"; content: string };
 
 const POS_KEY = "pykidda:pyko-pos";
 
+// Panel hides itself entirely on routes that host an in-progress assessment.
+// Belt-and-suspenders: the server also blocks Pyko while a session is active.
+function isAssessmentRoute(path: string): boolean {
+  return (
+    /^\/mock-tests\/[^/]+\/run\b/.test(path) ||
+    /^\/mock-tests\/ai\/[^/]+\/take\b/.test(path)
+  );
+}
+
 export function PykoFloatingPanel() {
   const chat = useServerFn(pykoChat);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onAssessment = isAssessmentRoute(pathname);
   const [open, setOpen] = useState(false);
   const [size, setSize] = useState<"normal" | "min" | "max">("normal");
   const [busy, setBusy] = useState(false);
@@ -18,15 +28,42 @@ export function PykoFloatingPanel() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [convId, setConvId] = useState<string | undefined>(undefined);
   const [err, setErr] = useState<string | null>(null);
+  const [lastUserText, setLastUserText] = useState<string | null>(null);
+  const [viewport, setViewport] = useState<{ w: number; h: number }>({ w: 1024, h: 768 });
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ dx: number; dy: number; moved: boolean; w: number; h: number; startX: number; startY: number } | null>(null);
+
+  // Force-close if we entered an active assessment route.
+  useEffect(() => {
+    if (onAssessment && open) setOpen(false);
+  }, [onAssessment, open]);
+
+  useEffect(() => {
+    const measure = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    measure();
+    window.addEventListener("resize", measure);
+    window.addEventListener("orientationchange", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
+    };
+  }, []);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(POS_KEY);
-      if (raw) { setPos(JSON.parse(raw)); return; }
-    } catch {}
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.x === "number" && typeof parsed.y === "number") {
+          setPos(parsed);
+          return;
+        }
+      }
+    } catch {
+      // Malformed storage — ignore.
+    }
     setPos({ x: 24, y: Math.max(80, window.innerHeight - 180) });
   }, []);
 
@@ -34,11 +71,26 @@ export function PykoFloatingPanel() {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
 
+  useEffect(() => {
+    if (open && size !== "min") {
+      // Focus input for accessibility.
+      setTimeout(() => inputRef.current?.focus(), 60);
+    }
+  }, [open, size]);
+
   const clamp = (x: number, y: number, w: number, h: number) => {
-    const maxX = window.innerWidth - w - 4;
-    const maxY = window.innerHeight - h - 4;
+    const maxX = viewport.w - w - 4;
+    const maxY = viewport.h - h - 4;
     return { x: Math.max(4, Math.min(x, maxX)), y: Math.max(4, Math.min(y, maxY)) };
   };
+
+  const panelDims = useMemo(() => {
+    const baseW = size === "max" ? 560 : 360;
+    const baseH = size === "max" ? 720 : 520;
+    const w = Math.min(baseW, viewport.w - 8);
+    const h = Math.min(size === "min" ? 48 : baseH, viewport.h - 8);
+    return { w, h };
+  }, [size, viewport]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLElement>) => {
     const el = e.currentTarget as HTMLElement;
@@ -52,7 +104,7 @@ export function PykoFloatingPanel() {
       startX: e.clientX,
       startY: e.clientY,
     };
-    try { el.setPointerCapture(e.pointerId); } catch {}
+    try { el.setPointerCapture(e.pointerId); } catch { /* noop */ }
   };
   const onPointerMove = (e: React.PointerEvent<HTMLElement>) => {
     const d = dragRef.current;
@@ -64,23 +116,24 @@ export function PykoFloatingPanel() {
   const endDrag = (e: React.PointerEvent<HTMLElement>, toggleOnClick: boolean) => {
     const d = dragRef.current;
     dragRef.current = null;
-    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* noop */ }
     if (pos && d?.moved) {
-      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch {}
+      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch { /* noop */ }
     }
     if (d && !d.moved && toggleOnClick) setOpen((o) => !o);
   };
   const onPointerUp = (e: React.PointerEvent<HTMLElement>) => endDrag(e, true);
   const onPointerUpHeader = (e: React.PointerEvent<HTMLElement>) => endDrag(e, false);
 
-  const send = async () => {
-    const text = input.trim();
-    if (!text || busy) return;
+  const doSend = async (text: string, retry: boolean) => {
     setErr(null);
     setBusy(true);
-    const userMsg: Msg = { id: `u_${Date.now()}`, role: "user", content: text };
-    setMessages((m) => [...m, userMsg]);
-    setInput("");
+    if (!retry) {
+      const userMsg: Msg = { id: `u_${Date.now()}`, role: "user", content: text };
+      setMessages((m) => [...m, userMsg]);
+      setInput("");
+      setLastUserText(text);
+    }
     try {
       const res = await chat({
         data: {
@@ -88,10 +141,12 @@ export function PykoFloatingPanel() {
           mode: "guide",
           message: text.slice(0, 4000),
           pageContext: { route: pathname.slice(0, 200) },
+          retry,
         },
       });
       setConvId(res.conversationId);
       setMessages((m) => [...m, { id: res.messageId, role: "assistant", content: res.content }]);
+      setLastUserText(null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Pyko is unavailable right now.");
     } finally {
@@ -99,7 +154,28 @@ export function PykoFloatingPanel() {
     }
   };
 
+  const send = () => {
+    const text = input.trim();
+    if (!text || busy) return;
+    void doSend(text, false);
+  };
+
+  const retry = () => {
+    if (!lastUserText || busy) return;
+    void doSend(lastUserText, true);
+  };
+
+  const newConversation = () => {
+    setConvId(undefined);
+    setMessages([]);
+    setErr(null);
+    setLastUserText(null);
+  };
+
   if (!pos) return null;
+  if (onAssessment) return null;
+
+  const adj = clamp(pos.x, pos.y, panelDims.w, panelDims.h);
 
   return (
     <>
@@ -116,18 +192,13 @@ export function PykoFloatingPanel() {
         </button>
       )}
 
-      {open && (() => {
-        const baseW = size === "max" ? 560 : 360;
-        const baseH = size === "max" ? 720 : 520;
-        const panelW = Math.min(baseW, window.innerWidth - 8);
-        const panelH = Math.min(size === "min" ? 48 : baseH, window.innerHeight - 8);
-        const adj = clamp(pos.x, pos.y, panelW, panelH);
-        return (
+      {open && (
         <div
-          style={{ left: adj.x, top: adj.y, width: panelW, height: panelH }}
+          role="dialog"
+          aria-label="Pyko AI"
+          style={{ left: adj.x, top: adj.y, width: panelDims.w, height: panelDims.h }}
           className="fixed z-40 flex max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
         >
-
           <div
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -140,6 +211,17 @@ export function PykoFloatingPanel() {
               <p className="text-[10px] opacity-90">Website guide · beta</p>
             </div>
             <div className="flex items-center gap-1">
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerMove={(e) => e.stopPropagation()}
+                onPointerUp={(e) => { e.stopPropagation(); newConversation(); }}
+                onClick={(e) => e.stopPropagation()}
+                className="text-primary-foreground text-[11px] leading-none px-2 py-1 rounded hover:opacity-80 border border-primary-foreground/30"
+                aria-label="Start a new Pyko conversation"
+                title="New chat"
+              >
+                New
+              </button>
               <button
                 onPointerDown={(e) => e.stopPropagation()}
                 onPointerMove={(e) => e.stopPropagation()}
@@ -175,74 +257,94 @@ export function PykoFloatingPanel() {
             </div>
           </div>
           {size !== "min" && (<>
-
-          <div ref={bodyRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-background/50">
-            {messages.length === 0 && (
-              <div className="text-xs text-muted-foreground space-y-2">
-                <p>Hi! I'm Pyko. I can help you find your way around PY Kidda.</p>
-                <p className="font-semibold text-foreground">Try asking:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Where do I see my homework?</li>
-                  <li>How do streaks work?</li>
-                  <li>How do I take a mock test?</li>
-                </ul>
-              </div>
-            )}
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs whitespace-pre-wrap ${
-                  m.role === "user"
-                    ? "ml-auto bg-primary text-primary-foreground"
-                    : "mr-auto bg-muted text-foreground"
-                }`}
-              >
-                {m.content}
-              </div>
-            ))}
-            {busy && (
-              <div className="mr-auto flex items-center gap-2 max-w-[85%] rounded-lg bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
-                <img
-                  src={pykoMascot.url}
-                  alt=""
-                  className="h-5 w-5 object-contain animate-[pyko-thinking_1.4s_ease-in-out_infinite]"
-                />
-                <span className="animate-pulse">Pyko is thinking…</span>
-              </div>
-            )}
-            {err && <p className="text-[11px] text-destructive">{err}</p>}
-          </div>
-
-          <div className="border-t border-border p-2">
-            <div className="flex gap-2">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-                placeholder="Ask Pyko about PY Kidda…"
-                disabled={busy}
-                className="flex-1 rounded-md border border-input bg-background px-2 py-1.5 text-xs outline-none focus:border-primary disabled:opacity-50"
-              />
-              <button
-                onClick={send}
-                disabled={busy || !input.trim()}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
-              >
-                Send
-              </button>
+            <div
+              ref={bodyRef}
+              aria-live="polite"
+              className="flex-1 overflow-y-auto p-3 space-y-2 bg-background/50"
+            >
+              {messages.length === 0 && (
+                <div className="text-xs text-muted-foreground space-y-2">
+                  <p>Hi! I'm Pyko. I can help you find your way around PY Kidda.</p>
+                  <p className="font-semibold text-foreground">Try asking:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Where do I see my homework?</li>
+                    <li>How do streaks work?</li>
+                    <li>How do I take a mock test?</li>
+                  </ul>
+                </div>
+              )}
+              {messages.map((m) => (
+                <div
+                  key={m.id}
+                  className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs whitespace-pre-wrap ${
+                    m.role === "user"
+                      ? "ml-auto bg-primary text-primary-foreground"
+                      : "mr-auto bg-muted text-foreground"
+                  }`}
+                >
+                  {m.content}
+                </div>
+              ))}
+              {busy && (
+                <div className="mr-auto flex items-center gap-2 max-w-[85%] rounded-lg bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
+                  <img
+                    src={pykoMascot.url}
+                    alt=""
+                    className="h-5 w-5 object-contain animate-[pyko-thinking_1.4s_ease-in-out_infinite]"
+                  />
+                  <span className="animate-pulse">Pyko is thinking…</span>
+                </div>
+              )}
+              {err && (
+                <div className="flex items-center justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-2">
+                  <p className="text-[11px] text-destructive">{err}</p>
+                  {lastUserText && (
+                    <button
+                      onClick={retry}
+                      disabled={busy}
+                      className="text-[11px] font-semibold text-destructive underline disabled:opacity-50"
+                      aria-label="Retry the last Pyko request"
+                    >
+                      Retry
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground">Pyko may make mistakes. Check important info.</p>
-          </div>
+
+            <div className="border-t border-border p-2">
+              <div className="flex gap-2">
+                <input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      send();
+                    }
+                  }}
+                  placeholder="Ask Pyko about PY Kidda…"
+                  disabled={busy}
+                  aria-label="Message to Pyko"
+                  className="flex-1 rounded-md border border-input bg-background px-2 py-1.5 text-xs outline-none focus:border-primary disabled:opacity-50"
+                />
+                <button
+                  onClick={send}
+                  disabled={busy || !input.trim()}
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                  aria-label="Send message"
+                >
+                  Send
+                </button>
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Chats may be stored to improve Pyko. Don't share sensitive info.
+              </p>
+            </div>
           </>)}
         </div>
-        );
-      })()}
-
+      )}
     </>
   );
 }
