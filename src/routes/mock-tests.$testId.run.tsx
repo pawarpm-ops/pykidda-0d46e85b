@@ -197,6 +197,7 @@ function RunTest() {
         });
         void syncMyScore();
         void recordStreakActivity("mock_test_attempted", testId);
+        void pykoEnd({ data: { assessmentId: `standard:${testId}`, reason: "completed" } }).catch(() => { /* noop */ });
         clearTestStarted(testId);
         navigate({
           to: "/mock-tests/$testId/result",
