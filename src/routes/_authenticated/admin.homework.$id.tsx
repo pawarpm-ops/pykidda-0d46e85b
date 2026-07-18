@@ -399,14 +399,14 @@ function AddQuestionForm({
 
   async function handleSave() {
     setErr(null);
-    if (!title.trim()) {
-      setErr("Please give the coding question a title.");
-      return;
-    }
     if (!prompt.trim()) {
       setErr("Please write the problem statement.");
       return;
     }
+    const autoTitle =
+      title.trim() ||
+      prompt.trim().split(/\r?\n/)[0].slice(0, 80) ||
+      `Coding question ${nextOrder}`;
     const marksNum = Math.max(1, Math.min(100, Number(marks) || 1));
     setBusy(true);
     try {
@@ -415,7 +415,7 @@ function AddQuestionForm({
           homework_id: homeworkId,
           question_order: nextOrder,
           question_type: "coding",
-          title: title.trim().slice(0, 120),
+          title: autoTitle.slice(0, 120),
           description: prompt.trim(),
           marks: marksNum,
           difficulty,
