@@ -6,6 +6,8 @@ import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
+const POS_KEY = "pykidda:pyko-pos";
+
 export function PykoFloatingPanel() {
   const chat = useServerFn(pykoChat);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -16,10 +18,57 @@ export function PykoFloatingPanel() {
   const [convId, setConvId] = useState<string | undefined>(undefined);
   const [err, setErr] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{ dx: number; dy: number; moved: boolean; w: number; h: number; startX: number; startY: number } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POS_KEY);
+      if (raw) { setPos(JSON.parse(raw)); return; }
+    } catch {}
+    setPos({ x: 20, y: window.innerHeight - 20 - 64 });
+  }, []);
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  const clamp = (x: number, y: number, w: number, h: number) => {
+    const maxX = window.innerWidth - w - 4;
+    const maxY = window.innerHeight - h - 4;
+    return { x: Math.max(4, Math.min(x, maxX)), y: Math.max(4, Math.min(y, maxY)) };
+  };
+
+  const onPointerDown = (e: React.PointerEvent<HTMLElement>) => {
+    const el = e.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    dragRef.current = {
+      dx: e.clientX - rect.left,
+      dy: e.clientY - rect.top,
+      moved: false,
+      w: rect.width,
+      h: rect.height,
+      startX: e.clientX,
+      startY: e.clientY,
+    };
+    try { el.setPointerCapture(e.pointerId); } catch {}
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 5) return;
+    d.moved = true;
+    setPos(clamp(e.clientX - d.dx, e.clientY - d.dy, d.w, d.h));
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLElement>) => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+    if (pos && d?.moved) {
+      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch {}
+    }
+    if (d && !d.moved) setOpen((o) => !o);
+  };
 
   const send = async () => {
     const text = input.trim();
