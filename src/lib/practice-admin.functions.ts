@@ -286,5 +286,15 @@ ${data.instructions.trim() ? `Extra instructions:\n"""\n${data.instructions.slic
       .select("id");
     if (insErr) throw new Error(insErr.message);
 
+    if (data.publish && inserted && inserted.length > 0) {
+      await supabase.from("announcements").insert({
+        author_id: userId,
+        title: "New practice questions",
+        body: `🐍 ${inserted.length} new practice question${inserted.length === 1 ? "" : "s"} available. Click View to try them.`,
+        priority: "normal",
+        action_url: `/practice`,
+      });
+    }
+
     return { inserted: inserted?.length ?? 0, publish: data.publish };
   });
