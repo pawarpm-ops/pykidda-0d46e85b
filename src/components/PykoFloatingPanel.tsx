@@ -289,6 +289,32 @@ export function PykoFloatingPanel() {
             </div>
           </div>
           {size !== "min" && (<>
+            <div className="border-b border-border bg-muted/30 px-2 py-2">
+              <div className="grid grid-cols-3 gap-1.5">
+                {(Object.keys(MODE_META) as StudentMode[]).map((k) => {
+                  const meta = MODE_META[k];
+                  const active = mode === k;
+                  return (
+                    <button
+                      key={k}
+                      onClick={() => switchMode(k)}
+                      disabled={busy}
+                      title={meta.desc}
+                      aria-pressed={active}
+                      className={`rounded-md px-1.5 py-1 text-[10px] font-semibold leading-tight border transition ${
+                        active
+                          ? `bg-gradient-to-br ${meta.accent} text-white border-transparent shadow`
+                          : "bg-background text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      <div className="text-sm leading-none">{meta.icon}</div>
+                      <div className="mt-0.5">{meta.label}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground text-center">{MODE_META[mode].desc}</p>
+            </div>
             <div
               ref={bodyRef}
               aria-live="polite"
