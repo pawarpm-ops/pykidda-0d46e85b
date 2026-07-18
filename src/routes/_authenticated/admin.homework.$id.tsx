@@ -472,17 +472,6 @@ function AddQuestionForm({
           />
         </label>
 
-        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Starter code <span className="text-[10px] normal-case text-muted-foreground/70">(optional — pre-filled in the student's editor)</span>
-          <textarea
-            value={starterCode}
-            onChange={(e) => setStarterCode(e.target.value)}
-            rows={5}
-            spellCheck={false}
-            placeholder={"# Write your solution below\n"}
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs normal-case tracking-normal text-foreground outline-none focus:border-accent"
-          />
-        </label>
 
         <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Reference solution <span className="text-[10px] normal-case text-muted-foreground/70">(only visible to you — used while grading)</span>
