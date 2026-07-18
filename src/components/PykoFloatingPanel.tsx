@@ -60,15 +60,17 @@ export function PykoFloatingPanel() {
     d.moved = true;
     setPos(clamp(e.clientX - d.dx, e.clientY - d.dy, d.w, d.h));
   };
-  const onPointerUp = (e: React.PointerEvent<HTMLElement>) => {
+  const endDrag = (e: React.PointerEvent<HTMLElement>, toggleOnClick: boolean) => {
     const d = dragRef.current;
     dragRef.current = null;
     try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
     if (pos && d?.moved) {
       try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch {}
     }
-    if (d && !d.moved) setOpen((o) => !o);
+    if (d && !d.moved && toggleOnClick) setOpen((o) => !o);
   };
+  const onPointerUp = (e: React.PointerEvent<HTMLElement>) => endDrag(e, true);
+  const onPointerUpHeader = (e: React.PointerEvent<HTMLElement>) => endDrag(e, false);
 
   const send = async () => {
     const text = input.trim();
