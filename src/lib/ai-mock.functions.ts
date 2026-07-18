@@ -321,6 +321,15 @@ export const publishAiMockTest = createServerFn({ method: "POST" })
         priority: "high",
         action_url: `/mock-tests/scheduled/${data.id}`,
       });
+    } else if (data.publish) {
+      const t = updated as { title?: string } | null;
+      await supabaseAdmin.from("announcements").insert({
+        author_id: context.userId,
+        title: "New Mock Test available",
+        body: `A new mock test "${t?.title ?? ""}" is now available. Click View to attempt it.`,
+        priority: "normal",
+        action_url: `/mock-tests`,
+      });
     }
     const publishedTitle =
       (updated as { title?: string } | null)?.title ?? "";
