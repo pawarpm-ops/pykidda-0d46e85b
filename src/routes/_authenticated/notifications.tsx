@@ -174,6 +174,15 @@ function NotificationsPage() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {unread && <span className="mt-1 h-2.5 w-2.5 rounded-full bg-accent" />}
+                      {n.action_url && (
+                        <Link
+                          to={n.action_url}
+                          onClick={(e) => e.stopPropagation()}
+                          className="rounded-md bg-primary text-primary-foreground px-2.5 py-1 text-xs font-semibold hover:bg-primary/85 transition"
+                        >
+                          View
+                        </Link>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
