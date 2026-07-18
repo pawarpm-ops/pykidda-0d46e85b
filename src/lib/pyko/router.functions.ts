@@ -21,31 +21,10 @@ function newTraceId(): string {
   return `pyko_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-// All-Rounder classifier: fast, deterministic, heuristic-only (no extra model
-// call — that would double budget cost). Order matters: code detection first.
-function classifyAllRounder(
-  message: string,
-  code?: string,
-): "guide" | "tutor" | "corrector" | "coach" {
-  const m = message.toLowerCase();
-  const hasFencedCode = /```/.test(message);
-  const looksLikeCode = /\b(def |print\(|import |for |while |class |traceback|error:|syntaxerror|nameerror|typeerror|indexerror|indentationerror)\b/i.test(
-    message,
-  );
-  if (code || hasFencedCode || looksLikeCode) return "corrector";
+// All-Rounder classifier lives in schemas.ts so it's importable from tests
+// without pulling in server-only modules.
+import { classifyAllRounder } from "./schemas";
 
-  const coachTerms = ["streak", "badge", "leaderboard", "progress", "improve", "how am i doing", "next step", "study plan"];
-  if (coachTerms.some((t) => m.includes(t))) return "coach";
-
-  const guideTerms = ["where", "how do i open", "how do i find", "how do i create", "how do i assign", "how do i submit", "how does homework", "how does grading", "how do scheduled", "homework section", "practice section", "mock test", "publish", "assign homework"];
-  if (guideTerms.some((t) => m.includes(t))) return "guide";
-
-  const tutorTerms = ["explain", "what is", "how does", "difference between", "why does", "concept", "loop", "list", "dictionary", "function", "recursion", "class", "python"];
-  if (tutorTerms.some((t) => m.includes(t))) return "tutor";
-
-  // Default to guide — safer than teaching an unrelated topic.
-  return "guide";
-}
 
 
 async function logTelemetry(
