@@ -96,20 +96,18 @@ function AdminHomeworkList() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin</p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight">Homework 📚</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create multi-question homework, publish it, and grade student submissions.
-            </p>
-          </div>
-          <Link
-            to="/admin"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"
-          >
-            ← Back to admin
-          </Link>
+        <Link
+          to="/admin"
+          className="inline-flex w-fit items-center rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"
+        >
+          ← Back to admin
+        </Link>
+        <div className="mt-4">
+          <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Homework 📚</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create multi-question homework, publish it, and grade student submissions.
+          </p>
         </div>
 
         {/* Homework / Practice switcher */}
