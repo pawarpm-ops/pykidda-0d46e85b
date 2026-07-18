@@ -181,6 +181,7 @@ function TakeAiMock() {
         });
         void recordStreakActivity("mock_test_attempted", testId);
         void syncMyScore();
+        void pykoEnd({ data: { assessmentId: `ai:${testId}`, reason: "completed" } }).catch(() => { /* noop */ });
         sessionStorage.setItem(`pykidda:ai-mock-result:${res.attempt_id}`, JSON.stringify(res));
         clearTestStarted(testId);
         navigate({ to: "/mock-tests/ai/$testId/result", params: { testId }, search: { attempt: res.attempt_id } });
