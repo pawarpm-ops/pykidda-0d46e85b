@@ -332,15 +332,19 @@ export function PykoFloatingPanel() {
                 </div>
               )}
               {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs whitespace-pre-wrap ${
-                    m.role === "user"
-                      ? "ml-auto bg-primary text-primary-foreground"
-                      : "mr-auto bg-muted text-foreground"
-                  }`}
-                >
-                  {m.content}
+                <div key={m.id} className={m.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}>
+                  {m.role === "assistant" && mode === "allrounder" && m.subMode && (
+                    <span className="mb-0.5 text-[10px] font-semibold text-muted-foreground">{SUBMODE_LABEL[m.subMode]}</span>
+                  )}
+                  <div
+                    className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs whitespace-pre-wrap ${
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground"
+                    }`}
+                  >
+                    {m.content}
+                  </div>
                 </div>
               ))}
               {busy && (
