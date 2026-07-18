@@ -332,6 +332,7 @@ export const adminUpdateAssignment = createServerFn({ method: "POST" })
         title: "New assignment assigned",
         body: `📝 New Python assignment: ${updates.title ?? before.title}. Open "Homework" to get started.`,
         priority: "normal",
+        action_url: `/assignments/${id}`,
       });
     }
     const finalTitle = updates.title ?? before?.title ?? "(untitled)";
