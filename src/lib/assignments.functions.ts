@@ -284,6 +284,7 @@ export const adminCreateAssignment = createServerFn({ method: "POST" })
         title: "New assignment assigned",
         body: `📝 New Python assignment: ${inserted.title}. Open "Homework" to get started.`,
         priority: "normal",
+        action_url: `/assignments/${inserted.id}`,
       });
     }
     await logAdminActivity(supabase, {
