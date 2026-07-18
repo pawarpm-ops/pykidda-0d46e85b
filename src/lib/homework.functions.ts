@@ -504,6 +504,7 @@ export const adminUpdateHomework = createServerFn({ method: "POST" })
         title: "New homework assigned",
         body: `📝 New Python homework: ${updates.title ?? before.title}. Open "Homework" to begin.`,
         priority: "normal",
+        action_url: `/homework/${id}`,
       });
     }
     const finalTitle = updates.title ?? before?.title ?? "(untitled)";
@@ -864,6 +865,7 @@ export const adminFinalizeCheck = createServerFn({ method: "POST" })
         : `Your homework "${hw?.title ?? ""}" has been checked. Open Homework to see feedback.`,
       priority: "normal",
       target_user_id: sub.student_id,
+      action_url: `/homework/${sub.homework_id}`,
     });
     await logAdminActivity(supabase, {
       actionType: data.return_for_correction

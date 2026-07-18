@@ -284,6 +284,7 @@ export const adminCreateAssignment = createServerFn({ method: "POST" })
         title: "New assignment assigned",
         body: `📝 New Python assignment: ${inserted.title}. Open "Homework" to get started.`,
         priority: "normal",
+        action_url: `/assignments/${inserted.id}`,
       });
     }
     await logAdminActivity(supabase, {
@@ -331,6 +332,7 @@ export const adminUpdateAssignment = createServerFn({ method: "POST" })
         title: "New assignment assigned",
         body: `📝 New Python assignment: ${updates.title ?? before.title}. Open "Homework" to get started.`,
         priority: "normal",
+        action_url: `/assignments/${id}`,
       });
     }
     const finalTitle = updates.title ?? before?.title ?? "(untitled)";
@@ -442,6 +444,7 @@ export const adminReviewSubmission = createServerFn({ method: "POST" })
       body: `Your homework "${a?.title ?? ""}" has been reviewed. Open Homework to read the teacher's comment.`,
       priority: "normal",
       target_user_id: sub.student_id,
+      action_url: `/assignments/${sub.assignment_id}`,
     });
 
     await logAdminActivity(supabase, {

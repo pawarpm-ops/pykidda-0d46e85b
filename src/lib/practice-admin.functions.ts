@@ -97,11 +97,26 @@ export const adminSetPracticeQuestionStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context as Ctx);
-    const { error } = await (context as Ctx).supabase
+    const supabase = (context as Ctx).supabase;
+    const { data: row } = await supabase
+      .from("practice_questions")
+      .select("status,title")
+      .eq("id", data.id)
+      .maybeSingle();
+    const { error } = await supabase
       .from("practice_questions")
       .update({ status: data.status })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+    if (data.status === "published" && row?.status !== "published") {
+      await supabase.from("announcements").insert({
+        author_id: (context as Ctx).userId,
+        title: "New practice question",
+        body: `🐍 New practice question available: "${row?.title ?? "Untitled"}". Click View to try it.`,
+        priority: "normal",
+        action_url: `/practice/db-${data.id}`,
+      });
+    }
     return { ok: true };
   });
 
@@ -270,6 +285,16 @@ ${data.instructions.trim() ? `Extra instructions:\n"""\n${data.instructions.slic
       .insert(rows)
       .select("id");
     if (insErr) throw new Error(insErr.message);
+
+    if (data.publish && inserted && inserted.length > 0) {
+      await supabase.from("announcements").insert({
+        author_id: userId,
+        title: "New practice questions",
+        body: `🐍 ${inserted.length} new practice question${inserted.length === 1 ? "" : "s"} available. Click View to try them.`,
+        priority: "normal",
+        action_url: `/practice`,
+      });
+    }
 
     return { inserted: inserted?.length ?? 0, publish: data.publish };
   });
