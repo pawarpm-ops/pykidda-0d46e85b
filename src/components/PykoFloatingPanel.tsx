@@ -196,6 +196,14 @@ export function PykoFloatingPanel() {
     setLastUserText(null);
   };
 
+  const switchMode = (next: StudentMode) => {
+    if (next === mode) return;
+    setMode(next);
+    try { localStorage.setItem(MODE_KEY, next); } catch { /* ignore */ }
+    // Switching mode starts a fresh conversation so instructions never mix.
+    newConversation();
+  };
+
   if (!pos) return null;
   if (onAssessment) return null;
 
