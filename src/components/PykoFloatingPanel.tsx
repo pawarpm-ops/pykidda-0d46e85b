@@ -129,8 +129,11 @@ export function PykoFloatingPanel() {
               <p className="text-[10px] opacity-90">Website guide · beta</p>
             </div>
             <button
-              onClick={() => setOpen(false)}
-              className="text-primary-foreground text-lg leading-none px-2 hover:opacity-80"
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerMove={(e) => e.stopPropagation()}
+              onPointerUp={(e) => { e.stopPropagation(); setOpen(false); }}
+              onClick={(e) => { e.stopPropagation(); setOpen(false); }}
+              className="text-primary-foreground text-xl leading-none px-2 hover:opacity-80"
               aria-label="Close Pyko"
             >
               ×
