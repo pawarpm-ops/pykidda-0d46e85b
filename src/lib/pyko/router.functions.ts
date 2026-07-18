@@ -123,14 +123,35 @@ export const pykoChat = createServerFn({ method: "POST" })
         .filter((m) => m.role === "user" || m.role === "assistant")
         .reverse();
 
-      // 5. Call the model.
-      const gateway = createPykoProvider();
-      const model = gateway(PYKO_DEFAULT_MODEL);
+      // 5. Resolve sub-mode. For All-Rounder we heuristically classify the
+      // request into guide/tutor/corrector/coach so we can pick the right
+      // system prompt and label the response.
       const currentRoute = data.pageContext?.route;
-      const systemPrompt = buildSystemPrompt(data.mode, currentRoute);
+      const subMode = data.mode === "allrounder"
+        ? classifyAllRounder(data.message, data.code)
+        : undefined;
+      const effectiveMode = subMode ?? data.mode;
 
+      // If user pasted code, append it as a fenced block to the last user
+      // message so the model sees it. We never accept hidden tests or
+      // reference solutions — the schema rejects unknown keys.
       const messages: Array<{ role: "user" | "assistant"; content: string }> = history.map(
         (m) => ({ role: m.role as "user" | "assistant", content: m.content }),
+      );
+      if (data.code && messages.length > 0) {
+        const last = messages[messages.length - 1];
+        if (last.role === "user") {
+          last.content = `${last.content}\n\n\`\`\`python\n${data.code.slice(0, 8000)}\n\`\`\``;
+        }
+      }
+
+      // 6. Call the model.
+      const gateway = createPykoProvider();
+      const model = gateway(PYKO_DEFAULT_MODEL);
+      const systemPrompt = buildSystemPrompt(
+        effectiveMode as "guide" | "tutor" | "corrector" | "coach" | "teacher" | "allrounder",
+        currentRoute,
+        data.message,
       );
 
       let content = "";
@@ -146,22 +167,19 @@ export const pykoChat = createServerFn({ method: "POST" })
         content = (result.text ?? "").trim();
       } catch (e) {
         providerFailed = true;
-        // Non-recoverable provider error — fall back deterministically.
         content = "";
-        // Surface to telemetry via outer catch by re-throwing only when there's
-        // nothing to say; guide mode has a hard-coded fallback so still respond.
-        if (data.mode !== "guide") throw e;
+        if (effectiveMode !== "guide") throw e;
       }
 
       if (!content) {
         content =
-          data.mode === "guide"
+          effectiveMode === "guide"
             ? guideFallback(data.message)
             : "Sorry, I couldn't generate a response. Please try again.";
       }
       const latency = Date.now() - started;
 
-      // 6. Persist assistant message via RLS-scoped client (owner insert).
+      // 7. Persist assistant message via RLS-scoped client (owner insert).
       const { data: msgRow, error: msgErr } = await supabase
         .from("pyko_messages")
         .insert({
@@ -194,6 +212,7 @@ export const pykoChat = createServerFn({ method: "POST" })
         traceId,
         content,
         mode: data.mode,
+        subMode,
         fallback: providerFailed,
       };
     } catch (err) {
