@@ -12,6 +12,7 @@ export function PykoFloatingPanel() {
   const chat = useServerFn(pykoChat);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
+  const [size, setSize] = useState<"normal" | "min" | "max">("normal");
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
