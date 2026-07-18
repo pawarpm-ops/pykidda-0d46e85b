@@ -1,85 +1,89 @@
-# Motivational Badges System
+# Pyko AI production hardening
 
-Extend the existing `badges` / `student_badges` infrastructure — no second system, all previously earned badges preserved.
+Scope is exactly the 11 items in the request. No unrelated visual/functional changes. Existing conversations, badges, streaks, homework and mock flows stay intact.
 
-## 1. Database (single migration)
+## 1. Database migration (single additive migration)
 
-Extend existing `badges` table:
-- Add `tier` (`bronze|silver|gold|platinum|legendary`), `rarity` (`common|uncommon|rare|epic|legendary`), `category` (`getting_started|consistency|practice|debugging|homework|mock|exploration`), `is_secret bool`, `target_value int`, `progress_metric text`.
-- Keep existing `rule_type`/`threshold` for back-compat; extend `evaluate_and_award_badges` to handle new rule types.
+- New table `pyko_assessment_sessions(user_id, assessment_id, assessment_type ENUM standard|ai|scheduled, status ENUM active|completed|expired|abandoned, started_at, expires_at, last_activity_at, completed_at)`. Unique partial index on `(user_id) WHERE status='active'`. GRANTs + RLS: user reads own, service_role all.
+- New enum `pyko_mode_type` mirroring the Zod enum (kept in sync via `schemas.ts`).
+- Ownership hardening on `pyko_messages`:
+  - Add composite FK `(conversation_id, user_id) REFERENCES pyko_conversations(id, user_id)` after adding a matching unique index on `pyko_conversations(id, user_id)`.
+  - RLS `EXISTS` check requiring `conversation_id` to belong to `auth.uid()` for SELECT/INSERT.
+  - Revoke UPDATE/DELETE from `authenticated` for `pyko_messages`; keep service_role.
+  - Restrict INSERT of `role='assistant'` to `service_role` only (policy predicate `role='user' OR auth.role()='service_role'`).
+- New SQL function `pyko_touch_budget(_user_id uuid, _day date, _limit int, _per_minute_limit int)` — atomic `INSERT … ON CONFLICT … DO UPDATE` that returns `{used, per_minute_used, allowed, reason}` in one round trip. Adds `minute_bucket` + `minute_count` columns to `pyko_budget_counters` (nullable, default 0) plus `tokens_in`, `tokens_out`.
+- New SQL function `pyko_start_assessment(_assessment_id text, _type text, _duration_minutes int)` and `pyko_end_assessment(_assessment_id text, _reason text)` running as SECURITY DEFINER, scoped to `auth.uid()`. Auto-expire lazily inside `pyko_has_active_assessment(_user_id uuid)`.
+- Feature flags: ensure only `pyko_ai_enabled` and `pyko_mode_guide` remain `enabled=true`; explicitly set `pyko_mode_tutor|corrector|coach|teacher` to `enabled=false`. No row deletes.
 
-Extend `student_badges`:
-- Already unique on `(student_id, badge_id)` — keeps idempotency. Add `trigger_activity text` (already have `source_type`).
+## 2. Server code changes
 
-Seed ~50 new badges covering all 7 categories from the spec (upsert by `badge_key` so existing keys keep their `id` and earned rows).
+Files:
 
-New/extended RPCs (all SECURITY DEFINER, `auth.uid()` based):
-- `evaluate_and_award_badges(_event_type text)` — extend to compute new metrics:
-  - practice pass counts (tiered), unit-complete, distinct-units, clean-sweep (all tests first attempt), total test cases passed
-  - homework: on-time count tiers, perfect marks, resubmission improvement, complete-answers, early-finisher
-  - mock: attempts count tiers, score tiers, perfect, 3-in-a-row improvement, personal-best, +15pp improvement
-  - debugging: first ai-corrector use, 10 corrections, syntax+runtime+logic mix (from `practice_attempts` failure reasons if stored, else from ai-feedback logs)
-  - never-give-up (pass after ≥3 fails on same question), comeback-coder (return after gap)
-  - exploration: coding+mcq+written mix, 5 topics, all-rounder, hard-difficulty, difficulty-climber
-  - getting-started: first activity, first code run, first pass, first homework submit, first mock complete
-  - Returns newly-earned rows only.
-- `get_badge_progress(_user_id uuid)` — returns all badges with `earned`, `earned_at`, `current_value`, `target_value`, `progress_pct`.
-- `get_next_badge_targets(_user_id uuid, _limit int)` — top-3 closest unearned non-secret badges by percentage.
-- `admin_badge_overview()` — admin-only aggregates: most-earned, rarest, recent awards, students near milestones.
+- `src/lib/pyko/policy.server.ts`
+  - Replace `assertNotInActiveAssessment` with a call to `pyko_has_active_assessment` covering all three assessment types (uses new table, not `ai_mock_attempts.submitted_at`). Block ALL modes including `guide`. Runs before budget.
+  - Replace `enforceAndIncrementBudget` with a single RPC to `pyko_touch_budget`. Per-minute cap 10. Skip on assessment block (never called because thrown earlier).
+  - Add `assertModeAllowedForUser(supabase, userId, mode, conversationMode)` — checks role for `teacher`, matches conversation mode.
+- `src/lib/pyko/router.functions.ts`
+  - Reorder: flag → assessment → conversation ownership check → mode/role check → budget → user msg insert → history load (descending, limit 20, reverse, ensure current user message present) → page-context refresh on conversation → provider call with `AbortSignal.timeout(25_000)` → assistant insert via `supabaseAdmin` (RLS blocks assistant inserts from authenticated) → telemetry.
+  - Handle every Supabase result: on error → throw `PykoPolicyError` with trace id, no provider call.
+  - Empty provider response → return deterministic Guide fallback from knowledge registry.
+  - Redact prompts/content from telemetry (log only lengths, mode, latency, status).
+- `src/lib/pyko/provider.server.ts`
+  - Add `X-Lovable-AIG-SDK` header (already set). Ensure `AbortSignal` accepted at call time.
+- `src/lib/pyko/prompts.ts` + new `src/lib/pyko/knowledge.server.ts`
+  - Knowledge registry: hard-coded map of routes → `{title, path, whatItDoes, whenToUse, relatedRoutes}` for every user-facing route confirmed in `src/routes/`. Includes dashboard, homework, practice, mock (standard/AI/scheduled), streaks, badges, leaderboard, profile, notifications, teacher-comments, help, badges, admin index (no data). Exported `guideFallback(query)` deterministic matcher.
+  - Guide system prompt: append verified knowledge summary + current route (validated server-side). Instruct to say "I'm not sure — try the Help page" when uncertain.
+- New `src/lib/pyko/assessment.functions.ts`
+  - `startPykoAssessment({assessmentId, type, durationMinutes})` and `endPykoAssessment({assessmentId, reason})` server fns via `requireSupabaseAuth`.
+- `src/lib/pyko/schemas.ts`
+  - Add `retry: boolean` optional to `PykoChatInput` (skip user-message insert). Add `PykoAssessmentStart/End` inputs.
 
-Backfill: run `evaluate_and_award_badges` for all existing users via one-off `INSERT ... SELECT` pattern in migration (loop over user_ids via PL/pgSQL DO block).
+## 3. Assessment integration
 
-## 2. Server functions (`src/lib/badges.functions.ts`)
+- `src/routes/mock-tests.$testId.run.tsx`, `mock-tests.ai.$testId.take.tsx`, and scheduled test route: call `startPykoAssessment` on mount (once ready to serve questions), call `endPykoAssessment` on submit/violation/unmount/expiry. Non-blocking failures.
+- `mock-tests.$testId.warning.tsx` and `mock-tests.ai.$testId.warning.tsx`: no start (only run/take routes start).
+- No changes to question fetching / submission flow logic; assessment session is additive.
 
-- `getMyBadgeProgress` (auth) — calls `get_badge_progress`.
-- `getMyNextTargets` (auth) — calls `get_next_badge_targets`.
-- `evaluateMyBadges` (auth) — calls `evaluate_and_award_badges`, returns newly earned.
-- `getAdminBadgeOverview` (auth + admin check) — calls `admin_badge_overview`.
+## 4. Floating panel UX (`src/components/PykoFloatingPanel.tsx`)
 
-Client hook `useBadgeEvaluator` triggers `evaluateMyBadges` after key events (practice solved, homework submitted, mock finished) — non-blocking, errors swallowed to console.
+- Ref-based measurement; on open recompute clamp with actual panel size. Recompute on `resize`/`orientationchange`.
+- Cap height with `min(520px, calc(100vh - 16px))` and width similar.
+- Malformed localStorage → discard.
+- Hide panel entirely on `/mock-tests/*/run`, `/mock-tests/ai/*/take`, `/mock-tests/scheduled/*/…` via pathname test (belt-and-suspenders; server already blocks).
+- Focus input on open; `aria-live=polite` on message list; labelled buttons.
+- Retry button on last error (calls `pykoChat` with `retry:true`).
+- "New conversation" button clears local state; "Delete conversation" calls new server fn that deletes only own conversation.
+- Preserve dragging + persisted position; also clamp saved values.
 
-## 3. UI
+## 5. Tests + tooling
 
-**Badge Gallery** (`/badges` route, already exists — extend):
-- Header: total earned / total, completion %.
-- Filters: category, tier, rarity, earned/locked/in-progress.
-- Grid of `BadgeCard` with tier ring, icon, name, progress bar; locked = greyscale + lock icon; secret = "?" until earned.
-- Click → `BadgeDetailDialog` with description, unlock condition, progress, earned date.
+- Add `vitest` config + `tests/pyko/*.test.ts`:
+  - Unauthed → 401 (mock middleware).
+  - Disabled mode rejected.
+  - Student → teacher mode 403.
+  - Active assessment → 423 for every mode; provider NOT called; budget unchanged.
+  - History: 15 exchanges → latest 20 in chronological order, current message last.
+  - Cross-user conversation id rejected.
+  - Concurrent budget: 70 parallel requests → exactly `limit` succeed.
+  - Prompt payload never contains reference solutions / hidden tests (assert on knowledge registry only).
+  - Panel: JSDOM snapshot ensuring bounding box within viewport for 320×568 and 1440×900.
+- Add npm scripts if missing: `typecheck`, `lint`, `test`, `build`.
 
-**Dashboard section** `YourNextBadges` — 3 cards from `getMyNextTargets`.
+## 6. Privacy notes
 
-**Celebration** — `BadgeUnlockToast` using sonner + framer-motion scale-in + limited confetti; respects `prefers-reduced-motion`; dedupe via localStorage set of celebrated badge ids.
+- Add a one-line privacy notice in panel footer: "Chats may be stored to improve Pyko. Don't share sensitive info."
+- Telemetry stores only metadata (no content, no page context contents other than route).
+- Retention: SQL function `pyko_retain(days int)` (not scheduled — documented for manual/cron use).
 
-**Admin** — new tab in existing admin area: `AdminBadgesOverview` — most-earned, rarest, recent, near-milestone lists.
+## Files changed
 
-**Artwork** — CSS/SVG medallions with tier gradients (bronze/silver/gold/platinum/legendary), category-specific lucide icons (Rocket, Flame, Trophy, Bug, ClipboardCheck, Target, Compass). No image files — keeps bundle small and theme-aware.
+Modified: `src/lib/pyko/{router.functions,policy.server,provider.server,prompts,schemas}.ts`, `src/components/PykoFloatingPanel.tsx`, `src/routes/mock-tests.$testId.run.tsx`, `src/routes/mock-tests.ai.$testId.take.tsx`, `src/routes/__root.tsx`.
 
-## 4. Files
+Added: `src/lib/pyko/{knowledge.server,assessment.functions,history.ts}.ts`, `tests/pyko/*.test.ts`, `vitest.config.ts` (if absent), one Supabase migration.
 
-- `supabase/migrations/<ts>_motivational_badges.sql`
-- `src/lib/badges.functions.ts` (new)
-- `src/components/badges/BadgeMedallion.tsx`
-- `src/components/badges/BadgeCard.tsx`
-- `src/components/badges/BadgeDetailDialog.tsx`
-- `src/components/badges/BadgeUnlockToast.tsx`
-- `src/components/badges/YourNextBadges.tsx`
-- `src/components/badges/AdminBadgesOverview.tsx`
-- `src/hooks/useBadgeEvaluator.ts`
-- Edit existing badges route/page to use new gallery.
-- Wire `useBadgeEvaluator` into practice solve, homework submit, mock finish points.
-- Add admin badges tab route.
+## Out of scope (explicit)
 
-## 5. Verification
-
-- Backfill produces correct counts against existing `practice_attempts`, `homework_submissions`, `mock_results`.
-- Trigger practice-solve → toast fires once, not on refresh.
-- Locked badges visible; secret badges hidden condition.
-- Reduced-motion disables confetti + scale.
-- Admin overview only accessible to admins (RLS on RPC via `has_role`).
-- Build + typecheck clean.
-
-## Notes
-
-- No changes to streak-count rules, scoring, grading, or auth.
-- Existing `student_badges` rows preserved (upsert by `badge_key`).
-- All awarding server-side; client never inserts into `student_badges`.
+- No changes to homework/practice/mock scoring, badges, streaks.
+- No scheduled cron for retention.
+- Tutor/Corrector/Coach/Teacher UI stays disabled.
+- No prompt/model swap.
