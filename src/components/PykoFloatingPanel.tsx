@@ -115,8 +115,13 @@ export function PykoFloatingPanel() {
         </button>
       )}
 
-      {open && (
-        <div style={{ left: pos.x, top: pos.y }} className="fixed z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+      {open && (() => {
+        const panelW = Math.min(360, window.innerWidth - 8);
+        const panelH = Math.min(520, window.innerHeight - 8);
+        const adj = clamp(pos.x, pos.y, panelW, panelH);
+        return (
+        <div style={{ left: adj.x, top: adj.y }} className="fixed z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+
           <div
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -203,7 +208,9 @@ export function PykoFloatingPanel() {
             <p className="mt-1 text-[10px] text-muted-foreground">Pyko may make mistakes. Check important info.</p>
           </div>
         </div>
-      )}
+        );
+      })()}
+
     </>
   );
 }
