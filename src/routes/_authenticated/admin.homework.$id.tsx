@@ -450,16 +450,6 @@ function AddQuestionForm({
       </p>
 
       <div className="mt-4 grid gap-4">
-        <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Title
-          <input
-            autoFocus
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Reverse a string"
-            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
-          />
-        </label>
 
         <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Problem statement
