@@ -12,6 +12,7 @@ export function PykoFloatingPanel() {
   const chat = useServerFn(pykoChat);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
+  const [size, setSize] = useState<"normal" | "min" | "max">("normal");
   const [busy, setBusy] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -116,11 +117,16 @@ export function PykoFloatingPanel() {
       )}
 
       {open && (() => {
-        const panelW = Math.min(360, window.innerWidth - 8);
-        const panelH = Math.min(520, window.innerHeight - 8);
+        const baseW = size === "max" ? 560 : 360;
+        const baseH = size === "max" ? 720 : 520;
+        const panelW = Math.min(baseW, window.innerWidth - 8);
+        const panelH = Math.min(size === "min" ? 48 : baseH, window.innerHeight - 8);
         const adj = clamp(pos.x, pos.y, panelW, panelH);
         return (
-        <div style={{ left: adj.x, top: adj.y }} className="fixed z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+        <div
+          style={{ left: adj.x, top: adj.y, width: panelW, height: panelH }}
+          className="fixed z-40 flex max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl"
+        >
 
           <div
             onPointerDown={onPointerDown}
@@ -133,17 +139,42 @@ export function PykoFloatingPanel() {
               <p className="text-sm font-bold">Pyko AI</p>
               <p className="text-[10px] opacity-90">Website guide · beta</p>
             </div>
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onPointerMove={(e) => e.stopPropagation()}
-              onPointerUp={(e) => { e.stopPropagation(); setOpen(false); }}
-              onClick={(e) => { e.stopPropagation(); setOpen(false); }}
-              className="text-primary-foreground text-xl leading-none px-2 hover:opacity-80"
-              aria-label="Close Pyko"
-            >
-              ×
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerMove={(e) => e.stopPropagation()}
+                onPointerUp={(e) => { e.stopPropagation(); setSize((s) => (s === "min" ? "normal" : "min")); }}
+                onClick={(e) => e.stopPropagation()}
+                className="text-primary-foreground text-lg leading-none px-2 hover:opacity-80"
+                aria-label={size === "min" ? "Restore Pyko" : "Minimize Pyko"}
+                title={size === "min" ? "Restore" : "Minimize"}
+              >
+                {size === "min" ? "▢" : "—"}
+              </button>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerMove={(e) => e.stopPropagation()}
+                onPointerUp={(e) => { e.stopPropagation(); setSize((s) => (s === "max" ? "normal" : "max")); }}
+                onClick={(e) => e.stopPropagation()}
+                className="text-primary-foreground text-lg leading-none px-2 hover:opacity-80"
+                aria-label={size === "max" ? "Restore Pyko" : "Maximize Pyko"}
+                title={size === "max" ? "Restore" : "Maximize"}
+              >
+                {size === "max" ? "🗗" : "🗖"}
+              </button>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerMove={(e) => e.stopPropagation()}
+                onPointerUp={(e) => { e.stopPropagation(); setOpen(false); }}
+                onClick={(e) => { e.stopPropagation(); setOpen(false); }}
+                className="text-primary-foreground text-xl leading-none px-2 hover:opacity-80"
+                aria-label="Close Pyko"
+              >
+                ×
+              </button>
+            </div>
           </div>
+          {size !== "min" && (<>
 
           <div ref={bodyRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-background/50">
             {messages.length === 0 && (
@@ -207,6 +238,7 @@ export function PykoFloatingPanel() {
             </div>
             <p className="mt-1 text-[10px] text-muted-foreground">Pyko may make mistakes. Check important info.</p>
           </div>
+          </>)}
         </div>
         );
       })()}
