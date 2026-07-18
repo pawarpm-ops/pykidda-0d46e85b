@@ -7,10 +7,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { PykoChatInput, type PykoChatOutput } from "./schemas";
 import { createPykoProvider, PYKO_DEFAULT_MODEL } from "./provider.server";
-import { GLOBAL_POLICY, MODE_PROMPTS, PROMPT_VERSION } from "./prompts";
+import { buildSystemPrompt, PROMPT_VERSION } from "./prompts";
+import { guideFallback } from "./knowledge.server";
 import {
   assertPykoEnabled,
   assertNotInActiveAssessment,
+  assertModeAllowedForUser,
   enforceAndIncrementBudget,
   PykoPolicyError,
 } from "./policy.server";
@@ -33,6 +35,7 @@ async function logTelemetry(
   },
 ) {
   try {
+    // Metadata only — never content, prompt text, or page-context payloads.
     await admin.from("pyko_telemetry").insert({
       user_id: row.userId,
       trace_id: row.traceId,
@@ -59,14 +62,28 @@ export const pykoChat = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     try {
-      // 1. Policy: flag → assessment lockout → budget. Order matters.
+      // 1. Policy: flag → assessment lockout → role/mode → budget. Order matters.
       await assertPykoEnabled(supabase, data.mode);
-      await assertNotInActiveAssessment(supabase, userId, data.mode);
+      await assertNotInActiveAssessment(supabase, userId);
+      await assertModeAllowedForUser(supabase, userId, data.mode);
       await enforceAndIncrementBudget(supabaseAdmin, userId);
 
       // 2. Get or create conversation (RLS-scoped to this user).
       let conversationId = data.conversationId;
-      if (!conversationId) {
+      if (conversationId) {
+        // Ownership check — RLS would filter to own rows, but be explicit
+        // so a cross-user id fails loudly with a policy error, not silently.
+        const { data: owned, error: ownErr } = await supabase
+          .from("pyko_conversations")
+          .select("id, mode")
+          .eq("id", conversationId)
+          .maybeSingle();
+        if (ownErr) throw new PykoPolicyError("conv_lookup_failed", "Pyko can't load this conversation.", 500);
+        if (!owned) throw new PykoPolicyError("conv_forbidden", "This conversation doesn't belong to you.", 403);
+        if (owned.mode !== data.mode) {
+          throw new PykoPolicyError("mode_mismatch", "This conversation uses a different Pyko mode.", 400);
+        }
+      } else {
         const { data: conv, error } = await supabase
           .from("pyko_conversations")
           .insert({
@@ -81,46 +98,70 @@ export const pykoChat = createServerFn({ method: "POST" })
         conversationId = conv.id as string;
       }
 
-      // 3. Persist the user message.
-      await supabase.from("pyko_messages").insert({
-        conversation_id: conversationId,
-        user_id: userId,
-        role: "user",
-        content: data.message,
-        mode: data.mode,
-        prompt_version: PROMPT_VERSION,
-      });
+      // 3. Persist the user message (skip on retry to avoid duplicates).
+      if (!data.retry) {
+        const { error: userMsgErr } = await supabase.from("pyko_messages").insert({
+          conversation_id: conversationId,
+          user_id: userId,
+          role: "user",
+          content: data.message,
+          mode: data.mode,
+          prompt_version: PROMPT_VERSION,
+        });
+        if (userMsgErr) throw new PykoPolicyError("msg_write_failed", "Couldn't save your message.", 500);
+      }
 
-      // 4. Load recent history for this conversation (bounded).
-      const { data: history } = await supabase
+      // 4. Load the most recent 20 messages in chronological order.
+      const { data: recent, error: histErr } = await supabase
         .from("pyko_messages")
         .select("role, content")
         .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(20);
+      if (histErr) throw new PykoPolicyError("history_read_failed", "Pyko can't load the conversation.", 500);
+      const history = ((recent ?? []) as Array<{ role: string; content: string }>)
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .reverse();
 
       // 5. Call the model.
       const gateway = createPykoProvider();
       const model = gateway(PYKO_DEFAULT_MODEL);
-      const systemPrompt = `${GLOBAL_POLICY}\n\n${MODE_PROMPTS[data.mode]}`;
+      const currentRoute = data.pageContext?.route;
+      const systemPrompt = buildSystemPrompt(data.mode, currentRoute);
 
-      const messages: Array<{ role: "user" | "assistant"; content: string }> = (
-        (history ?? []) as Array<{ role: string; content: string }>
-      )
-        .filter((m) => m.role === "user" || m.role === "assistant")
-        .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+      const messages: Array<{ role: "user" | "assistant"; content: string }> = history.map(
+        (m) => ({ role: m.role as "user" | "assistant", content: m.content }),
+      );
 
-      const result = await generateText({
-        model,
-        system: systemPrompt,
-        messages,
-        providerOptions: { lovable: { reasoningEffort: "none" } },
-      });
+      let content = "";
+      let providerFailed = false;
+      try {
+        const result = await generateText({
+          model,
+          system: systemPrompt,
+          messages,
+          abortSignal: AbortSignal.timeout(25_000),
+          providerOptions: { lovable: { reasoningEffort: "none" } },
+        });
+        content = (result.text ?? "").trim();
+      } catch (e) {
+        providerFailed = true;
+        // Non-recoverable provider error — fall back deterministically.
+        content = "";
+        // Surface to telemetry via outer catch by re-throwing only when there's
+        // nothing to say; guide mode has a hard-coded fallback so still respond.
+        if (data.mode !== "guide") throw e;
+      }
 
-      const content = result.text?.trim() || "Sorry, I couldn't generate a response. Please try again.";
+      if (!content) {
+        content =
+          data.mode === "guide"
+            ? guideFallback(data.message)
+            : "Sorry, I couldn't generate a response. Please try again.";
+      }
       const latency = Date.now() - started;
 
-      // 6. Persist assistant message.
+      // 6. Persist assistant message via RLS-scoped client (owner insert).
       const { data: msgRow, error: msgErr } = await supabase
         .from("pyko_messages")
         .insert({
@@ -144,7 +185,7 @@ export const pykoChat = createServerFn({ method: "POST" })
         provider: "lovable",
         model: PYKO_DEFAULT_MODEL,
         latencyMs: latency,
-        responseStatus: "ok",
+        responseStatus: providerFailed ? "fallback" : "ok",
       });
 
       return {
@@ -153,7 +194,7 @@ export const pykoChat = createServerFn({ method: "POST" })
         traceId,
         content,
         mode: data.mode,
-        fallback: false,
+        fallback: providerFailed,
       };
     } catch (err) {
       const latency = Date.now() - started;
