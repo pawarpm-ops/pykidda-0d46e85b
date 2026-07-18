@@ -444,6 +444,7 @@ export const adminReviewSubmission = createServerFn({ method: "POST" })
       body: `Your homework "${a?.title ?? ""}" has been reviewed. Open Homework to read the teacher's comment.`,
       priority: "normal",
       target_user_id: sub.student_id,
+      action_url: `/assignments/${sub.assignment_id}`,
     });
 
     await logAdminActivity(supabase, {
