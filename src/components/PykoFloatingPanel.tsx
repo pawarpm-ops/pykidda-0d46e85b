@@ -6,6 +6,8 @@ import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
 type Msg = { id: string; role: "user" | "assistant"; content: string };
 
+const POS_KEY = "pykidda:pyko-pos";
+
 export function PykoFloatingPanel() {
   const chat = useServerFn(pykoChat);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -16,10 +18,59 @@ export function PykoFloatingPanel() {
   const [convId, setConvId] = useState<string | undefined>(undefined);
   const [err, setErr] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{ dx: number; dy: number; moved: boolean; w: number; h: number; startX: number; startY: number } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POS_KEY);
+      if (raw) { setPos(JSON.parse(raw)); return; }
+    } catch {}
+    setPos({ x: 20, y: window.innerHeight - 20 - 64 });
+  }, []);
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  const clamp = (x: number, y: number, w: number, h: number) => {
+    const maxX = window.innerWidth - w - 4;
+    const maxY = window.innerHeight - h - 4;
+    return { x: Math.max(4, Math.min(x, maxX)), y: Math.max(4, Math.min(y, maxY)) };
+  };
+
+  const onPointerDown = (e: React.PointerEvent<HTMLElement>) => {
+    const el = e.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    dragRef.current = {
+      dx: e.clientX - rect.left,
+      dy: e.clientY - rect.top,
+      moved: false,
+      w: rect.width,
+      h: rect.height,
+      startX: e.clientX,
+      startY: e.clientY,
+    };
+    try { el.setPointerCapture(e.pointerId); } catch {}
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    if (!d.moved && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 5) return;
+    d.moved = true;
+    setPos(clamp(e.clientX - d.dx, e.clientY - d.dy, d.w, d.h));
+  };
+  const endDrag = (e: React.PointerEvent<HTMLElement>, toggleOnClick: boolean) => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+    if (pos && d?.moved) {
+      try { localStorage.setItem(POS_KEY, JSON.stringify(pos)); } catch {}
+    }
+    if (d && !d.moved && toggleOnClick) setOpen((o) => !o);
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLElement>) => endDrag(e, true);
+  const onPointerUpHeader = (e: React.PointerEvent<HTMLElement>) => endDrag(e, false);
 
   const send = async () => {
     const text = input.trim();
@@ -47,21 +98,32 @@ export function PykoFloatingPanel() {
     }
   };
 
+  if (!pos) return null;
+
   return (
     <>
       {!open && (
         <button
-          onClick={() => setOpen(true)}
-          aria-label="Open Pyko AI"
-          className="fixed bottom-5 left-5 z-40 flex h-16 w-16 items-center justify-center rounded-full hover:scale-110 transition"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          aria-label="Open Pyko AI (draggable)"
+          style={{ left: pos.x, top: pos.y, touchAction: "none" }}
+          className="fixed z-40 flex h-16 w-16 items-center justify-center rounded-full hover:scale-110 transition select-none"
         >
-          <img src={pykoMascot.url} alt="Pyko" className="h-full w-full object-contain animate-[pyko-thinking_1.6s_ease-in-out_infinite]" />
+          <img draggable={false} src={pykoMascot.url} alt="Pyko" className="h-full w-full object-contain pointer-events-none animate-[pyko-thinking_1.6s_ease-in-out_infinite]" />
         </button>
       )}
 
       {open && (
-        <div className="fixed bottom-5 left-5 z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
-          <div className="flex items-center justify-between border-b border-border px-3 py-2" style={{ backgroundImage: "var(--gradient-sunrise, linear-gradient(135deg,#f97316,#ef4444))" }}>
+        <div style={{ left: pos.x, top: pos.y }} className="fixed z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+          <div
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUpHeader}
+            style={{ backgroundImage: "var(--gradient-sunrise, linear-gradient(135deg,#f97316,#ef4444))", touchAction: "none", cursor: "move" }}
+            className="flex items-center justify-between border-b border-border px-3 py-2 select-none"
+          >
             <div className="text-primary-foreground">
               <p className="text-sm font-bold">Pyko AI</p>
               <p className="text-[10px] opacity-90">Website guide · beta</p>
