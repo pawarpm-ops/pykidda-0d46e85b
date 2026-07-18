@@ -75,6 +75,8 @@ function TakeAiMock() {
   const navigate = useNavigate();
   const getFn = useServerFn(getStudentAiTest);
   const submitFn = useServerFn(submitAiMockAttempt);
+  const pykoStart = useServerFn(startPykoAssessment);
+  const pykoEnd = useServerFn(endPykoAssessment);
 
   const [allowed, setAllowed] = useState<boolean | null>(null);
   useEffect(() => {
