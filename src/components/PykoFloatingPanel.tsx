@@ -96,21 +96,32 @@ export function PykoFloatingPanel() {
     }
   };
 
+  if (!pos) return null;
+
   return (
     <>
       {!open && (
         <button
-          onClick={() => setOpen(true)}
-          aria-label="Open Pyko AI"
-          className="fixed bottom-5 left-5 z-40 flex h-16 w-16 items-center justify-center rounded-full hover:scale-110 transition"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          aria-label="Open Pyko AI (draggable)"
+          style={{ left: pos.x, top: pos.y, touchAction: "none" }}
+          className="fixed z-40 flex h-16 w-16 items-center justify-center rounded-full hover:scale-110 transition select-none"
         >
-          <img src={pykoMascot.url} alt="Pyko" className="h-full w-full object-contain animate-[pyko-thinking_1.6s_ease-in-out_infinite]" />
+          <img draggable={false} src={pykoMascot.url} alt="Pyko" className="h-full w-full object-contain pointer-events-none animate-[pyko-thinking_1.6s_ease-in-out_infinite]" />
         </button>
       )}
 
       {open && (
-        <div className="fixed bottom-5 left-5 z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
-          <div className="flex items-center justify-between border-b border-border px-3 py-2" style={{ backgroundImage: "var(--gradient-sunrise, linear-gradient(135deg,#f97316,#ef4444))" }}>
+        <div style={{ left: pos.x, top: pos.y }} className="fixed z-40 flex h-[520px] w-[360px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+          <div
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            style={{ backgroundImage: "var(--gradient-sunrise, linear-gradient(135deg,#f97316,#ef4444))", touchAction: "none", cursor: "move" }}
+            className="flex items-center justify-between border-b border-border px-3 py-2 select-none"
+          >
             <div className="text-primary-foreground">
               <p className="text-sm font-bold">Pyko AI</p>
               <p className="text-[10px] opacity-90">Website guide · beta</p>
