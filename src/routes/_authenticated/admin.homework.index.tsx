@@ -215,7 +215,7 @@ function AdminHomeworkList() {
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="text-base font-semibold leading-tight line-clamp-2">{h.title}</h2>
                   <span className="shrink-0 rounded-full border border-border bg-secondary/40 px-2 py-0.5 text-[10px] font-semibold capitalize">
-                    {h.status}
+                    {effectiveStatus(h)}
                   </span>
                 </div>
                 {h.description && (
