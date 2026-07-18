@@ -56,6 +56,36 @@ function AdminHomeworkList() {
     await refetch();
   }
 
+  async function handleDeleteAll() {
+    if (filtered.length === 0) return;
+    const label = tab === "all" ? "ALL homework" : `all ${tab} homework`;
+    if (!confirm(`Delete ${label} (${filtered.length} item(s))? This cannot be undone.`)) return;
+    let forceAll = false;
+    for (const h of filtered) {
+      try {
+        await deleteFn({ data: { id: h.id, force: forceAll || undefined } });
+      } catch (e: any) {
+        const msg = String(e?.message ?? e);
+        if (/submission\(s\)/i.test(msg) || /force=true/i.test(msg)) {
+          if (!forceAll) {
+            if (!confirm(`Some homework has submissions.\n\nDelete every remaining homework including all submissions?`)) {
+              break;
+            }
+            forceAll = true;
+          }
+          try {
+            await deleteFn({ data: { id: h.id, force: true } });
+          } catch (e2: any) {
+            alert(`Failed to delete "${h.title}": ${String(e2?.message ?? e2)}`);
+          }
+        } else {
+          alert(`Failed to delete "${h.title}": ${msg}`);
+        }
+      }
+    }
+    await refetch();
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
