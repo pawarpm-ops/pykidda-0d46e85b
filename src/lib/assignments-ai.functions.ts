@@ -336,6 +336,7 @@ export const saveAiGeneratedHomework = createServerFn({ method: "POST" })
         title: "New homework assigned",
         body: `📝 ${rows.length} new homework question${rows.length === 1 ? "" : "s"} on "${data.topic || "Python"}". Open "Homework" to get started.`,
         priority: "normal",
+        action_url: `/assignments`,
       });
     }
     await logAdminActivity(context.supabase, {
