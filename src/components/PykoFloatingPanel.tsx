@@ -43,6 +43,13 @@ export function PykoFloatingPanel() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [convId, setConvId] = useState<string | undefined>(undefined);
+  const [mode, setMode] = useState<StudentMode>("guide");
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(MODE_KEY);
+      if (raw === "guide" || raw === "tutor" || raw === "allrounder") setMode(raw);
+    } catch { /* ignore */ }
+  }, []);
   const [err, setErr] = useState<string | null>(null);
   const [lastUserText, setLastUserText] = useState<string | null>(null);
   const [viewport, setViewport] = useState<{ w: number; h: number }>({ w: 1024, h: 768 });
