@@ -211,7 +211,7 @@ function RunTest() {
         alert(`Submission failed: ${e instanceof Error ? e.message : "unknown error"}`);
       }
     },
-    [navigate, questions, test, testId, submitAttempt],
+    [navigate, questions, test, testId, submitAttempt, pykoEnd],
   );
 
   // Timer
