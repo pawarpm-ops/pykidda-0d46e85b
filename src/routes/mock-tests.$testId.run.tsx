@@ -62,6 +62,8 @@ function RunTest() {
   const navigate = useNavigate();
   const fetchTest = useServerFn(getStudentMockTest);
   const submitAttempt = useServerFn(submitGradedMockAttempt);
+  const pykoStart = useServerFn(startPykoAssessment);
+  const pykoEnd = useServerFn(endPykoAssessment);
 
   const [test, setTest] = useState<SanitizedMockTest | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
