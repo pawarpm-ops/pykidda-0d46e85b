@@ -26,7 +26,7 @@ export function PykoFloatingPanel() {
       const raw = localStorage.getItem(POS_KEY);
       if (raw) { setPos(JSON.parse(raw)); return; }
     } catch {}
-    setPos({ x: 20, y: window.innerHeight - 20 - 64 });
+    setPos({ x: 24, y: Math.max(80, window.innerHeight - 180) });
   }, []);
 
   useEffect(() => {
