@@ -135,22 +135,32 @@ function AdminHomeworkList() {
         )}
 
         {/* Tabs + list */}
-        <div className="mt-8 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
-          {(["all", "draft", "published", "closed"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 capitalize transition ${
-                tab === t
-                  ? "font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-                  : "text-muted-foreground hover:bg-secondary"
-              }`}
-              style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
-            >
-              {t}
-            </button>
-          ))}
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex rounded-lg border border-border bg-card p-1 text-sm">
+            {(["all", "draft", "published", "closed"] as Tab[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`rounded-md px-3 py-1.5 capitalize transition ${
+                  tab === t
+                    ? "font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                    : "text-muted-foreground hover:bg-secondary"
+                }`}
+                style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleDeleteAll}
+            disabled={filtered.length === 0}
+            className="rounded-md border border-destructive/60 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/20 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Delete all {tab !== "all" ? tab : ""} ({filtered.length})
+          </button>
         </div>
+
 
         {isLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
         {!isLoading && filtered.length === 0 && (
