@@ -191,7 +191,7 @@ function TakeAiMock() {
         setSubmitting(false);
       }
     },
-    [navigate, submitFn, testId, test],
+    [navigate, submitFn, testId, test, pykoEnd],
   );
 
   // Timer
