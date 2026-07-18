@@ -18,6 +18,7 @@ import {
   type SanitizedMockTest,
   type SanitizedMockQuestion,
 } from "@/lib/mock-secure.functions";
+import { startPykoAssessment, endPykoAssessment } from "@/lib/pyko/assessment.functions";
 
 export const Route = createFileRoute("/mock-tests/$testId/run")({
   head: () => ({
