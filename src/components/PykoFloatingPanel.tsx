@@ -208,7 +208,9 @@ export function PykoFloatingPanel() {
             <p className="mt-1 text-[10px] text-muted-foreground">Pyko may make mistakes. Check important info.</p>
           </div>
         </div>
-      )}
+        );
+      })()}
+
     </>
   );
 }
