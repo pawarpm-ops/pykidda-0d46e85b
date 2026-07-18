@@ -31,6 +31,7 @@ export const PykoChatInput = z.object({
   mode: PykoMode,
   message: z.string().min(1).max(4000),
   pageContext: PykoPageContext.optional(),
+  retry: z.boolean().optional(),
 });
 export type PykoChatInput = z.infer<typeof PykoChatInput>;
 
@@ -43,3 +44,19 @@ export const PykoChatOutput = z.object({
   fallback: z.boolean().default(false),
 });
 export type PykoChatOutput = z.infer<typeof PykoChatOutput>;
+
+export const PykoAssessmentType = z.enum(["standard", "ai", "scheduled"]);
+export type PykoAssessmentType = z.infer<typeof PykoAssessmentType>;
+
+export const PykoAssessmentStart = z.object({
+  assessmentId: z.string().min(1).max(120),
+  type: PykoAssessmentType,
+  durationMinutes: z.number().int().min(1).max(480).default(120),
+});
+export type PykoAssessmentStart = z.infer<typeof PykoAssessmentStart>;
+
+export const PykoAssessmentEnd = z.object({
+  assessmentId: z.string().min(1).max(120),
+  reason: z.enum(["completed", "abandoned", "expired"]).default("completed"),
+});
+export type PykoAssessmentEnd = z.infer<typeof PykoAssessmentEnd>;
