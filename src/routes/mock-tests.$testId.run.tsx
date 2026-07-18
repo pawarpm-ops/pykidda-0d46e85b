@@ -119,7 +119,19 @@ function RunTest() {
     startedAt.current = persistedStartedAt;
     const elapsed = Math.max(0, Math.floor((Date.now() - persistedStartedAt) / 1000));
     setRemaining(Math.max(0, test.durationSec - elapsed));
-  }, [test, testId, allowed]);
+    // Register Pyko assessment lock; failures must not block the test.
+    void pykoStart({
+      data: {
+        assessmentId: `standard:${testId}`,
+        type: "standard",
+        durationMinutes: Math.max(1, Math.ceil(test.durationSec / 60) + 5),
+      },
+    }).catch(() => { /* non-blocking */ });
+    return () => {
+      // Best-effort release on unmount (submit path also calls this).
+      void pykoEnd({ data: { assessmentId: `standard:${testId}`, reason: "abandoned" } }).catch(() => { /* noop */ });
+    };
+  }, [test, testId, allowed, pykoStart, pykoEnd]);
 
   useEffect(() => {
     if (!test) return;
