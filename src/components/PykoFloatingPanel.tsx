@@ -174,7 +174,7 @@ export function PykoFloatingPanel() {
               </button>
             </div>
           </div>
-          {size !== "min" && (<></>)}
+          {size !== "min" && (<>);
 
           <div ref={bodyRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-background/50">
             {messages.length === 0 && (
