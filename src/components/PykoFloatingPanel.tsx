@@ -4,9 +4,25 @@ import { useRouterState } from "@tanstack/react-router";
 import { pykoChat } from "@/lib/pyko/router.functions";
 import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
-type Msg = { id: string; role: "user" | "assistant"; content: string };
+type SubMode = "guide" | "tutor" | "corrector" | "coach";
+type StudentMode = "guide" | "tutor" | "allrounder";
+type Msg = { id: string; role: "user" | "assistant"; content: string; subMode?: SubMode };
 
 const POS_KEY = "pykidda:pyko-pos";
+const MODE_KEY = "pykidda:pyko-mode";
+
+const MODE_META: Record<StudentMode, { icon: string; label: string; desc: string; accent: string }> = {
+  guide:      { icon: "🧭", label: "Guide",      desc: "Learn how to use PY Kidda.",                        accent: "from-sky-500 to-indigo-500" },
+  tutor:      { icon: "👨‍🏫", label: "AI Teacher", desc: "Understand Python and correct your code.",         accent: "from-emerald-500 to-teal-500" },
+  allrounder: { icon: "✨", label: "All-Rounder", desc: "Navigation, learning, code help and progress.",     accent: "from-fuchsia-500 to-orange-500" },
+};
+
+const SUBMODE_LABEL: Record<SubMode, string> = {
+  guide: "🧭 Guide response",
+  tutor: "👨‍🏫 Teaching response",
+  corrector: "🛠 Code correction",
+  coach: "📈 Progress guidance",
+};
 
 // Panel hides itself entirely on routes that host an in-progress assessment.
 // Belt-and-suspenders: the server also blocks Pyko while a session is active.
