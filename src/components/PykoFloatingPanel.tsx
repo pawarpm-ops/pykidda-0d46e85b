@@ -4,9 +4,25 @@ import { useRouterState } from "@tanstack/react-router";
 import { pykoChat } from "@/lib/pyko/router.functions";
 import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
-type Msg = { id: string; role: "user" | "assistant"; content: string };
+type SubMode = "guide" | "tutor" | "corrector" | "coach";
+type StudentMode = "guide" | "tutor" | "allrounder";
+type Msg = { id: string; role: "user" | "assistant"; content: string; subMode?: SubMode };
 
 const POS_KEY = "pykidda:pyko-pos";
+const MODE_KEY = "pykidda:pyko-mode";
+
+const MODE_META: Record<StudentMode, { icon: string; label: string; desc: string; accent: string }> = {
+  guide:      { icon: "🧭", label: "Guide",      desc: "Learn how to use PY Kidda.",                        accent: "from-sky-500 to-indigo-500" },
+  tutor:      { icon: "👨‍🏫", label: "AI Teacher", desc: "Understand Python and correct your code.",         accent: "from-emerald-500 to-teal-500" },
+  allrounder: { icon: "✨", label: "All-Rounder", desc: "Navigation, learning, code help and progress.",     accent: "from-fuchsia-500 to-orange-500" },
+};
+
+const SUBMODE_LABEL: Record<SubMode, string> = {
+  guide: "🧭 Guide response",
+  tutor: "👨‍🏫 Teaching response",
+  corrector: "🛠 Code correction",
+  coach: "📈 Progress guidance",
+};
 
 // Panel hides itself entirely on routes that host an in-progress assessment.
 // Belt-and-suspenders: the server also blocks Pyko while a session is active.
@@ -27,6 +43,13 @@ export function PykoFloatingPanel() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [convId, setConvId] = useState<string | undefined>(undefined);
+  const [mode, setMode] = useState<StudentMode>("guide");
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(MODE_KEY);
+      if (raw === "guide" || raw === "tutor" || raw === "allrounder") setMode(raw);
+    } catch { /* ignore */ }
+  }, []);
   const [err, setErr] = useState<string | null>(null);
   const [lastUserText, setLastUserText] = useState<string | null>(null);
   const [viewport, setViewport] = useState<{ w: number; h: number }>({ w: 1024, h: 768 });
@@ -138,14 +161,15 @@ export function PykoFloatingPanel() {
       const res = await chat({
         data: {
           conversationId: convId,
-          mode: "guide",
+          mode,
           message: text.slice(0, 4000),
           pageContext: { route: pathname.slice(0, 200) },
           retry,
         },
       });
       setConvId(res.conversationId);
-      setMessages((m) => [...m, { id: res.messageId, role: "assistant", content: res.content }]);
+      const sub = (res as { subMode?: SubMode }).subMode;
+      setMessages((m) => [...m, { id: res.messageId, role: "assistant", content: res.content, subMode: sub }]);
       setLastUserText(null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Pyko is unavailable right now.");
@@ -170,6 +194,14 @@ export function PykoFloatingPanel() {
     setMessages([]);
     setErr(null);
     setLastUserText(null);
+  };
+
+  const switchMode = (next: StudentMode) => {
+    if (next === mode) return;
+    setMode(next);
+    try { localStorage.setItem(MODE_KEY, next); } catch { /* ignore */ }
+    // Switching mode starts a fresh conversation so instructions never mix.
+    newConversation();
   };
 
   if (!pos) return null;
@@ -208,7 +240,7 @@ export function PykoFloatingPanel() {
           >
             <div className="text-primary-foreground">
               <p className="text-sm font-bold">Pyko AI</p>
-              <p className="text-[10px] opacity-90">Website guide · beta</p>
+              <p className="text-[10px] opacity-90">{MODE_META[mode].icon} {MODE_META[mode].label} · beta</p>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -257,6 +289,32 @@ export function PykoFloatingPanel() {
             </div>
           </div>
           {size !== "min" && (<>
+            <div className="border-b border-border bg-muted/30 px-2 py-2">
+              <div className="grid grid-cols-3 gap-1.5">
+                {(Object.keys(MODE_META) as StudentMode[]).map((k) => {
+                  const meta = MODE_META[k];
+                  const active = mode === k;
+                  return (
+                    <button
+                      key={k}
+                      onClick={() => switchMode(k)}
+                      disabled={busy}
+                      title={meta.desc}
+                      aria-pressed={active}
+                      className={`rounded-md px-1.5 py-1 text-[10px] font-semibold leading-tight border transition ${
+                        active
+                          ? `bg-gradient-to-br ${meta.accent} text-white border-transparent shadow`
+                          : "bg-background text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      <div className="text-sm leading-none">{meta.icon}</div>
+                      <div className="mt-0.5">{meta.label}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground text-center">{MODE_META[mode].desc}</p>
+            </div>
             <div
               ref={bodyRef}
               aria-live="polite"
@@ -274,15 +332,19 @@ export function PykoFloatingPanel() {
                 </div>
               )}
               {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs whitespace-pre-wrap ${
-                    m.role === "user"
-                      ? "ml-auto bg-primary text-primary-foreground"
-                      : "mr-auto bg-muted text-foreground"
-                  }`}
-                >
-                  {m.content}
+                <div key={m.id} className={m.role === "user" ? "flex flex-col items-end" : "flex flex-col items-start"}>
+                  {m.role === "assistant" && mode === "allrounder" && m.subMode && (
+                    <span className="mb-0.5 text-[10px] font-semibold text-muted-foreground">{SUBMODE_LABEL[m.subMode]}</span>
+                  )}
+                  <div
+                    className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs whitespace-pre-wrap ${
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground"
+                    }`}
+                  >
+                    {m.content}
+                  </div>
                 </div>
               ))}
               {busy && (
