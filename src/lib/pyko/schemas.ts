@@ -78,3 +78,31 @@ export const PykoAssessmentEnd = z.object({
   reason: z.enum(["completed", "abandoned", "expired"]).default("completed"),
 });
 export type PykoAssessmentEnd = z.infer<typeof PykoAssessmentEnd>;
+
+// All-Rounder classifier: fast, deterministic, heuristic-only (no extra
+// model call — that would double budget cost). Order matters: code detection
+// first, then coach signals, then guide signals, then tutor.
+export function classifyAllRounder(
+  message: string,
+  code?: string,
+): "guide" | "tutor" | "corrector" | "coach" {
+  const m = message.toLowerCase();
+  const hasFencedCode = /```/.test(message);
+  const looksLikeCode = /\b(def |print\(|import |for |while |class |traceback|error:|syntaxerror|nameerror|typeerror|indexerror|indentationerror)\b/i.test(
+    message,
+  );
+  if (code || hasFencedCode || looksLikeCode) return "corrector";
+
+  const coachTerms = ["streak", "badge", "leaderboard", "progress", "improve", "how am i doing", "next step", "study plan"];
+  if (coachTerms.some((t) => m.includes(t))) return "coach";
+
+  const guideTerms = ["where is", "where do i", "how do i open", "how do i find", "how do i create", "how do i assign", "how do i submit", "how does homework", "how does grading", "how do scheduled", "homework section", "practice section", "mock test section", "publish", "assign homework", "notifications page"];
+  if (guideTerms.some((t) => m.includes(t))) return "guide";
+
+  const tutorTerms = ["explain", "what is", "how does a", "difference between", "why does", "concept", "loop", "list", "dictionary", "function", "recursion", "class", "python"];
+  if (tutorTerms.some((t) => m.includes(t))) return "tutor";
+
+  // Default to guide — safer than teaching an unrelated topic.
+  return "guide";
+}
+
