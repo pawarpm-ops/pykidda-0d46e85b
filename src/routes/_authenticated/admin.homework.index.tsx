@@ -37,7 +37,13 @@ function AdminHomeworkList() {
   });
 
   type HRow = Awaited<ReturnType<typeof adminListHomework>>[number];
-  const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => tab === "all" || h.status === tab);
+  const now = Date.now();
+  const effectiveStatus = (h: HRow): "draft" | "published" | "closed" => {
+    if (h.status === "closed") return "closed";
+    if (h.status === "published" && h.due_at && new Date(h.due_at).getTime() < now) return "closed";
+    return h.status as "draft" | "published";
+  };
+  const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => tab === "all" || effectiveStatus(h) === tab);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this homework? This cannot be undone.")) return;
@@ -209,7 +215,7 @@ function AdminHomeworkList() {
                 <div className="flex items-start justify-between gap-3">
                   <h2 className="text-base font-semibold leading-tight line-clamp-2">{h.title}</h2>
                   <span className="shrink-0 rounded-full border border-border bg-secondary/40 px-2 py-0.5 text-[10px] font-semibold capitalize">
-                    {h.status}
+                    {effectiveStatus(h)}
                   </span>
                 </div>
                 {h.description && (
