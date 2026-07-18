@@ -120,7 +120,7 @@ export function PykoFloatingPanel() {
           <div
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
+            onPointerUp={onPointerUpHeader}
             style={{ backgroundImage: "var(--gradient-sunrise, linear-gradient(135deg,#f97316,#ef4444))", touchAction: "none", cursor: "move" }}
             className="flex items-center justify-between border-b border-border px-3 py-2 select-none"
           >
