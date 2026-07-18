@@ -240,7 +240,7 @@ export function PykoFloatingPanel() {
           >
             <div className="text-primary-foreground">
               <p className="text-sm font-bold">Pyko AI</p>
-              <p className="text-[10px] opacity-90">Website guide · beta</p>
+              <p className="text-[10px] opacity-90">{MODE_META[mode].icon} {MODE_META[mode].label} · beta</p>
             </div>
             <div className="flex items-center gap-1">
               <button
