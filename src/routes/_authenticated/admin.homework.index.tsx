@@ -37,7 +37,13 @@ function AdminHomeworkList() {
   });
 
   type HRow = Awaited<ReturnType<typeof adminListHomework>>[number];
-  const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => tab === "all" || h.status === tab);
+  const now = Date.now();
+  const effectiveStatus = (h: HRow): "draft" | "published" | "closed" => {
+    if (h.status === "closed") return "closed";
+    if (h.status === "published" && h.due_at && new Date(h.due_at).getTime() < now) return "closed";
+    return h.status as "draft" | "published";
+  };
+  const filtered = ((data ?? []) as HRow[]).filter((h: HRow) => tab === "all" || effectiveStatus(h) === tab);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this homework? This cannot be undone.")) return;
