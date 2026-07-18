@@ -504,6 +504,7 @@ export const adminUpdateHomework = createServerFn({ method: "POST" })
         title: "New homework assigned",
         body: `📝 New Python homework: ${updates.title ?? before.title}. Open "Homework" to begin.`,
         priority: "normal",
+        action_url: `/homework/${id}`,
       });
     }
     const finalTitle = updates.title ?? before?.title ?? "(untitled)";
