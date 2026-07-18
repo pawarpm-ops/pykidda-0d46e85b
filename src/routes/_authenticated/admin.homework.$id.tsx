@@ -508,18 +508,6 @@ function AddQuestionForm({
               className="mt-1 w-28 rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
             />
           </label>
-          <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Difficulty
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value as "easy" | "medium" | "hard")}
-              className="mt-1 block rounded-md border border-border bg-background px-3 py-2 text-sm font-normal normal-case tracking-normal text-foreground outline-none focus:border-accent"
-            >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-          </label>
         </div>
       </div>
 
