@@ -161,14 +161,15 @@ export function PykoFloatingPanel() {
       const res = await chat({
         data: {
           conversationId: convId,
-          mode: "guide",
+          mode,
           message: text.slice(0, 4000),
           pageContext: { route: pathname.slice(0, 200) },
           retry,
         },
       });
       setConvId(res.conversationId);
-      setMessages((m) => [...m, { id: res.messageId, role: "assistant", content: res.content }]);
+      const sub = (res as { subMode?: SubMode }).subMode;
+      setMessages((m) => [...m, { id: res.messageId, role: "assistant", content: res.content, subMode: sub }]);
       setLastUserText(null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Pyko is unavailable right now.");
