@@ -139,9 +139,14 @@ function AdminPracticePage() {
         <div className="mt-6 space-y-8">
           {grouped.map(([unit, rows]) => (
             <section key={unit}>
-              <h2 className="text-lg font-semibold">
-                <span className="text-accent">Unit {unit}</span>
-                <span className="ml-2 text-xs font-normal text-muted-foreground">
+              <h2 className="flex items-center gap-3">
+                <span
+                  className="inline-flex items-center rounded-lg px-3 py-1.5 text-base font-bold text-primary-foreground shadow-[var(--shadow-warm)]"
+                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                >
+                  Unit {unit}
+                </span>
+                <span className="text-xs font-medium text-muted-foreground">
                   {rows.length} question{rows.length === 1 ? "" : "s"}
                 </span>
               </h2>
