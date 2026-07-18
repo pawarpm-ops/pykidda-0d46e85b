@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest, submitAiMockAttempt } from "@/lib/ai-mock.functions";
+import { startPykoAssessment, endPykoAssessment } from "@/lib/pyko/assessment.functions";
 import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
 import { recordStreakActivity } from "@/lib/streaks";
 import { syncMyScore } from "@/lib/leaderboard";
