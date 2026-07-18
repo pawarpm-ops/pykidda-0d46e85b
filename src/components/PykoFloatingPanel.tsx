@@ -85,8 +85,8 @@ export function PykoFloatingPanel() {
   };
 
   const panelDims = useMemo(() => {
-    const baseW = size === "max" ? 560 : 360;
-    const baseH = size === "max" ? 720 : 520;
+    const baseW = size === "max" ? 760 : 360;
+    const baseH = size === "max" ? 880 : 520;
     const w = Math.min(baseW, viewport.w - 8);
     const h = Math.min(size === "min" ? 48 : baseH, viewport.h - 8);
     return { w, h };
