@@ -123,11 +123,22 @@ function TakeAiMock() {
         startedAtRef.current = persisted;
         const elapsed = Math.max(0, Math.floor((Date.now() - persisted) / 1000));
         setRemaining(Math.max(0, (test as Test).duration_sec - elapsed));
+
+        void pykoStart({
+          data: {
+            assessmentId: `ai:${testId}`,
+            type: "ai",
+            durationMinutes: Math.max(1, Math.ceil((test as Test).duration_sec / 60) + 5),
+          },
+        }).catch(() => { /* non-blocking */ });
       } catch (e) {
         setLoadError((e as Error).message);
       }
     })();
-  }, [getFn, testId, allowed]);
+    return () => {
+      void pykoEnd({ data: { assessmentId: `ai:${testId}`, reason: "abandoned" } }).catch(() => { /* noop */ });
+    };
+  }, [getFn, testId, allowed, pykoStart, pykoEnd]);
 
   const submit = useCallback(
     async (submission_type: "normal" | "auto-violation" = "normal", violation_reason?: string) => {
