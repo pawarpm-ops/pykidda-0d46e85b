@@ -47,12 +47,12 @@ const PROCESS_WALKTHROUGHS: Record<string, Walkthrough> = {
     steps: [
       "Open the Admin dashboard from Profile → Admin, then click Homework.",
       "On /admin/homework click 'New homework' — this opens the homework editor.",
-      "Fill Title, Description, Due date and Total marks. Optionally set 'allow late submission'.",
+      "Fill Title and Description. The homework editor does not ask for a due date or total marks up-front — marks are computed from the questions you add.",
       "Choose the target audience: all students or a specific list.",
-      "Under Questions click 'Add question'. Only coding questions are supported. Type the problem statement (the first line becomes the auto-title), the expected tests and reference solution used for auto-grading are kept server-side and never shown to students.",
+      "Under Questions click 'Add question'. Only coding questions are supported (descriptive questions have been removed). Type the problem statement — the first line becomes the auto-title; do NOT enter a separate title, starter code, or difficulty field, those inputs no longer exist. The hidden tests and reference solution used for auto-grading stay server-side and are never shown to students.",
       "Save each question, then click 'Publish' on the homework. Publishing inserts an announcement into every student's Notifications with a View button linking to /homework/<id>.",
-      "Students open /homework, see the new item, click in, write code in the in-browser editor, click Run Tests / Submit. The auto-grader records how many hidden tests passed.",
-      "Teachers open /admin/homework/<id>, review each submission, add comments and either 'Check' (finalise) or 'Return for correction'. The student gets a notification with a View button linking back to their homework.",
+      "Students open /homework, click the item, write code in the two-column editor, click Run Tests / Submit. The auto-grader records how many hidden tests passed.",
+      "Teachers open /admin/homework/<id>, review each submission, add comments and either 'Check' (finalise) or 'Return for correction'. Homework past its due date automatically moves to the Closed tab; drafts stay drafts. The student gets a notification with a View button linking back to their homework.",
     ],
   },
   homework_submit: {
@@ -112,21 +112,52 @@ const PROCESS_WALKTHROUGHS: Record<string, Walkthrough> = {
   },
 };
 
-// Keyword → walkthrough key lookup. Ordered longest-first inside each entry
-// so more specific phrases win.
+// Import the shared normaliser so keyword matching is paraphrase-tolerant.
+// Same list of stopwords/punctuation stripping is applied to both the user
+// query AND the keyword list, so "How do I create the homework?" and
+// "create homework" both normalize to "create homework".
+import { normalizePykoQuery } from "./schemas";
+
+// Keyword → walkthrough key lookup. Keywords are stored as the intent phrase;
+// they are normalised at match time so we do not need to enumerate every
+// paraphrase.
 const TOPIC_KEYWORDS: Array<[string[], keyof typeof PROCESS_WALKTHROUGHS]> = [
-  [["create homework", "assign homework", "make homework", "publish homework", "homework creation"], "homework_create"],
-  [["submit homework", "how do i submit homework", "student submit homework", "how does a student submit"], "homework_submit"],
-  [["create practice", "add practice question", "publish practice"], "practice_create"],
-  [["scheduled mock", "mock test schedule", "how do scheduled mock tests work", "how do mock tests work"], "mock_scheduled"],
-  [["streak system", "explain the complete streak", "how does streak work", "how streak works"], "streaks"],
-  [["grade homework", "grading", "teacher grade", "return for correction"], "grading"],
+  [[
+    "create homework", "creating homework", "assign homework", "make homework",
+    "publish homework", "new homework", "add homework", "setup homework",
+    "homework creation", "give homework",
+  ], "homework_create"],
+  [[
+    "submit homework", "submitting homework", "student submit homework",
+    "how student submit homework", "turn in homework", "hand in homework",
+    "upload homework",
+  ], "homework_submit"],
+  [[
+    "create practice", "creating practice", "add practice question",
+    "publish practice", "new practice question", "practice question creation",
+  ], "practice_create"],
+  [[
+    "scheduled mock", "mock test schedule", "scheduled mock test",
+    "scheduled mock tests work", "mock tests work", "how mock test",
+    "take scheduled mock",
+  ], "mock_scheduled"],
+  [[
+    "streak system", "explain streak", "streak work", "streaks work",
+    "how streak", "how streaks", "streak counted", "streak counting",
+  ], "streaks"],
+  [[
+    "grade homework", "grading homework", "grading", "teacher grade",
+    "return correction", "check homework", "review homework",
+  ], "grading"],
 ];
 
 export function getProcessWalkthrough(query: string): Walkthrough | null {
-  const q = query.toLowerCase();
+  const q = normalizePykoQuery(query);
+  if (!q) return null;
   for (const [keywords, key] of TOPIC_KEYWORDS) {
-    if (keywords.some((k) => q.includes(k))) return PROCESS_WALKTHROUGHS[key];
+    if (keywords.some((k) => q.includes(normalizePykoQuery(k)))) {
+      return PROCESS_WALKTHROUGHS[key];
+    }
   }
   return null;
 }
@@ -152,10 +183,14 @@ export function guideKnowledgeBlock(currentRoute?: string, userMessage?: string)
 export function guideFallback(query: string): string {
   const wt = getProcessWalkthrough(query);
   if (wt) return walkthroughText(wt);
-  const q = query.toLowerCase();
-  const hit = PYKO_ROUTE_FACTS.find(
-    (r) => q.includes(r.title.toLowerCase()) || q.includes(r.path.replace("/", "")),
-  );
+  const q = normalizePykoQuery(query);
+  const hit = PYKO_ROUTE_FACTS.find((r) => {
+    const title = normalizePykoQuery(r.title);
+    const slug = r.path.replace(/^\//, "");
+    return (title && q.includes(title)) || (slug && q.includes(slug));
+  });
   if (hit) return `${hit.title} lives at ${hit.path}. ${hit.whatItDoes}`;
-  return "I'm not sure about that yet — try the Help page (/help) for step-by-step guides.";
+  // Do not dead-end at /help — steer the student toward AI Teacher / All-Rounder
+  // for anything that isn't clearly a navigation question.
+  return "I couldn't map that to a PY Kidda feature. If it's a Python concept or a code error, switch to AI Teacher or All-Rounder for a detailed answer — otherwise try rephrasing (for example: \"how do I create homework\", \"how do streaks work\").";
 }
