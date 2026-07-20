@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useRouterState } from "@tanstack/react-router";
 import { pykoChat } from "@/lib/pyko/router.functions";
 import { getPykoEnabledModes, type PykoEnabledModes } from "@/lib/pyko/flags.functions";
+import { PykoMessage } from "@/components/PykoMessage";
 import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
 type SubMode = "guide" | "tutor" | "corrector" | "coach";
