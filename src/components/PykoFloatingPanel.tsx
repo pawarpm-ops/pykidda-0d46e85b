@@ -357,13 +357,17 @@ export function PykoFloatingPanel() {
                     <span className="mb-0.5 text-[10px] font-semibold text-muted-foreground">{SUBMODE_LABEL[m.subMode]}</span>
                   )}
                   <div
-                    className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-xs whitespace-pre-wrap ${
+                    className={`max-w-[92%] rounded-2xl px-3 py-2 text-xs shadow-sm ${
                       m.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground"
+                        ? "bg-primary text-primary-foreground whitespace-pre-wrap"
+                        : "border border-border/60 bg-card text-foreground"
                     }`}
                   >
-                    {m.content}
+                    {m.role === "assistant" ? (
+                      <PykoMessage content={m.content} />
+                    ) : (
+                      m.content
+                    )}
                   </div>
                 </div>
               ))}
