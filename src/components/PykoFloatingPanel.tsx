@@ -398,6 +398,7 @@ export function PykoFloatingPanel() {
                           setInput(p);
                           inputRef.current?.focus();
                         }}
+                        onNavigate={handleNavigate}
                       />
                     ) : (
                       m.content
