@@ -36,7 +36,11 @@ export type PykoPageContext = z.infer<typeof PykoPageContext>;
 export const PykoChatInput = z
   .object({
     conversationId: z.string().uuid().optional(),
-    mode: PykoMode,
+    // Students may only request guide, tutor (AI Teacher), or allrounder.
+    // `corrector` and `coach` are internal submodes chosen by the server-side
+    // All-Rounder router. `teacher` (Teacher Copilot) is admin-only and lives
+    // behind a separate server function, not this student endpoint.
+    mode: PykoStudentMode,
     message: z.string().min(1).max(4000),
     // Optional pasted student code for AI Teacher / All-Rounder corrector.
     // Trusted-input only: this is the student's own draft, never hidden tests
@@ -57,9 +61,10 @@ export const PykoChatOutput = z.object({
   messageId: z.string().uuid(),
   traceId: z.string(),
   content: z.string(),
-  mode: PykoMode,
+  mode: PykoStudentMode,
   subMode: PykoSubMode.optional(),
   fallback: z.boolean().default(false),
+  clarification: z.boolean().default(false),
 });
 export type PykoChatOutput = z.infer<typeof PykoChatOutput>;
 
@@ -91,32 +96,58 @@ export function normalizePykoQuery(message: string): string {
   return tokenizePyko(message).join(" ");
 }
 
-// All-Rounder classifier: fast, deterministic, heuristic-only (no extra
-// model call — that would double budget cost). Order matters: pasted code
-// first, then coach signals, then guide (topic + admin/navigation action),
-// then tutor (concept explanation), fallback guide.
-export function classifyAllRounder(
+// All-Rounder classifier with confidence. Deterministic, heuristic-only (no
+// extra model call). Returns the chosen submode plus a confidence score in
+// [0,1] and a short reason. Callers can use low confidence to ask a
+// clarifying question instead of committing to a submode.
+export type AllRounderClassification = {
+  subMode: "guide" | "tutor" | "corrector" | "coach";
+  confidence: number;
+  reason: string;
+};
+
+export function classifyAllRounderDetailed(
   message: string,
   code?: string,
-): "guide" | "tutor" | "corrector" | "coach" {
+): AllRounderClassification {
+  // Strong corrector evidence first — must be MORE than a single code-ish word.
   const hasFencedCode = /```/.test(message);
-  const looksLikeCode = /\b(def |print\(|import |for |while |class |traceback|error:|syntaxerror|nameerror|typeerror|indexerror|indentationerror)\b/i.test(
+  const hasTraceback = /\btraceback\b|\bfile "\S+", line \d+/i.test(message);
+  const hasPyException = /\b(syntaxerror|nameerror|typeerror|indexerror|indentationerror|attributeerror|keyerror|valueerror|zerodivisionerror|modulenotfounderror)\b/i.test(
     message,
   );
-  if (code || hasFencedCode || looksLikeCode) return "corrector";
+  const hasMultilineCode = message.split("\n").filter((l) => /^\s*(def |for |while |if |elif |else|class |import |print\(|return )/.test(l)).length >= 2;
+  const explicitFixRequest = /\b(fix|debug|correct|whats wrong|what's wrong|why doesn'?t (this|my code) work|error in my code)\b/i.test(message);
+
+  if (code && code.trim().length > 0) {
+    return { subMode: "corrector", confidence: 0.98, reason: "explicit code field" };
+  }
+  if (hasTraceback || hasPyException) {
+    return { subMode: "corrector", confidence: 0.95, reason: "traceback / python exception in message" };
+  }
+  if (hasFencedCode && (explicitFixRequest || hasMultilineCode)) {
+    return { subMode: "corrector", confidence: 0.9, reason: "fenced code with fix request or multiline code" };
+  }
+  if (hasMultilineCode && explicitFixRequest) {
+    return { subMode: "corrector", confidence: 0.85, reason: "multiline code with fix request" };
+  }
 
   const intent = resolveIntent(message);
   const t = intent.topic;
 
-  // Coach: progress / streak / badge / rank reflection questions.
+  // Coach signals (progress / streak reflection).
   const coachSignals = /\b(progress|improve|improving|next step|study plan|am i doing|how am i)\b/i.test(message);
-  if (coachSignals) return "coach";
+  if (coachSignals) return { subMode: "coach", confidence: 0.8, reason: "progress reflection keywords" };
   if (
     (t === "streak" || t === "badge" || t === "leaderboard" || t === "analytics") &&
     (intent.action === "explain" || intent.action === "navigate" || intent.action === "unknown")
   ) {
-    return "coach";
+    return { subMode: "coach", confidence: 0.75, reason: `${t} explain/navigate intent` };
   }
+
+  // Tutor: Python teaching / concept questions.
+  const tutorTerms = /\b(loop|for loop|while loop|list|dictionary|dict|tuple|set|function|recursion|python|syntax|variable|string|class|import|module|difference between|meaning of|what is (a|an)?|why does|why is|how does .* work)\b/i;
+  if (tutorTerms.test(message)) return { subMode: "tutor", confidence: 0.85, reason: "python concept keywords" };
 
   // Guide: any recognised website topic with a website-y action.
   const websiteActions: Array<typeof intent.action> = [
@@ -124,18 +155,19 @@ export function classifyAllRounder(
     "create", "assign", "publish", "delete", "schedule",
   ];
   if (t && (websiteActions.includes(intent.action) || intent.action === "unknown")) {
-    // Explicit navigation phrasing OR an admin/creation verb OR any known topic
-    // without a Python-teaching keyword — treat as Guide.
-    const looksLikePythonConcept = /\b(loop|list|dictionary|dict|tuple|set|function|recursion|variable|string|syntax|input\(|print\(|class )\b/i.test(message);
-    if (!looksLikePythonConcept) return "guide";
+    return { subMode: "guide", confidence: 0.8, reason: `${t} ${intent.action}` };
   }
 
-  // Tutor: Python teaching / concept questions.
-  const tutorTerms = /\b(explain|concept|loop|list|dictionary|dict|tuple|set|function|recursion|python|syntax|variable|string|difference between|meaning of|what is|why does|why is)\b/i;
-  if (tutorTerms.test(message)) return "tutor";
+  // Nothing strong matched — low confidence guide, so the router can ask.
+  return { subMode: "guide", confidence: 0.35, reason: "no strong signal" };
+}
 
-  // Default: safer to route to Guide than to teach an unrelated topic.
-  return "guide";
+// Backwards-compatible thin wrapper.
+export function classifyAllRounder(
+  message: string,
+  code?: string,
+): "guide" | "tutor" | "corrector" | "coach" {
+  return classifyAllRounderDetailed(message, code).subMode;
 }
 
 // Re-export for callers that used to import from ./schemas only.

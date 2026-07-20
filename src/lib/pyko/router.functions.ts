@@ -23,7 +23,20 @@ function newTraceId(): string {
 
 // All-Rounder classifier lives in schemas.ts so it's importable from tests
 // without pulling in server-only modules.
-import { classifyAllRounder } from "./schemas";
+import { classifyAllRounderDetailed } from "./schemas";
+import { resolveIntent } from "./intent";
+import { getProcessWalkthrough } from "./knowledge.server";
+
+// Ambiguity clarification threshold for All-Rounder.
+const ALLROUNDER_CONFIDENCE_MIN = 0.55;
+
+// Reasoning effort per effective mode. Guide navigation stays fast; teaching
+// and code correction get a real reasoning budget instead of always "none".
+function reasoningEffortFor(mode: string): "none" | "low" | "medium" {
+  if (mode === "tutor" || mode === "corrector") return "medium";
+  if (mode === "coach") return "low";
+  return "none"; // guide, allrounder shell
+}
 
 
 
