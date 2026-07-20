@@ -207,16 +207,16 @@ function AdminPage() {
       const { data: u } = await supabase.auth.getUser();
       setAuthorId(u.user?.id ?? null);
 
-      const [m, p, pr, sr, ai, st] = await Promise.all([
+      const [m, pr, sr, ai, st] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
-        supabase.from("practice_attempts").select("*").order("attempted_at", { ascending: false }).limit(2000),
         supabase.from("profiles").select("id, display_name, full_name, contact_number, college_name, age, gender, birth_date, onboarded"),
         supabase.from("user_roles").select("user_id").eq("role", "student"),
         fetchAuthInfo().catch((e) => { console.error("auth info", e); return [] as StudentAuthInfo[]; }),
         supabase.from("student_streaks").select("user_id, current_streak, longest_streak, last_activity_date"),
       ]);
       setMocks((m.data ?? []) as MockRow[]);
-      setPractice((p.data ?? []) as PracticeRow[]);
+      // Practice attempts are no longer persisted — see practice-attempts.functions.ts.
+      setPractice([]);
       const pmap: Record<string, ProfileInfo> = {};
       for (const row of (pr.data ?? []) as Array<ProfileInfo & { id: string }>) {
         pmap[row.id] = {

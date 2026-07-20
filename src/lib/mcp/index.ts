@@ -1,7 +1,6 @@
 import { auth, defineMcp } from "@lovable.dev/mcp-js";
 import getMyProfile from "./tools/get-my-profile";
 import getMyStreak from "./tools/get-my-streak";
-import listMyPracticeAttempts from "./tools/list-my-practice-attempts";
 import listMyAssignments from "./tools/list-my-assignments";
 import listMyHomework from "./tools/list-my-homework";
 
@@ -16,7 +15,7 @@ export default defineMcp({
   title: "PY Kidda",
   version: "0.1.0",
   instructions:
-    "Read the signed-in PY Kidda student's profile, daily streak, practice attempts, assignments, and homework. All tools are read-only and scoped to the authenticated user by RLS.",
+    "Read the signed-in PY Kidda student's profile, daily streak, assignments, and homework. All tools are read-only and scoped to the authenticated user by RLS.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
@@ -24,7 +23,6 @@ export default defineMcp({
   tools: [
     getMyProfile,
     getMyStreak,
-    listMyPracticeAttempts,
     listMyAssignments,
     listMyHomework,
   ],

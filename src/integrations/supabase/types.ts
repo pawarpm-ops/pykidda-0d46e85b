@@ -878,42 +878,6 @@ export type Database = {
         }
         Relationships: []
       }
-      practice_attempts: {
-        Row: {
-          attempted_at: string
-          created_at: string
-          id: string
-          passed: number
-          question_id: string
-          solved: boolean
-          total: number
-          unit: number
-          user_id: string
-        }
-        Insert: {
-          attempted_at?: string
-          created_at?: string
-          id?: string
-          passed?: number
-          question_id: string
-          solved?: boolean
-          total?: number
-          unit: number
-          user_id: string
-        }
-        Update: {
-          attempted_at?: string
-          created_at?: string
-          id?: string
-          passed?: number
-          question_id?: string
-          solved?: boolean
-          total?: number
-          unit?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
       practice_questions: {
         Row: {
           created_at: string
