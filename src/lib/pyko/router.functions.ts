@@ -26,6 +26,15 @@ function newTraceId(): string {
 import { classifyAllRounderDetailed } from "./schemas";
 import { resolveIntent } from "./intent";
 import { getProcessWalkthrough } from "./knowledge.server";
+import {
+  detectNavigationActions,
+  filterActionsForRole,
+  isAdminCreationIntent,
+  serializePykoActions,
+  PYKO_NAVIGATION_ROUTES,
+  type PykoAction,
+} from "./navigation";
+import type { AppRole } from "@/lib/require-role";
 
 // Ambiguity clarification threshold for All-Rounder.
 const ALLROUNDER_CONFIDENCE_MIN = 0.55;
