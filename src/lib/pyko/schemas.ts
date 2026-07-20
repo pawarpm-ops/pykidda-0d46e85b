@@ -79,6 +79,35 @@ export const PykoAssessmentEnd = z.object({
 });
 export type PykoAssessmentEnd = z.infer<typeof PykoAssessmentEnd>;
 
+// Robust query normaliser used by every keyword matcher (Guide keywords,
+// All-Rounder classifier, walkthrough lookup). Lowercases, strips punctuation,
+// removes filler/stop words, and collapses whitespace so paraphrases like
+// "How do I create the homework?" match the same intent as "create homework".
+const PYKO_STOPWORDS = new Set([
+  "a","an","the","this","that","these","those",
+  "i","me","my","mine","we","our","you","your","us",
+  "is","am","are","was","were","be","been","being",
+  "do","does","did","doing","done",
+  "to","of","for","on","in","at","by","with","from","into","about","as",
+  "how","what","why","when","where","which","who","whom","whose",
+  "can","could","should","would","will","shall","may","might","must",
+  "please","kindly","hey","hi","hello","pyko",
+  "and","or","but","if","then","so","because","just","also","actually",
+  "some","any","get","make","need","want","use","using","tell","show","give",
+  "plz","pls","thx","thanks",
+]);
+
+export function normalizePykoQuery(message: string): string {
+  if (!message) return "";
+  const cleaned = message
+    .toLowerCase()
+    .replace(/[`~!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const tokens = cleaned.split(" ").filter((t) => t && !PYKO_STOPWORDS.has(t));
+  return tokens.join(" ");
+}
+
 // All-Rounder classifier: fast, deterministic, heuristic-only (no extra
 // model call — that would double budget cost). Order matters: code detection
 // first, then coach signals, then guide signals, then tutor.
@@ -86,21 +115,30 @@ export function classifyAllRounder(
   message: string,
   code?: string,
 ): "guide" | "tutor" | "corrector" | "coach" {
-  const m = message.toLowerCase();
+  const raw = message.toLowerCase();
+  const m = normalizePykoQuery(message);
   const hasFencedCode = /```/.test(message);
   const looksLikeCode = /\b(def |print\(|import |for |while |class |traceback|error:|syntaxerror|nameerror|typeerror|indexerror|indentationerror)\b/i.test(
     message,
   );
   if (code || hasFencedCode || looksLikeCode) return "corrector";
 
-  const coachTerms = ["streak", "badge", "leaderboard", "progress", "improve", "how am i doing", "next step", "study plan"];
+  const coachTerms = ["streak", "badge", "leaderboard", "progress", "improve", "am doing", "next step", "study plan", "rank"];
   if (coachTerms.some((t) => m.includes(t))) return "coach";
 
-  const guideTerms = ["where is", "where do i", "how do i open", "how do i find", "how do i create", "how do i assign", "how do i submit", "how does homework", "how does grading", "how do scheduled", "homework section", "practice section", "mock test section", "publish", "assign homework", "notifications page"];
+  const guideTerms = [
+    "create homework", "assign homework", "make homework", "publish homework", "new homework",
+    "submit homework", "open homework", "view homework", "homework section", "homework page",
+    "create practice", "add practice", "publish practice", "practice section", "practice page",
+    "create mock", "schedule mock", "mock section", "mock page", "take mock", "scheduled mock",
+    "notifications page", "notifications section",
+    "where find", "where see", "where open", "open profile", "open admin",
+    "grade homework", "grading", "return correction",
+  ];
   if (guideTerms.some((t) => m.includes(t))) return "guide";
 
-  const tutorTerms = ["explain", "what is", "how does a", "difference between", "why does", "concept", "loop", "list", "dictionary", "function", "recursion", "class", "python"];
-  if (tutorTerms.some((t) => m.includes(t))) return "tutor";
+  const tutorTerms = ["explain", "concept", "loop", "list", "dictionary", "function", "recursion", "class python", "python", "difference between", "syntax", "variable", "string", "tuple", "set", "print", "input"];
+  if (tutorTerms.some((t) => m.includes(t)) || /\b(what|why)\b/.test(raw)) return "tutor";
 
   // Default to guide — safer than teaching an unrelated topic.
   return "guide";
