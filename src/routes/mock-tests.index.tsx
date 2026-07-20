@@ -58,7 +58,17 @@ function MockTestsList() {
   const listFn = useServerFn(listAiMockTests);
   const [aiTests, setAiTests] = useState<AiTestRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("normal");
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window !== "undefined" && window.location.hash.replace("#", "") === "scheduled") return "scheduled";
+    return "normal";
+  });
+  useEffect(() => {
+    const onHash = () => {
+      if (window.location.hash.replace("#", "") === "scheduled") setTab("scheduled");
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
   useTick(30_000);
 
   useEffect(() => {

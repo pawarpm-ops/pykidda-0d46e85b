@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useRouterState } from "@tanstack/react-router";
+import { useRouterState, useNavigate } from "@tanstack/react-router";
 import { pykoChat } from "@/lib/pyko/router.functions";
 import { getPykoEnabledModes, type PykoEnabledModes } from "@/lib/pyko/flags.functions";
 import { PykoMessage } from "@/components/PykoMessage";
+import { PYKO_NAVIGATION_ROUTES, type PykoAction } from "@/lib/pyko/navigation";
 import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
 type SubMode = "guide" | "tutor" | "corrector" | "coach";
@@ -38,6 +39,7 @@ function isAssessmentRoute(path: string): boolean {
 export function PykoFloatingPanel() {
   const chat = useServerFn(pykoChat);
   const loadFlags = useServerFn(getPykoEnabledModes);
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onAssessment = isAssessmentRoute(pathname);
   const [open, setOpen] = useState(false);
@@ -211,6 +213,32 @@ export function PykoFloatingPanel() {
     setLastUserText(null);
   };
 
+  const handleNavigate = (action: PykoAction) => {
+    const entry = PYKO_NAVIGATION_ROUTES[action.routeKey];
+    if (!entry) return;
+    // Minimise the panel so it doesn't cover the destination.
+    setSize("min");
+    setOpen(false);
+    // Analytics: safe metadata only — no message text, no PII.
+    try {
+      // eslint-disable-next-line no-console
+      console.debug("[pyko:nav]", {
+        routeKey: action.routeKey,
+        mode,
+        from: pathname,
+        at: Date.now(),
+      });
+    } catch { /* ignore */ }
+    void navigate({ to: entry.route, hash: entry.hash }).then(() => {
+      // Move focus to the destination heading for accessibility.
+      setTimeout(() => {
+        const h = document.querySelector<HTMLElement>("h1, [role='heading']");
+        h?.focus?.();
+      }, 120);
+    });
+  };
+
+
   const switchMode = (next: StudentMode) => {
     if (next === mode) return;
     if (!flags[next]) return;
@@ -370,6 +398,7 @@ export function PykoFloatingPanel() {
                           setInput(p);
                           inputRef.current?.focus();
                         }}
+                        onNavigate={handleNavigate}
                       />
                     ) : (
                       m.content

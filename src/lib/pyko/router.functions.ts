@@ -26,6 +26,15 @@ function newTraceId(): string {
 import { classifyAllRounderDetailed } from "./schemas";
 import { resolveIntent } from "./intent";
 import { getProcessWalkthrough } from "./knowledge.server";
+import {
+  detectNavigationActions,
+  filterActionsForRole,
+  isAdminCreationIntent,
+  serializePykoActions,
+  PYKO_NAVIGATION_ROUTES,
+  type PykoAction,
+} from "./navigation";
+import type { AppRole } from "@/lib/require-role";
 
 // Ambiguity clarification threshold for All-Rounder.
 const ALLROUNDER_CONFIDENCE_MIN = 0.55;
@@ -259,6 +268,47 @@ export const pykoChat = createServerFn({ method: "POST" })
             ? guideFallback(data.message)
             : "Sorry, I couldn't generate a response. Please try again.";
       }
+
+      // 6b. Smart navigation actions. Deterministic on the server so the
+      // model can never invent URLs; role-checked so students never get
+      // admin destinations.
+      try {
+        const shouldEmit =
+          effectiveMode === "guide" ||
+          subMode === "guide" ||
+          data.mode === "allrounder" ||
+          (effectiveMode === "tutor" && resolveIntent(data.message).topic === "practice");
+        if (shouldEmit) {
+          let actions: PykoAction[] = detectNavigationActions(data.message);
+          if (actions.length > 0) {
+            // Look up caller role (RLS-scoped: own row only). Default to student.
+            let role: AppRole = "student";
+            const { data: roleRows } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", userId);
+            const roles = ((roleRows ?? []) as Array<{ role: AppRole }>).map((r) => r.role);
+            if (roles.includes("super_admin")) role = "super_admin";
+            else if (roles.includes("admin")) role = "admin";
+            else if (roles.includes("teacher")) role = "teacher";
+            // Admin-creation intent gets the admin management route.
+            if (isAdminCreationIntent(data.message) && (role === "admin" || role === "super_admin" || role === "teacher")) {
+              const primary = actions[0];
+              if (primary.routeKey === "homework") {
+                actions = [
+                  { type: "navigate", routeKey: "adminHomework", style: "primary", label: PYKO_NAVIGATION_ROUTES.adminHomework.label },
+                  ...actions.slice(1),
+                ];
+              }
+            }
+            actions = filterActionsForRole(actions, role);
+            if (actions.length > 0) {
+              content = `${content}\n\n${serializePykoActions(actions)}`;
+            }
+          }
+        }
+      } catch { /* navigation actions are best-effort */ }
+
       const latency = Date.now() - started;
 
       // 7. Persist assistant message via RLS-scoped client (owner insert).
