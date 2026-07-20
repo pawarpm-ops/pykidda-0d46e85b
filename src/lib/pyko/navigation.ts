@@ -8,13 +8,14 @@
 
 import { z } from "zod";
 import { resolveIntent, type GuideTopic } from "./intent";
-import type { FileRoutesByFullPath } from "@/routeTree.gen";
+import type { FileRouteTypes } from "@/routeTree.gen";
 
 // Compile-time guarantee: every `route` in PYKO_NAVIGATION_ROUTES must exist
-// in the generated TanStack route tree. If a route file is renamed or deleted,
-// TypeScript fails the build here instead of Pyko emitting a broken action
-// card at runtime. Do not weaken this type; add a real route file instead.
-type VerifiedRoute = keyof FileRoutesByFullPath;
+// in the generated TanStack route tree (using the same `to` type <Link>
+// accepts). If a route file is renamed or deleted, TypeScript fails the
+// build here instead of Pyko emitting a broken action card at runtime.
+// Do not weaken this type; add a real route file instead.
+type VerifiedRoute = FileRouteTypes["to"];
 
 export const PYKO_ROUTE_KEYS = [
   "practice",
