@@ -23,7 +23,20 @@ function newTraceId(): string {
 
 // All-Rounder classifier lives in schemas.ts so it's importable from tests
 // without pulling in server-only modules.
-import { classifyAllRounder } from "./schemas";
+import { classifyAllRounderDetailed } from "./schemas";
+import { resolveIntent } from "./intent";
+import { getProcessWalkthrough } from "./knowledge.server";
+
+// Ambiguity clarification threshold for All-Rounder.
+const ALLROUNDER_CONFIDENCE_MIN = 0.55;
+
+// Reasoning effort per effective mode. Guide navigation stays fast; teaching
+// and code correction get a real reasoning budget instead of always "none".
+function reasoningEffortFor(mode: string): "none" | "low" | "medium" {
+  if (mode === "tutor" || mode === "corrector") return "medium";
+  if (mode === "coach") return "low";
+  return "none"; // guide, allrounder shell
+}
 
 
 
@@ -131,12 +144,56 @@ export const pykoChat = createServerFn({ method: "POST" })
 
       // 5. Resolve sub-mode. For All-Rounder we heuristically classify the
       // request into guide/tutor/corrector/coach so we can pick the right
-      // system prompt and label the response.
+      // system prompt and label the response. Low-confidence classifications
+      // trigger a clarification question instead of a committed submode.
       const currentRoute = data.pageContext?.route;
-      const subMode = data.mode === "allrounder"
-        ? classifyAllRounder(data.message, data.code)
-        : undefined;
+      const classification = data.mode === "allrounder"
+        ? classifyAllRounderDetailed(data.message, data.code)
+        : null;
+      const needsClarification =
+        classification !== null && classification.confidence < ALLROUNDER_CONFIDENCE_MIN;
+      const subMode = classification?.subMode;
       const effectiveMode = subMode ?? data.mode;
+
+      // Short-circuit ambiguous All-Rounder: skip the model, ask the user.
+      if (needsClarification) {
+        const latency = Date.now() - started;
+        const clarify =
+          "I'm not sure what you need — would you like:\n" +
+          "• 🧭 Website guidance (find a page or explain a feature)\n" +
+          "• 👨‍🏫 A Python explanation (concept or syntax)\n" +
+          "• 🛠 Help correcting some code (paste the code and the error)\n\n" +
+          "Reply with one of those so I can help precisely.";
+        const { data: msgRow, error: msgErr } = await supabase
+          .from("pyko_messages")
+          .insert({
+            conversation_id: conversationId,
+            user_id: userId,
+            role: "assistant",
+            content: clarify,
+            mode: data.mode,
+            prompt_version: PROMPT_VERSION,
+            model: "internal.clarify",
+            latency_ms: latency,
+          })
+          .select("id")
+          .single();
+        if (msgErr || !msgRow) throw new PykoPolicyError("msg_write_failed", "Pyko responded but we couldn't save it.", 500);
+        await logTelemetry(supabaseAdmin, {
+          userId, traceId, mode: data.mode, provider: "internal", model: "clarify",
+          latencyMs: latency, responseStatus: "clarify",
+        });
+        return {
+          conversationId,
+          messageId: msgRow.id as string,
+          traceId,
+          content: clarify,
+          mode: data.mode,
+          subMode: undefined,
+          fallback: false,
+          clarification: true,
+        };
+      }
 
       // If user pasted code, append it as a fenced block to the last user
       // message so the model sees it. We never accept hidden tests or
@@ -151,7 +208,8 @@ export const pykoChat = createServerFn({ method: "POST" })
         }
       }
 
-      // 6. Call the model.
+      // 6. Call the model. Per-mode reasoning effort — Guide stays fast,
+      // Tutor/Corrector get real reasoning for detailed teaching.
       const gateway = createPykoProvider();
       const model = gateway(PYKO_DEFAULT_MODEL);
       const systemPrompt = buildSystemPrompt(
@@ -159,6 +217,12 @@ export const pykoChat = createServerFn({ method: "POST" })
         currentRoute,
         data.message,
       );
+      const effort = reasoningEffortFor(effectiveMode);
+
+      // Pre-fetch the verified walkthrough so we can guarantee it wins over
+      // an uncertain / empty model reply for Guide + All-Rounder-guide.
+      const verifiedWalkthrough =
+        (effectiveMode === "guide" || subMode === "guide") ? getProcessWalkthrough(data.message) : null;
 
       let content = "";
       let providerFailed = false;
@@ -167,14 +231,26 @@ export const pykoChat = createServerFn({ method: "POST" })
           model,
           system: systemPrompt,
           messages,
-          abortSignal: AbortSignal.timeout(25_000),
-          providerOptions: { lovable: { reasoningEffort: "none" } },
+          abortSignal: AbortSignal.timeout(30_000),
+          providerOptions: { lovable: { reasoningEffort: effort } },
         });
         content = (result.text ?? "").trim();
       } catch (e) {
         providerFailed = true;
         content = "";
-        if (effectiveMode !== "guide") throw e;
+        if (effectiveMode !== "guide" && !verifiedWalkthrough) throw e;
+      }
+
+      // Guide guarantee: if we have a verified walkthrough and the model reply
+      // is empty, too short, or steers to /help, override with the walkthrough.
+      if (verifiedWalkthrough) {
+        const looksWeak =
+          !content ||
+          content.length < 120 ||
+          /\/help\b|visit .*help/i.test(content);
+        if (looksWeak) {
+          content = guideFallback(data.message);
+        }
       }
 
       if (!content) {
@@ -220,6 +296,7 @@ export const pykoChat = createServerFn({ method: "POST" })
         mode: data.mode,
         subMode,
         fallback: providerFailed,
+        clarification: false,
       };
     } catch (err) {
       const latency = Date.now() - started;
