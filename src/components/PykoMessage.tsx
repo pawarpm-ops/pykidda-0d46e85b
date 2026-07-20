@@ -159,20 +159,24 @@ function Markdown({ content }: { content: string }) {
   );
 }
 
-function PykoMessageImpl({ content, compact: _compact, onSuggestion }: Props) {
-  const extracted = extractPykoLesson(content);
+function PykoMessageImpl({ content, compact: _compact, onSuggestion, onNavigate }: Props) {
+  // Actions may appear alongside either a lesson block or plain markdown.
+  const { actions, cleaned } = extractPykoActions(content);
+  const extracted = extractPykoLesson(cleaned);
   if (extracted) {
     return (
       <div className="pyko-md space-y-2">
         {extracted.before && <Markdown content={extracted.before} />}
         <PykoLesson lesson={extracted.lesson} onSuggestion={onSuggestion} />
         {extracted.after && <Markdown content={extracted.after} />}
+        {actions.length > 0 && <PykoActionCard actions={actions} onNavigate={onNavigate} />}
       </div>
     );
   }
   return (
     <div className="pyko-md space-y-0.5">
-      <Markdown content={content} />
+      <Markdown content={cleaned} />
+      {actions.length > 0 && <PykoActionCard actions={actions} onNavigate={onNavigate} />}
     </div>
   );
 }
