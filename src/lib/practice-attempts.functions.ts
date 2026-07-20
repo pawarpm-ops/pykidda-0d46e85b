@@ -11,14 +11,14 @@ const InputSchema = z.object({
   solved: z.boolean(),
 });
 
+// Practice attempts are intentionally NOT persisted — practice is for
+// self-learning only. We still validate the submission for internal
+// consistency and record a streak activity when the student solves a
+// question, but no per-attempt row is stored anywhere.
 export const submitPracticeAttempt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data, context }) => {
-    // Server-side sanity checks — reject fabricated scores. The actual
-    // Python execution happens in-browser (Pyodide) so we cannot re-verify
-    // the code, but we DO enforce that the counters submitted are internally
-    // consistent with the question's real test-case count.
     let expectedUnit: number;
     let expectedTotal: number;
 
@@ -46,17 +46,6 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
     if (data.solved !== (data.passed === data.total && data.total > 0)) {
       throw new Error("Inconsistent solved flag");
     }
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("practice_attempts").insert({
-      user_id: context.userId,
-      question_id: data.questionId,
-      unit: data.unit,
-      passed: data.passed,
-      total: data.total,
-      solved: data.solved,
-    });
-    if (error) throw new Error(error.message);
 
     if (data.solved) {
       try {

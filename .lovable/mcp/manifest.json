@@ -49,30 +49,6 @@
         "outputSchema": null
       },
       {
-        "name": "list_my_practice_attempts",
-        "title": "List my practice attempts",
-        "description": "Return the signed-in student's recent Python practice attempts, newest first.",
-        "annotations": {
-          "readOnlyHint": true,
-          "idempotentHint": true,
-          "openWorldHint": false
-        },
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "limit": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "description": "Max rows to return (1-100, default 20)."
-            }
-          },
-          "additionalProperties": false,
-          "$schema": "http://json-schema.org/draft-07/schema#"
-        },
-        "outputSchema": null
-      },
-      {
         "name": "list_my_assignments",
         "title": "List assignments",
         "description": "Return assignments visible to the signed-in student, newest first. RLS scopes results automatically.",

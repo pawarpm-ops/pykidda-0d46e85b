@@ -6,35 +6,28 @@ export const getMyAnalyticsData = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [practiceRes, mockRes] = await Promise.all([
-      supabaseAdmin
-        .from("practice_attempts")
-        .select("question_id,unit,passed,total,solved,attempted_at")
-        .eq("user_id", context.userId)
-        .order("attempted_at", { ascending: false })
-        .limit(1000),
-      supabaseAdmin
-        .from("mock_results")
-        .select(
-          "test_id,test_name,percentage,grade,marks_obtained,total_marks,total_questions,time_taken_sec,submission_type,violation_reason,submitted_at",
-        )
-        .eq("user_id", context.userId)
-        .order("submitted_at", { ascending: false })
-        .limit(500),
-    ]);
+    // Practice attempts are not persisted (practice is for self-learning
+    // only), so analytics only surface mock test history.
+    const mockRes = await supabaseAdmin
+      .from("mock_results")
+      .select(
+        "test_id,test_name,percentage,grade,marks_obtained,total_marks,total_questions,time_taken_sec,submission_type,violation_reason,submitted_at",
+      )
+      .eq("user_id", context.userId)
+      .order("submitted_at", { ascending: false })
+      .limit(500);
 
-    if (practiceRes.error) throw new Error(practiceRes.error.message);
     if (mockRes.error) throw new Error(mockRes.error.message);
 
     return {
-      practice: (practiceRes.data ?? []).map((p) => ({
-        questionId: p.question_id as string,
-        unit: Number(p.unit ?? 0),
-        passed: Number(p.passed ?? 0),
-        total: Number(p.total ?? 0),
-        solved: Boolean(p.solved),
-        at: p.attempted_at ? new Date(p.attempted_at as string).getTime() : Date.now(),
-      })),
+      practice: [] as Array<{
+        questionId: string;
+        unit: number;
+        passed: number;
+        total: number;
+        solved: boolean;
+        at: number;
+      }>,
       mocks: (mockRes.data ?? []).map((m) => ({
         testId: m.test_id as string,
         testName: (m.test_name as string) ?? "Mock test",
