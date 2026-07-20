@@ -39,6 +39,7 @@ function isAssessmentRoute(path: string): boolean {
 export function PykoFloatingPanel() {
   const chat = useServerFn(pykoChat);
   const loadFlags = useServerFn(getPykoEnabledModes);
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onAssessment = isAssessmentRoute(pathname);
   const [open, setOpen] = useState(false);
