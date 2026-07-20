@@ -202,7 +202,7 @@ const SPELLING_MAP: Record<string, string> = {
   explan: "explain", exlpain: "explain", explian: "explain",
   // wh-words (kept for correction, still stripped later)
   wher: "where", wehre: "where",
-  hw: "homework", // duplicate override — hw is homework, not "how"
+  // hw override handled above (hw → homework)
 };
 
 export function tokenizePyko(message: string): string[] {
