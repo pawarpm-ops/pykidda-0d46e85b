@@ -174,8 +174,9 @@ const SPELLING_MAP: Record<string, string> = {
   practise: "practice", pratice: "practice", practce: "practice", practicee: "practice",
   // assignment typos
   assingment: "assignment", assinment: "assignment", assignmnt: "assignment", assingments: "assignment",
-  // mock / test
+  // mock / test / scheduled
   moc: "mock", moock: "mock", mck: "mock", tset: "test", tets: "test",
+  sheduled: "scheduled", schedueld: "scheduled", scheduld: "scheduled", scheuled: "scheduled",
   // streak
   strek: "streak", streek: "streak", streakk: "streak",
   // badge / leaderboard / notification / profile
