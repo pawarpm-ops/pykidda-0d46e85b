@@ -213,6 +213,32 @@ export function PykoFloatingPanel() {
     setLastUserText(null);
   };
 
+  const handleNavigate = (action: PykoAction) => {
+    const entry = PYKO_NAVIGATION_ROUTES[action.routeKey];
+    if (!entry) return;
+    // Minimise the panel so it doesn't cover the destination.
+    setSize("min");
+    setOpen(false);
+    // Analytics: safe metadata only — no message text, no PII.
+    try {
+      // eslint-disable-next-line no-console
+      console.debug("[pyko:nav]", {
+        routeKey: action.routeKey,
+        mode,
+        from: pathname,
+        at: Date.now(),
+      });
+    } catch { /* ignore */ }
+    void navigate({ to: entry.route, hash: entry.hash }).then(() => {
+      // Move focus to the destination heading for accessibility.
+      setTimeout(() => {
+        const h = document.querySelector<HTMLElement>("h1, [role='heading']");
+        h?.focus?.();
+      }, 120);
+    });
+  };
+
+
   const switchMode = (next: StudentMode) => {
     if (next === mode) return;
     if (!flags[next]) return;
