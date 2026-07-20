@@ -309,21 +309,25 @@ export function PykoFloatingPanel() {
                 {(Object.keys(MODE_META) as StudentMode[]).map((k) => {
                   const meta = MODE_META[k];
                   const active = mode === k;
+                  const enabled = flags[k];
                   return (
                     <button
                       key={k}
                       onClick={() => switchMode(k)}
-                      disabled={busy}
-                      title={meta.desc}
+                      disabled={busy || !enabled}
+                      title={enabled ? meta.desc : `${meta.label} is disabled by the admin.`}
                       aria-pressed={active}
-                      className={`rounded-md px-1.5 py-1 text-[10px] font-semibold leading-tight border transition ${
-                        active
-                          ? `bg-gradient-to-br ${meta.accent} text-white border-transparent shadow`
-                          : "bg-background text-foreground border-border hover:bg-muted"
+                      className={`relative rounded-md px-1.5 py-1 text-[10px] font-semibold leading-tight border transition ${
+                        !enabled
+                          ? "bg-muted/40 text-muted-foreground border-dashed border-border opacity-60 cursor-not-allowed"
+                          : active
+                            ? `bg-gradient-to-br ${meta.accent} text-white border-transparent shadow`
+                            : "bg-background text-foreground border-border hover:bg-muted"
                       }`}
                     >
                       <div className="text-sm leading-none">{meta.icon}</div>
                       <div className="mt-0.5">{meta.label}</div>
+                      {!enabled && <div className="mt-0.5 text-[8px] uppercase tracking-wide">off</div>}
                     </button>
                   );
                 })}
