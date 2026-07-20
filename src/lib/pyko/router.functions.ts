@@ -5,7 +5,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
-import { PykoChatInput, type PykoChatOutput } from "./schemas";
+import { PykoChatInput, PykoChatOutput, type PykoChatOutput as PykoChatOutputT } from "./schemas";
 import { createPykoProvider, PYKO_DEFAULT_MODEL } from "./provider.server";
 import { buildSystemPrompt, PROMPT_VERSION } from "./prompts";
 import { guideFallback } from "./knowledge.server";
