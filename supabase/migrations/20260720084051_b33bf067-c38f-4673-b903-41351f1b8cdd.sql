@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Actors can view their own audit logs" ON public.admin_activity_logs;
