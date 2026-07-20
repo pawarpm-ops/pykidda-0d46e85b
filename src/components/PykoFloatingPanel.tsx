@@ -364,7 +364,13 @@ export function PykoFloatingPanel() {
                     }`}
                   >
                     {m.role === "assistant" ? (
-                      <PykoMessage content={m.content} />
+                      <PykoMessage
+                        content={m.content}
+                        onSuggestion={(p) => {
+                          setInput(p);
+                          inputRef.current?.focus();
+                        }}
+                      />
                     ) : (
                       m.content
                     )}

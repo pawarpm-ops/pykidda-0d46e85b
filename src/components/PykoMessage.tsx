@@ -2,10 +2,13 @@ import { memo, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
+import { extractPykoLesson } from "@/lib/pyko/lesson-schema";
+import { PykoLesson } from "@/components/PykoLesson";
 
 type Props = {
   content: string;
   compact?: boolean;
+  onSuggestion?: (prompt: string) => void;
 };
 
 function CodeBlock({ code, lang }: { code: string; lang?: string }) {
@@ -141,16 +144,32 @@ const components: Components = {
   },
 };
 
-function PykoMessageImpl({ content, compact: _compact }: Props) {
+function Markdown({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeSanitize]}
+      components={components}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
+function PykoMessageImpl({ content, compact: _compact, onSuggestion }: Props) {
+  const extracted = extractPykoLesson(content);
+  if (extracted) {
+    return (
+      <div className="pyko-md space-y-2">
+        {extracted.before && <Markdown content={extracted.before} />}
+        <PykoLesson lesson={extracted.lesson} onSuggestion={onSuggestion} />
+        {extracted.after && <Markdown content={extracted.after} />}
+      </div>
+    );
+  }
   return (
     <div className="pyko-md space-y-0.5">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSanitize]}
-        components={components}
-      >
-        {content}
-      </ReactMarkdown>
+      <Markdown content={content} />
     </div>
   );
 }
