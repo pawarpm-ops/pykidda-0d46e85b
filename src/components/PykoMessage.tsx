@@ -4,11 +4,14 @@ import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
 import { extractPykoLesson } from "@/lib/pyko/lesson-schema";
 import { PykoLesson } from "@/components/PykoLesson";
+import { extractPykoActions, type PykoAction } from "@/lib/pyko/navigation";
+import { PykoActionCard } from "@/components/PykoActionCard";
 
 type Props = {
   content: string;
   compact?: boolean;
   onSuggestion?: (prompt: string) => void;
+  onNavigate?: (action: PykoAction) => void;
 };
 
 function CodeBlock({ code, lang }: { code: string; lang?: string }) {
