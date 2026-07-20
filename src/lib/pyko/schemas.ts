@@ -79,68 +79,66 @@ export const PykoAssessmentEnd = z.object({
 });
 export type PykoAssessmentEnd = z.infer<typeof PykoAssessmentEnd>;
 
-// Robust query normaliser used by every keyword matcher (Guide keywords,
-// All-Rounder classifier, walkthrough lookup). Lowercases, strips punctuation,
-// removes filler/stop words, and collapses whitespace so paraphrases like
-// "How do I create the homework?" match the same intent as "create homework".
-const PYKO_STOPWORDS = new Set([
-  "a","an","the","this","that","these","those",
-  "i","me","my","mine","we","our","you","your","us",
-  "is","am","are","was","were","be","been","being",
-  "do","does","did","doing","done",
-  "to","of","for","on","in","at","by","with","from","into","about","as",
-  "how","what","why","when","where","which","who","whom","whose",
-  "can","could","should","would","will","shall","may","might","must",
-  "please","kindly","hey","hi","hello","pyko",
-  "and","or","but","if","then","so","because","just","also","actually",
-  "some","any","get","make","need","want","use","using","tell","show","give",
-  "plz","pls","thx","thanks",
-]);
+// Paraphrase-tolerant query normaliser. Delegates to the structured intent
+// resolver in ./intent so we do not double-maintain stopword lists. Only
+// genuine filler words (articles, pronouns, wh-words, politeness) are
+// removed — real action verbs like "make", "give", "get", "use", "submit",
+// "open" are KEPT so downstream matchers can tell "make homework" from
+// "submit homework" from "grade homework".
+import { tokenizePyko, resolveIntent, isCreateIntent } from "./intent";
 
 export function normalizePykoQuery(message: string): string {
-  if (!message) return "";
-  const cleaned = message
-    .toLowerCase()
-    .replace(/[`~!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const tokens = cleaned.split(" ").filter((t) => t && !PYKO_STOPWORDS.has(t));
-  return tokens.join(" ");
+  return tokenizePyko(message).join(" ");
 }
 
 // All-Rounder classifier: fast, deterministic, heuristic-only (no extra
-// model call — that would double budget cost). Order matters: code detection
-// first, then coach signals, then guide signals, then tutor.
+// model call — that would double budget cost). Order matters: pasted code
+// first, then coach signals, then guide (topic + admin/navigation action),
+// then tutor (concept explanation), fallback guide.
 export function classifyAllRounder(
   message: string,
   code?: string,
 ): "guide" | "tutor" | "corrector" | "coach" {
-  const raw = message.toLowerCase();
-  const m = normalizePykoQuery(message);
   const hasFencedCode = /```/.test(message);
   const looksLikeCode = /\b(def |print\(|import |for |while |class |traceback|error:|syntaxerror|nameerror|typeerror|indexerror|indentationerror)\b/i.test(
     message,
   );
   if (code || hasFencedCode || looksLikeCode) return "corrector";
 
-  const coachTerms = ["streak", "badge", "leaderboard", "progress", "improve", "am doing", "next step", "study plan", "rank"];
-  if (coachTerms.some((t) => m.includes(t))) return "coach";
+  const intent = resolveIntent(message);
+  const t = intent.topic;
 
-  const guideTerms = [
-    "create homework", "assign homework", "make homework", "publish homework", "new homework",
-    "submit homework", "open homework", "view homework", "homework section", "homework page",
-    "create practice", "add practice", "publish practice", "practice section", "practice page",
-    "create mock", "schedule mock", "mock section", "mock page", "take mock", "scheduled mock",
-    "notifications page", "notifications section",
-    "where find", "where see", "where open", "open profile", "open admin",
-    "grade homework", "grading", "return correction",
+  // Coach: progress / streak / badge / rank reflection questions.
+  const coachSignals = /\b(progress|improve|improving|next step|study plan|am i doing|how am i)\b/i.test(message);
+  if (coachSignals) return "coach";
+  if (
+    (t === "streak" || t === "badge" || t === "leaderboard" || t === "analytics") &&
+    (intent.action === "explain" || intent.action === "navigate" || intent.action === "unknown")
+  ) {
+    return "coach";
+  }
+
+  // Guide: any recognised website topic with a website-y action.
+  const websiteActions: Array<typeof intent.action> = [
+    "navigate", "open", "submit", "attempt", "grade", "return", "review",
+    "create", "assign", "publish", "delete", "schedule",
   ];
-  if (guideTerms.some((t) => m.includes(t))) return "guide";
+  if (t && (websiteActions.includes(intent.action) || intent.action === "unknown")) {
+    // Explicit navigation phrasing OR an admin/creation verb OR any known topic
+    // without a Python-teaching keyword — treat as Guide.
+    const looksLikePythonConcept = /\b(loop|list|dictionary|dict|tuple|set|function|recursion|variable|string|syntax|input\(|print\(|class )\b/i.test(message);
+    if (!looksLikePythonConcept) return "guide";
+  }
 
-  const tutorTerms = ["explain", "concept", "loop", "list", "dictionary", "function", "recursion", "class python", "python", "difference between", "syntax", "variable", "string", "tuple", "set", "print", "input"];
-  if (tutorTerms.some((t) => m.includes(t)) || /\b(what|why)\b/.test(raw)) return "tutor";
+  // Tutor: Python teaching / concept questions.
+  const tutorTerms = /\b(explain|concept|loop|list|dictionary|dict|tuple|set|function|recursion|python|syntax|variable|string|difference between|meaning of|what is|why does|why is)\b/i;
+  if (tutorTerms.test(message)) return "tutor";
 
-  // Default to guide — safer than teaching an unrelated topic.
+  // Default: safer to route to Guide than to teach an unrelated topic.
   return "guide";
 }
+
+// Re-export for callers that used to import from ./schemas only.
+export { resolveIntent, isCreateIntent, tokenizePyko };
+export type { GuideIntent, GuideTopic, GuideAction } from "./intent";
 
