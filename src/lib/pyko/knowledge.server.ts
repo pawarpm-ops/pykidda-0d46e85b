@@ -47,12 +47,12 @@ const PROCESS_WALKTHROUGHS: Record<string, Walkthrough> = {
     steps: [
       "Open the Admin dashboard from Profile → Admin, then click Homework.",
       "On /admin/homework click 'New homework' — this opens the homework editor.",
-      "Fill Title, Description, Due date and Total marks. Optionally set 'allow late submission'.",
+      "Fill Title and Description. The homework editor does not ask for a due date or total marks up-front — marks are computed from the questions you add.",
       "Choose the target audience: all students or a specific list.",
-      "Under Questions click 'Add question'. Only coding questions are supported. Type the problem statement (the first line becomes the auto-title), the expected tests and reference solution used for auto-grading are kept server-side and never shown to students.",
+      "Under Questions click 'Add question'. Only coding questions are supported (descriptive questions have been removed). Type the problem statement — the first line becomes the auto-title; do NOT enter a separate title, starter code, or difficulty field, those inputs no longer exist. The hidden tests and reference solution used for auto-grading stay server-side and are never shown to students.",
       "Save each question, then click 'Publish' on the homework. Publishing inserts an announcement into every student's Notifications with a View button linking to /homework/<id>.",
-      "Students open /homework, see the new item, click in, write code in the in-browser editor, click Run Tests / Submit. The auto-grader records how many hidden tests passed.",
-      "Teachers open /admin/homework/<id>, review each submission, add comments and either 'Check' (finalise) or 'Return for correction'. The student gets a notification with a View button linking back to their homework.",
+      "Students open /homework, click the item, write code in the two-column editor, click Run Tests / Submit. The auto-grader records how many hidden tests passed.",
+      "Teachers open /admin/homework/<id>, review each submission, add comments and either 'Check' (finalise) or 'Return for correction'. Homework past its due date automatically moves to the Closed tab; drafts stay drafts. The student gets a notification with a View button linking back to their homework.",
     ],
   },
   homework_submit: {
