@@ -163,11 +163,56 @@ const TOPIC_PHRASES: Array<[string, GuideTopic]> = [
 
 const PUNCT_RE = /[`~!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g;
 
+// Controlled spelling / synonym correction. ONLY maps tokens to a known PY
+// Kidda topic or action verb — never rewrites arbitrary words. This bounds
+// fuzzy behaviour so we don't accidentally warp real Python vocabulary.
+const SPELLING_MAP: Record<string, string> = {
+  // homework typos
+  hoemwork: "homework", homwork: "homework", homewrk: "homework", homeework: "homework",
+  hwrk: "homework", hw: "homework",
+  // practice typos
+  practise: "practice", pratice: "practice", practce: "practice", practicee: "practice",
+  // assignment typos
+  assingment: "assignment", assinment: "assignment", assignmnt: "assignment", assingments: "assignment",
+  // mock / test
+  moc: "mock", moock: "mock", mck: "mock", tset: "test", tets: "test",
+  // streak
+  strek: "streak", streek: "streak", streakk: "streak",
+  // badge / leaderboard / notification / profile
+  bage: "badge", badg: "badge",
+  leaderbord: "leaderboard", leadeboard: "leaderboard", leaderborad: "leaderboard",
+  notifcation: "notification", notificaton: "notification", notifiction: "notification",
+  profil: "profile", proflie: "profile",
+  // action verbs — create family
+  craete: "create", creaet: "create", creat: "create", creete: "create",
+  mke: "make", mak: "make",
+  prpare: "prepare", prepere: "prepare",
+  ad: "add", addd: "add",
+  asign: "assign", asisgn: "assign", assgn: "assign",
+  publsh: "publish", pubish: "publish",
+  // action verbs — submit / grade / return / delete
+  sumbit: "submit", submt: "submit", sbumit: "submit",
+  grde: "grade", gade: "grade",
+  retun: "return", retrun: "return",
+  delte: "delete", delet: "delete", dlete: "delete",
+  // action verbs — open / view / find / explain
+  opn: "open", oepn: "open",
+  vew: "view", veiw: "view",
+  fnd: "find", fidn: "find",
+  explan: "explain", exlpain: "explain", explian: "explain",
+  // wh-words (kept for correction, still stripped later)
+  wher: "where", wehre: "where",
+  hw: "homework", // duplicate override — hw is homework, not "how"
+};
+
 export function tokenizePyko(message: string): string[] {
   if (!message) return [];
   const cleaned = message.toLowerCase().replace(PUNCT_RE, " ").replace(/\s+/g, " ").trim();
   if (!cleaned) return [];
-  return cleaned.split(" ").filter((t) => t && !STOPWORDS.has(t));
+  return cleaned
+    .split(" ")
+    .map((t) => SPELLING_MAP[t] ?? t)
+    .filter((t) => t && !STOPWORDS.has(t));
 }
 
 export function resolveIntent(message: string): GuideIntent {
