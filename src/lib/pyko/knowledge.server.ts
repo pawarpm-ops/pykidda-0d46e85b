@@ -112,60 +112,67 @@ const PROCESS_WALKTHROUGHS: Record<string, Walkthrough> = {
   },
 };
 
-// Import the shared normaliser so keyword matching is paraphrase-tolerant.
-// Same list of stopwords/punctuation stripping is applied to both the user
-// query AND the keyword list, so "How do I create the homework?" and
-// "create homework" both normalize to "create homework".
-import { normalizePykoQuery } from "./schemas";
+// Structured intent → walkthrough routing. We resolve (topic, action) from
+// the query and pick a walkthrough. This replaces the old substring keyword
+// matcher, which misclassified "where is homework" and "submit homework" as
+// homework creation because the normaliser stripped "where"/"submit".
+import { resolveIntent, isCreateIntent, type GuideIntent, type GuideTopic } from "./intent";
 
-// Keyword → walkthrough key lookup. Keywords are stored as the intent phrase;
-// they are normalised at match time so we do not need to enumerate every
-// paraphrase.
-const TOPIC_KEYWORDS: Array<[string[], keyof typeof PROCESS_WALKTHROUGHS]> = [
-  [[
-    "create homework", "creating homework", "assign homework", "make homework",
-    "publish homework", "new homework", "add homework", "setup homework",
-    "homework creation", "give homework",
-  ], "homework_create"],
-  [[
-    "submit homework", "submitting homework", "student submit homework",
-    "how student submit homework", "turn in homework", "hand in homework",
-    "upload homework",
-  ], "homework_submit"],
-  [[
-    "create practice", "creating practice", "add practice question",
-    "publish practice", "new practice question", "practice question creation",
-  ], "practice_create"],
-  [[
-    "scheduled mock", "mock test schedule", "scheduled mock test",
-    "scheduled mock tests work", "mock tests work", "how mock test",
-    "take scheduled mock",
-  ], "mock_scheduled"],
-  [[
-    "streak system", "explain streak", "streak work", "streaks work",
-    "how streak", "how streaks", "streak counted", "streak counting",
-  ], "streaks"],
-  [[
-    "grade homework", "grading homework", "grading", "teacher grade",
-    "return correction", "check homework", "review homework",
-  ], "grading"],
-];
+function pickWalkthroughKey(intent: GuideIntent): keyof typeof PROCESS_WALKTHROUGHS | null {
+  const { topic, action } = intent;
+  if (!topic) return null;
 
-export function getProcessWalkthrough(query: string): Walkthrough | null {
-  const q = normalizePykoQuery(query);
-  if (!q) return null;
-  for (const [keywords, key] of TOPIC_KEYWORDS) {
-    if (keywords.some((k) => q.includes(normalizePykoQuery(k)))) {
-      return PROCESS_WALKTHROUGHS[key];
+  if (topic === "homework") {
+    if (isCreateIntent(intent)) return "homework_create";
+    if (action === "submit" || action === "attempt") return "homework_submit";
+    if (action === "grade" || action === "review" || action === "return") return "grading";
+    return null; // navigation / explain → let route facts answer
+  }
+  if (topic === "practice") {
+    if (isCreateIntent(intent)) return "practice_create";
+    return null;
+  }
+  if (topic === "scheduled_mock" || topic === "mock_test") {
+    if (action === "explain" || action === "attempt" || action === "navigate" || isCreateIntent(intent) || action === "unknown") {
+      return "mock_scheduled";
     }
+    return "mock_scheduled";
+  }
+  if (topic === "streak") {
+    if (action === "explain" || action === "navigate" || action === "unknown") return "streaks";
+    return "streaks";
   }
   return null;
+}
+
+export function getProcessWalkthrough(query: string): Walkthrough | null {
+  const intent = resolveIntent(query);
+  const key = pickWalkthroughKey(intent);
+  return key ? PROCESS_WALKTHROUGHS[key] : null;
 }
 
 function walkthroughText(w: Walkthrough): string {
   const numbered = w.steps.map((s, i) => `${i + 1}. ${s}`).join("\n");
   return `Verified process — ${w.title}\nWho can do this: ${w.roles}\n${numbered}`;
 }
+
+// Short factual answers for topic + navigation/explain intents where a full
+// walkthrough would be overkill (e.g. "where is homework?", "what is streak?").
+const TOPIC_TO_ROUTE: Partial<Record<GuideTopic, string>> = {
+  homework: "/homework",
+  practice: "/practice",
+  assignment: "/assignments",
+  mock_test: "/mock-tests",
+  scheduled_mock: "/mock-tests",
+  ai_mock: "/mock-tests",
+  badge: "/badges",
+  leaderboard: "/leaderboard",
+  notification: "/notifications",
+  profile: "/profile",
+  streak: "/streak-journey",
+  help: "/help",
+  auth: "/auth",
+};
 
 export function guideKnowledgeBlock(currentRoute?: string, userMessage?: string): string {
   const lines = PYKO_ROUTE_FACTS.map(
@@ -174,7 +181,7 @@ export function guideKnowledgeBlock(currentRoute?: string, userMessage?: string)
   const here = currentRoute ? `\n\nStudent is currently on: ${currentRoute}` : "";
   const wt = userMessage ? getProcessWalkthrough(userMessage) : null;
   const walkthrough = wt ? `\n\n${walkthroughText(wt)}` : "";
-  return `Verified PY Kidda facts (only answer from this list; if unsure, say so and point to /help):\n${lines.join(
+  return `Verified PY Kidda facts (only answer from this list; if unsure, say so):\n${lines.join(
     "\n",
   )}\n\nRules:\n${RULES.map((r) => `- ${r}`).join("\n")}${here}${walkthrough}`;
 }
@@ -183,14 +190,11 @@ export function guideKnowledgeBlock(currentRoute?: string, userMessage?: string)
 export function guideFallback(query: string): string {
   const wt = getProcessWalkthrough(query);
   if (wt) return walkthroughText(wt);
-  const q = normalizePykoQuery(query);
-  const hit = PYKO_ROUTE_FACTS.find((r) => {
-    const title = normalizePykoQuery(r.title);
-    const slug = r.path.replace(/^\//, "");
-    return (title && q.includes(title)) || (slug && q.includes(slug));
-  });
-  if (hit) return `${hit.title} lives at ${hit.path}. ${hit.whatItDoes}`;
-  // Do not dead-end at /help — steer the student toward AI Teacher / All-Rounder
-  // for anything that isn't clearly a navigation question.
+  const intent = resolveIntent(query);
+  if (intent.topic) {
+    const route = TOPIC_TO_ROUTE[intent.topic];
+    const fact = route ? PYKO_ROUTE_FACTS.find((r) => r.path === route) : null;
+    if (fact) return `${fact.title} lives at ${fact.path}. ${fact.whatItDoes}`;
+  }
   return "I couldn't map that to a PY Kidda feature. If it's a Python concept or a code error, switch to AI Teacher or All-Rounder for a detailed answer — otherwise try rephrasing (for example: \"how do I create homework\", \"how do streaks work\").";
 }
