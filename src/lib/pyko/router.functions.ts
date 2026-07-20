@@ -83,7 +83,7 @@ async function logTelemetry(
 export const pykoChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => PykoChatInput.parse(d))
-  .handler(async ({ data, context }): Promise<PykoChatOutput> => {
+  .handler(async ({ data, context }): Promise<PykoChatOutputT> => {
     const { supabase, userId } = context;
     const traceId = newTraceId();
     const started = Date.now();
@@ -192,7 +192,7 @@ export const pykoChat = createServerFn({ method: "POST" })
           userId, traceId, mode: data.mode, provider: "internal", model: "clarify",
           latencyMs: latency, responseStatus: "clarify",
         });
-        return {
+        return PykoChatOutput.parse({
           conversationId,
           messageId: msgRow.id as string,
           traceId,
@@ -201,7 +201,7 @@ export const pykoChat = createServerFn({ method: "POST" })
           subMode: undefined,
           fallback: false,
           clarification: true,
-        };
+        });
       }
 
       // If user pasted code, append it as a fenced block to the last user
@@ -338,7 +338,10 @@ export const pykoChat = createServerFn({ method: "POST" })
         responseStatus: providerFailed ? "fallback" : "ok",
       });
 
-      return {
+      // Validate the outbound shape so a future refactor cannot silently ship
+      // a response that violates the client contract (extra fields, wrong
+      // types, missing ids). Zod throws before the model output is trusted.
+      return PykoChatOutput.parse({
         conversationId,
         messageId: msgRow.id as string,
         traceId,
@@ -347,7 +350,7 @@ export const pykoChat = createServerFn({ method: "POST" })
         subMode,
         fallback: providerFailed,
         clarification: false,
-      };
+      });
     } catch (err) {
       const latency = Date.now() - started;
       const message = err instanceof Error ? err.message : String(err);
