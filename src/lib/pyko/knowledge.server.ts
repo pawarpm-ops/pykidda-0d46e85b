@@ -75,7 +75,7 @@ const PROCESS_WALKTHROUGHS: Record<string, Walkthrough> = {
       "Click 'New question'. Enter unit, title, prompt, starter code, marks and any hint or reference solution.",
       "Add one or more test cases (stdin + expected output). These stay server-side; students never see them.",
       "Save as Draft or click Publish. Publishing inserts an announcement with a View button linking to /practice/db-<id>.",
-      "Students find the question under /practice grouped by unit and solve it in the browser; each attempt is recorded in practice_attempts.",
+      "Students find the question under /practice grouped by unit and solve it in the browser. Practice attempts are for self-learning only and are not stored on the server.",
     ],
   },
   mock_scheduled: {
