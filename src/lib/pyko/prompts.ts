@@ -3,7 +3,7 @@
 
 import { guideKnowledgeBlock } from "./knowledge.server";
 
-export const PROMPT_VERSION = "pyko.modes.v3";
+export const PROMPT_VERSION = "pyko.modes.v4";
 
 export const GLOBAL_POLICY = `You are Pyko, the AI assistant inside the PY Kidda Python learning platform for Indian college students.
 

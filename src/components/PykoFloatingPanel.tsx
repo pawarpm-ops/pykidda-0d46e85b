@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouterState } from "@tanstack/react-router";
 import { pykoChat } from "@/lib/pyko/router.functions";
+import { getPykoEnabledModes, type PykoEnabledModes } from "@/lib/pyko/flags.functions";
 import pykoMascot from "@/assets/pyko-mascot.png.asset.json";
 
 type SubMode = "guide" | "tutor" | "corrector" | "coach";
@@ -35,6 +36,7 @@ function isAssessmentRoute(path: string): boolean {
 
 export function PykoFloatingPanel() {
   const chat = useServerFn(pykoChat);
+  const loadFlags = useServerFn(getPykoEnabledModes);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onAssessment = isAssessmentRoute(pathname);
   const [open, setOpen] = useState(false);
@@ -44,12 +46,24 @@ export function PykoFloatingPanel() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [convId, setConvId] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<StudentMode>("guide");
+  const [flags, setFlags] = useState<PykoEnabledModes>({ master: true, guide: true, tutor: true, allrounder: true });
   useEffect(() => {
     try {
       const raw = localStorage.getItem(MODE_KEY);
       if (raw === "guide" || raw === "tutor" || raw === "allrounder") setMode(raw);
     } catch { /* ignore */ }
   }, []);
+  useEffect(() => {
+    loadFlags().then((f) => {
+      setFlags(f);
+      // If the persisted mode is now disabled, snap to the first enabled one.
+      setMode((cur) => {
+        if (f[cur]) return cur;
+        const order: StudentMode[] = ["guide", "tutor", "allrounder"];
+        return order.find((k) => f[k]) ?? cur;
+      });
+    }).catch(() => { /* keep permissive defaults */ });
+  }, [loadFlags]);
   const [err, setErr] = useState<string | null>(null);
   const [lastUserText, setLastUserText] = useState<string | null>(null);
   const [viewport, setViewport] = useState<{ w: number; h: number }>({ w: 1024, h: 768 });
@@ -198,6 +212,7 @@ export function PykoFloatingPanel() {
 
   const switchMode = (next: StudentMode) => {
     if (next === mode) return;
+    if (!flags[next]) return;
     setMode(next);
     try { localStorage.setItem(MODE_KEY, next); } catch { /* ignore */ }
     // Switching mode starts a fresh conversation so instructions never mix.
