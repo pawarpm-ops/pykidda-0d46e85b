@@ -37,7 +37,7 @@ export const PYKO_ROUTE_KEYS = [
 export type PykoRouteKey = (typeof PYKO_ROUTE_KEYS)[number];
 
 export type PykoRouteEntry = {
-  route: string;
+  route: VerifiedRoute;
   hash?: string;
   label: string;
   icon: string;
