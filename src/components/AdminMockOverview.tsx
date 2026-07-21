@@ -803,12 +803,15 @@ function StudentAnalysis(props: {
 
   const saveComment = async () => {
     if (!props.currentUserId) return;
+    if (savingComment) return;
+    const trimmed = commentDraft.trim();
+    if (!trimmed) return;
     setSavingComment(true);
     try {
       if (comment) {
         const { data, error } = await (supabase
           .from("mock_test_attempt_comments" as never) as any)
-          .update({ comment_text: commentDraft, teacher_id: props.currentUserId })
+          .update({ comment_text: trimmed, teacher_id: props.currentUserId })
           .eq("id", comment.id)
           .select()
           .maybeSingle();
@@ -823,7 +826,7 @@ function StudentAnalysis(props: {
             student_id: props.studentId,
             teacher_id: props.currentUserId,
             test_id: props.testId,
-            comment_text: commentDraft,
+            comment_text: trimmed,
           })
           .select()
           .maybeSingle();
