@@ -1,0 +1,3 @@
+CREATE POLICY "admins insert tests" ON public.ai_mock_tests FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));
+CREATE POLICY "admins update tests" ON public.ai_mock_tests FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role)) WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));
+CREATE POLICY "admins delete tests" ON public.ai_mock_tests FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role));
