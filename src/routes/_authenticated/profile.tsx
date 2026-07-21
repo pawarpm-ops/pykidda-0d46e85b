@@ -393,9 +393,9 @@ function ProfilePage() {
                       onChange={(e) => setDisplayName(e.target.value)}
                       maxLength={60}
                       placeholder="e.g. Ada Lovelace"
-                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                     />
-                    <span className="text-xs text-muted-foreground">{displayName.length}/60</span>
+                    <span className="text-xs text-muted-foreground" aria-live="polite">{displayName.length}/60</span>
                   </label>
 
                   <label className="flex flex-col gap-1">
@@ -406,9 +406,9 @@ function ProfilePage() {
                       maxLength={280}
                       rows={4}
                       placeholder="A short intro — what are you learning?"
-                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent resize-y"
+                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card resize-y"
                     />
-                    <span className="text-xs text-muted-foreground">{bio.length}/280</span>
+                    <span className="text-xs text-muted-foreground" aria-live="polite">{bio.length}/280</span>
                   </label>
 
                   <div className="flex flex-col gap-2">
