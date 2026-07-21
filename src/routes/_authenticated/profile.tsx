@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { User, Flame, FileText, GraduationCap, QrCode, type LucideIcon } from "lucide-react";
+import { User, Flame, FileText, GraduationCap, QrCode, ArrowLeft, UserCircle2, Upload, Trash2, type LucideIcon } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StreakCard } from "@/components/StreakCard";
 import { ProfileQrCard } from "@/components/ProfileQrCard";
@@ -9,6 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { restartTutorial } from "@/components/OnboardingTutorial";
 import { toast } from "sonner";
 import { z } from "zod";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/state";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
