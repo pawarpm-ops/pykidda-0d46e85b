@@ -549,14 +549,13 @@ function Editor() {
             </Field>
           </div>
           <div className="mt-5">
-            <p className="text-sm font-medium mb-2">Questions to generate:</p>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {(Object.keys(counts) as Array<keyof typeof counts>).map((k) => (
-                <Field key={k} label={TYPE_LABEL[k as QType]}>
-                  <input type="number" min={0} max={30} value={counts[k]} onChange={(e) => setCounts((c) => ({ ...c, [k]: Math.max(0, Number(e.target.value) || 0) }))} className="input" />
-                </Field>
-              ))}
+            <p className="text-sm font-medium mb-2">Coding questions to generate:</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <Field label={TYPE_LABEL.code}>
+                <input type="number" min={1} max={30} value={counts.code} onChange={(e) => setCounts((c) => ({ ...c, code: Math.max(1, Number(e.target.value) || 1) }))} className="input" />
+              </Field>
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">AI Mock Test Creator only generates coding questions.</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <button
