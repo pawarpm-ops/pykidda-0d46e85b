@@ -59,6 +59,35 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-muted: var(--surface-muted);
+
+  /* Motion tokens */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Elevation tokens */
+  --shadow-card: 0 1px 2px 0 oklch(0.129 0.042 264.695 / 0.06), 0 1px 3px 0 oklch(0.129 0.042 264.695 / 0.08);
+  --shadow-elevated: 0 8px 24px -12px oklch(0.129 0.042 264.695 / 0.18), 0 2px 6px -2px oklch(0.129 0.042 264.695 / 0.08);
+
+  /* Z layers */
+  --z-sticky: 20;
+  --z-header: 40;
+  --z-sidebar: 45;
+  --z-mobile-nav: 50;
+  --z-overlay: 60;
+  --z-dialog: 70;
+  --z-toast: 80;
+  --z-pyko: 90;
 }
 
 :root {
