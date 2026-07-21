@@ -692,6 +692,15 @@ function Editor() {
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   <button onClick={() => onLoadTest(t.id)} className="text-primary hover:underline">Edit</button>
+                  {kind === "scheduled" && (
+                    <Link
+                      to="/admin/ai-mock/$testId/grading"
+                      params={{ testId: t.id }}
+                      className="text-[oklch(0.55_0.18_260)] font-semibold hover:underline"
+                    >
+                      Grade submissions
+                    </Link>
+                  )}
                   {kind === "scheduled" && t.status === "published" && schedStatus !== "closed" && (
                     <button onClick={() => openScheduleForEdit(t)} className="text-primary hover:underline">Edit schedule</button>
                   )}
@@ -700,6 +709,7 @@ function Editor() {
                   ) : null}
                   <button onClick={() => onDelete(t.id)} className="text-destructive hover:underline">Delete</button>
                 </div>
+
               </li>
               );
             })}

@@ -545,7 +545,8 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
       .select("test_kind,scheduled_start_at,scheduled_end_at,status")
       .eq("id", data.test_id)
       .single();
-    if (tRow && (tRow as any).test_kind === "scheduled") {
+    const isScheduled = tRow && (tRow as any).test_kind === "scheduled";
+    if (isScheduled) {
       const now = Date.now();
       const s = (tRow as any).scheduled_start_at ? new Date((tRow as any).scheduled_start_at).getTime() : 0;
       const e = (tRow as any).scheduled_end_at ? new Date((tRow as any).scheduled_end_at).getTime() : 0;
@@ -571,7 +572,7 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
     }>;
 
     const answerMap = new Map(data.answers.map((a) => [a.question_id, a]));
-    let marksObtained = 0;
+    let autoMarks = 0;
     let totalMarks = 0;
     const gradedAnswers = questions.map((q) => {
       totalMarks += q.marks;
@@ -620,22 +621,31 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
           correct = true;
         }
       }
-      marksObtained += awarded;
+      autoMarks += awarded;
       return {
         question_id: q.id,
         response,
+        // For scheduled tests these fields are teacher-editable; we seed with the auto values.
         correct,
         marks_awarded: awarded,
+        auto_marks_awarded: awarded,
         marks_total: q.marks,
         correct_answer: q.correct_answer,
         explanation: q.explanation,
+        teacher_comment: "",
         code_passed: codePassed,
         code_total: codeTotal,
       };
     });
 
-    const percentage = totalMarks > 0 ? Math.round((marksObtained / totalMarks) * 100) : 0;
-    const grade = gradeFor(percentage);
+    const autoPercentage = totalMarks > 0 ? Math.round((autoMarks / totalMarks) * 100) : 0;
+
+    // Scheduled tests wait for the teacher. Students see "Awaiting review"
+    // and nothing counts toward the leaderboard until published.
+    const marksObtained = isScheduled ? 0 : autoMarks;
+    const percentage = isScheduled ? 0 : autoPercentage;
+    const grade = isScheduled ? "-" : gradeFor(autoPercentage);
+    const gradingStatus = isScheduled ? "pending_review" : "published";
 
     const { data: inserted, error: iErr } = await supabaseAdmin
       .from("ai_mock_attempts")
@@ -651,6 +661,9 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
         grade,
         time_taken_sec: data.time_taken_sec,
         answers: gradedAnswers,
+        auto_marks_obtained: autoMarks,
+        auto_percentage: autoPercentage,
+        grading_status: gradingStatus,
       })
       .select("id")
       .single();
@@ -663,8 +676,10 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
       percentage,
       grade,
       answers: gradedAnswers,
+      grading_status: gradingStatus,
     };
   });
+
 
 // ----------- List tests (admin: all; students: published) -----------
 
@@ -701,27 +716,44 @@ export const getAiMockAttemptResult = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: attempt, error: aErr } = await supabaseAdmin
       .from("ai_mock_attempts")
-      .select("id,user_id,test_id,marks_obtained,total_marks,percentage,grade,answers,submission_type,violation_reason,time_taken_sec")
+      .select("id,user_id,test_id,marks_obtained,total_marks,percentage,grade,answers,submission_type,violation_reason,time_taken_sec,grading_status,teacher_feedback,reviewed_at")
       .eq("id", data.attempt_id)
       .single();
     if (aErr) throw new Error(aErr.message);
-    if (attempt.user_id !== context.userId) {
-      const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-      if (!isAdmin) throw new Error("Not authorized");
-    }
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (attempt.user_id !== context.userId && !isAdmin) throw new Error("Not authorized");
     const { data: test } = await supabaseAdmin
       .from("ai_mock_tests")
-      .select("id,title")
+      .select("id,title,test_kind")
       .eq("id", attempt.test_id)
       .single();
+
+    // Student view: if scheduled and not yet published, strip answer key so
+    // the teacher's un-reviewed auto marks don't leak.
+    const isOwnerNotAdmin = attempt.user_id === context.userId && !isAdmin;
+    const pending = attempt.grading_status !== "published";
+    if (isOwnerNotAdmin && pending) {
+      return {
+        attempt: {
+          ...attempt,
+          answers: [],
+          teacher_feedback: null,
+        },
+        test,
+        questions: [],
+        pending_review: true,
+      };
+    }
+
     const { data: questions, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
       .select("id,prompt,type,options,correct_answer,starter_code,explanation,order_index")
       .eq("test_id", attempt.test_id)
       .order("order_index");
     if (qErr) throw new Error(qErr.message);
-    return { attempt, test, questions: questions ?? [] };
+    return { attempt, test, questions: questions ?? [], pending_review: false };
   });
+
 
 // ----------- List my attempts for a given AI mock test -----------
 
@@ -732,7 +764,7 @@ export const listMyAiMockAttempts = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: rows, error } = await supabaseAdmin
       .from("ai_mock_attempts")
-      .select("id,submitted_at,started_at,marks_obtained,total_marks,percentage,grade,submission_type,time_taken_sec")
+      .select("id,submitted_at,started_at,marks_obtained,total_marks,percentage,grade,submission_type,time_taken_sec,grading_status")
       .eq("test_id", data.test_id)
       .eq("user_id", context.userId)
       .not("submitted_at", "is", null)

@@ -74,13 +74,19 @@ export type Database = {
       ai_mock_attempts: {
         Row: {
           answers: Json
+          auto_marks_obtained: number
+          auto_percentage: number
           grade: string
+          grading_status: string
           id: string
           marks_obtained: number
           percentage: number
+          reviewed_at: string | null
+          reviewed_by: string | null
           started_at: string
           submission_type: string
           submitted_at: string | null
+          teacher_feedback: string | null
           test_id: string
           time_taken_sec: number
           total_marks: number
@@ -89,13 +95,19 @@ export type Database = {
         }
         Insert: {
           answers?: Json
+          auto_marks_obtained?: number
+          auto_percentage?: number
           grade?: string
+          grading_status?: string
           id?: string
           marks_obtained?: number
           percentage?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           started_at?: string
           submission_type?: string
           submitted_at?: string | null
+          teacher_feedback?: string | null
           test_id: string
           time_taken_sec?: number
           total_marks?: number
@@ -104,13 +116,19 @@ export type Database = {
         }
         Update: {
           answers?: Json
+          auto_marks_obtained?: number
+          auto_percentage?: number
           grade?: string
+          grading_status?: string
           id?: string
           marks_obtained?: number
           percentage?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           started_at?: string
           submission_type?: string
           submitted_at?: string | null
+          teacher_feedback?: string | null
           test_id?: string
           time_taken_sec?: number
           total_marks?: number
