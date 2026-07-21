@@ -455,7 +455,7 @@ export const getAdminAiTest = createServerFn({ method: "POST" })
 export const getStudentAiTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: test, error: tErr } = await supabaseAdmin
       .from("ai_mock_tests")
@@ -475,6 +475,17 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
       if (!t.scheduled_start_at || !t.scheduled_end_at) throw new Error("Scheduled test is misconfigured");
       if (now < new Date(t.scheduled_start_at).getTime()) throw new Error("Scheduled test has not started yet");
       if (now > new Date(t.scheduled_end_at).getTime()) throw new Error("Scheduled test window has ended");
+      // One attempt per scheduled test — block reopening the take screen.
+      const { data: prior } = await supabaseAdmin
+        .from("ai_mock_attempts")
+        .select("id")
+        .eq("test_id", data.id)
+        .eq("user_id", context.userId)
+        .not("submitted_at", "is", null)
+        .limit(1);
+      if (Array.isArray(prior) && prior.length > 0) {
+        throw new Error("You have already submitted this scheduled test. Only one attempt is allowed.");
+      }
     }
 
     const { data: qs, error: qErr } = await supabaseAdmin
@@ -554,6 +565,17 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
       // Allow a small grace window on submit (in case fullscreen exit fires right at end)
       if (now < s) throw new Error("Scheduled test has not started yet");
       if (now > e + 60_000) throw new Error("Scheduled test window has ended");
+      // Enforce one attempt per student for scheduled tests.
+      const { data: prior } = await supabaseAdmin
+        .from("ai_mock_attempts")
+        .select("id")
+        .eq("test_id", data.test_id)
+        .eq("user_id", context.userId)
+        .not("submitted_at", "is", null)
+        .limit(1);
+      if (Array.isArray(prior) && prior.length > 0) {
+        throw new Error("You have already submitted this scheduled test. Only one attempt is allowed.");
+      }
     }
     const { data: qs, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")

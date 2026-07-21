@@ -288,7 +288,14 @@ function MockTestsList() {
                             </Link>
                           ) : null}
                         </div>
-                        {st.startable ? (
+                        {latestAttempts[t.id] ? (
+                          <span
+                            className="inline-flex min-h-11 items-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-semibold text-muted-foreground"
+                            title="You've already submitted this test — only one attempt is allowed."
+                          >
+                            Submitted
+                          </span>
+                        ) : st.startable ? (
 
                           <Link
                             to="/mock-tests/ai/$testId/warning"
@@ -298,6 +305,7 @@ function MockTestsList() {
                           >
                             Attend Test
                           </Link>
+
                         ) : (
                           <button
                             disabled
