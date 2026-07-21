@@ -687,23 +687,8 @@ function AdminPage() {
               <div className="flex h-full flex-col gap-6">
                 <ScoreDistributionCard bands={bands} total={allPcts.length} />
 
-                <ChartCard title="Submission integrity">
-                  {subBreakdown.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No data.</p>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={240}>
-                      <PieChart>
-                        <Pie data={subBreakdown} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90}>
-                          {subBreakdown.map((b, i) => (
-                            <Cell key={i} fill={b.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend wrapperStyle={{ fontSize: 12 }} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )}
-                </ChartCard>
+                <SubmissionIntegrityCard breakdown={subBreakdown} />
+
               </div>
             </section>
 
