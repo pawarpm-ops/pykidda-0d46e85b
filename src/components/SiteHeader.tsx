@@ -334,17 +334,26 @@ export function SiteHeader() {
                 </Link>
               )}
               {email && (
-                <div className="mt-2 pt-2 border-t border-border/60 flex items-center justify-between gap-2">
+                <div className="mt-2 pt-2 border-t border-border/60 flex flex-col gap-2">
                   <span className="truncate text-xs text-muted-foreground" title={email}>
                     {email}
                   </span>
-                  <button
-                    onClick={handleSignOut}
-                    className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-destructive/50 hover:text-destructive transition-colors"
-                  >
-                    <LogOut size={14} />
-                    Sign out
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleSwitchAccount}
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-primary/50 hover:text-primary transition-colors"
+                    >
+                      <UserCog size={14} />
+                      Switch account
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-destructive/50 hover:text-destructive transition-colors"
+                    >
+                      <LogOut size={14} />
+                      Sign out
+                    </button>
+                  </div>
                 </div>
               )}
             </nav>
