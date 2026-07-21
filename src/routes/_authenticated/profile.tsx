@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { User, Flame, Award, FileText, GraduationCap, QrCode, type LucideIcon } from "lucide-react";
+import { User, Flame, FileText, GraduationCap, QrCode, type LucideIcon } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StreakCard } from "@/components/StreakCard";
 import { ProfileQrCard } from "@/components/ProfileQrCard";
-import { BadgesGrid } from "@/components/BadgesGrid";
-import { YourNextBadges } from "@/components/YourNextBadges";
 import { DEFAULT_PUBLIC_SETTINGS, type PublicProfileSettings } from "@/lib/publicProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { restartTutorial } from "@/components/OnboardingTutorial";
