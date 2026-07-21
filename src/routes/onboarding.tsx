@@ -22,7 +22,6 @@ type FormState = {
   full_name: string;
   contact_number: string;
   birth_date: string;
-  age: string;
   about_you: string;
 };
 
@@ -40,11 +39,6 @@ const stepSchemas = [
     .string()
     .min(1, "Pick your birth date")
     .refine((v) => new Date(v) <= new Date(), "Birth date can't be in the future"),
-  z.coerce
-    .number({ invalid_type_error: "Enter a number" })
-    .int("Enter a whole number")
-    .min(5, "Age looks too low")
-    .max(120, "Age looks too high"),
   z
     .string()
     .trim()
@@ -56,9 +50,9 @@ const questions = [
   { key: "full_name", title: "What is your full name?", mascot: "Hi! I'm Py, your guide. Let's start with your name." },
   { key: "contact_number", title: "What is your contact number?", mascot: "Nice to meet you! How can we reach you?" },
   { key: "birth_date", title: "What is your birthdate?", mascot: "When did the world get lucky to have you?" },
-  { key: "age", title: "What is your age?", mascot: "And how many trips around the sun so far?" },
   { key: "about_you", title: "Tell us something about yourself.", mascot: "Last one — I'd love to know a bit about you!" },
 ] as const;
+
 
 function OnboardingPage() {
   const navigate = useNavigate();
@@ -75,9 +69,9 @@ function OnboardingPage() {
     full_name: "",
     contact_number: "",
     birth_date: "",
-    age: "",
     about_you: "",
   });
+
 
   useEffect(() => {
     (async () => {
@@ -89,7 +83,7 @@ function OnboardingPage() {
       setUserId(data.user.id);
       const { data: p } = await supabase
         .from("profiles")
-        .select("onboarded, full_name, contact_number, age, birth_date, bio")
+        .select("onboarded, full_name, contact_number, birth_date, bio")
         .eq("id", data.user.id)
         .maybeSingle();
       if (p?.onboarded) {
@@ -101,10 +95,10 @@ function OnboardingPage() {
           full_name: p.full_name ?? "",
           contact_number: p.contact_number ?? "",
           birth_date: p.birth_date ?? "",
-          age: p.age?.toString() ?? "",
           about_you: p.bio ?? "",
         });
       }
+
       setChecking(false);
     })();
   }, [navigate]);
@@ -151,7 +145,6 @@ function OnboardingPage() {
     if (!userId || saving) return;
     setSaveErr(null);
     setSaving(true);
-    const age = Number(form.age);
     const { error } = await supabase.from("profiles").upsert(
       {
         id: userId,
@@ -159,12 +152,12 @@ function OnboardingPage() {
         display_name: form.full_name.trim(),
         contact_number: form.contact_number.trim(),
         birth_date: form.birth_date,
-        age,
         bio: form.about_you.trim(),
         onboarded: true,
       },
       { onConflict: "id" },
     );
+
     setSaving(false);
     if (error) {
       setSaveErr(error.message);
