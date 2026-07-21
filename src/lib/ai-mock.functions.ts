@@ -573,16 +573,14 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
     const answerMap = new Map(data.answers.map((a) => [a.question_id, a]));
     let marksObtained = 0;
     let totalMarks = 0;
-    let codePassed: number | null = null;
-    let codeTotal: number | null = null;
     const gradedAnswers = questions.map((q) => {
       totalMarks += q.marks;
       const a = answerMap.get(q.id);
       const response = a?.response ?? "";
       let awarded = 0;
       let correct = false;
-      codePassed = null;
-      codeTotal = null;
+      let codePassed: number | null = null;
+      let codeTotal: number | null = null;
       if (q.type === "code") {
         // Server-side grading: bind each server-held test case to the
         // student's submitted run by stdin match, then diff stdout against
