@@ -279,9 +279,9 @@ function LeaderboardPage() {
                         >
                           <td className="px-4 py-3 font-mono text-muted-foreground">#{rank}</td>
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
                               <Avatar row={r} size={32} />
-                              <NameLink entry={directory.get(r.user_id)} className="font-medium">
+                              <NameLink entry={directory.get(r.user_id)} className="font-medium truncate max-w-[220px]">
                                 {r.display_name || "Anonymous"}
                               </NameLink>
                               {isMe && (
@@ -394,9 +394,9 @@ function StreakLeaderboard({
                   >
                     <td className="px-4 py-3 font-mono text-muted-foreground">#{rank}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         <StreakAvatar row={r} size={32} />
-                        <NameLink entry={directory.get(r.user_id)} className="font-medium">
+                        <NameLink entry={directory.get(r.user_id)} className="font-medium truncate max-w-[220px]">
                           {r.display_name || "Anonymous"}
                         </NameLink>
                         {isMe && (
