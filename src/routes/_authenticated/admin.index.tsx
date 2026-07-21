@@ -176,6 +176,34 @@ function AdminPage() {
   const [authorId, setAuthorId] = useState<string | null>(null);
   const overviewRef = useRef<HTMLDivElement>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
+  const resetFn = useServerFn(resetTeacherDashboardData);
+
+  const handleClearAll = async () => {
+    setResetting(true);
+    try {
+      const res = await resetFn();
+      const total = Object.values(res.cleared ?? {}).reduce((a, b) => a + Number(b || 0), 0);
+      toast.success("Teacher dashboard cleared", {
+        description: `Removed ${total} records across student activity tables.`,
+      });
+      setMocks([]);
+      setStreaks({});
+      setConfirmReset(false);
+      setResetConfirmText("");
+      // Reload to pull fresh (empty) state everywhere.
+      setTimeout(() => window.location.reload(), 400);
+    } catch (e) {
+      console.error("[admin] reset failed", e);
+      toast.error("Could not clear dashboard", {
+        description: e instanceof Error ? e.message : "Please try again.",
+      });
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const handleDownloadOverviewPdf = async () => {
     if (!overviewRef.current) return;
