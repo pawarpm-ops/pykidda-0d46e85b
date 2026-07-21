@@ -51,7 +51,10 @@ import {
   FlaskConical,
   ArrowLeft,
   type LucideIcon,
+  Trash2,
 } from "lucide-react";
+import { resetTeacherDashboardData } from "@/lib/admin-reset.functions";
+import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/_authenticated/admin/")({
