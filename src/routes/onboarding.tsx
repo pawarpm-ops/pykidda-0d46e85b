@@ -365,7 +365,7 @@ function StepControl({
   const cls = `${base} ${border}`;
 
   const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && step !== 4) {
+    if (e.key === "Enter" && step !== 3) {
       e.preventDefault();
       onEnter();
     }
@@ -414,21 +414,6 @@ function StepControl({
       );
     case 3:
       return (
-        <input
-          ref={(el) => { inputRef.current = el; }}
-          type="number"
-          inputMode="numeric"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKey}
-          min={5}
-          max={120}
-          placeholder="e.g. 18"
-          className={cls}
-        />
-      );
-    case 4:
-      return (
         <textarea
           ref={(el) => { inputRef.current = el; }}
           value={value}
@@ -442,6 +427,7 @@ function StepControl({
       return null;
   }
 }
+
 
 function BackgroundGlow() {
   return (
