@@ -516,14 +516,25 @@ function AdminPage() {
                 )}
               </div>
               {overviewSubTab === "complete" && (
-                <button
-                  onClick={handleDownloadOverviewPdf}
-                  disabled={downloadingPdf}
-                  className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-60"
-                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                >
-                  {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setConfirmReset(true)}
+                    disabled={resetting}
+                    className="inline-flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/20 disabled:opacity-60 transition"
+                    title="Delete all student activity data"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                    Clear all
+                  </button>
+                  <button
+                    onClick={handleDownloadOverviewPdf}
+                    disabled={downloadingPdf}
+                    className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-60"
+                    style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                  >
+                    {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
+                  </button>
+                </div>
               )}
             </div>
 
