@@ -323,45 +323,54 @@ function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-7xl px-6 py-10">
-        {/* Header */}
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Analytics</p>
-            <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">Your performance dashboard</h1>
-            <p className="mt-1 text-muted-foreground">
-              Live visual snapshot of your practice and mock test performance.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={exportMocksCSV}
-              disabled={filtered.mocks.length === 0}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition disabled:opacity-50"
-            >
-              ⬇ Export CSV
-            </button>
-            <button
-              onClick={() => window.print()}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition"
-            >
-              🖨 Print / PDF
-            </button>
-            <button
-              onClick={() => {
-                if (confirm("Reset locally cached analytics on this device? (Server data is preserved.)")) {
-                  clearProgress(userId);
-                  const local = getProgress(userId);
-                  setRaw(local);
-                  setA(computeAnalytics(local));
-                }
-              }}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-destructive hover:text-destructive transition"
-            >
-              Reset
-            </button>
-          </div>
-        </div>
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10 pb-24">
+        <PageHeader
+          eyebrow="Analytics"
+          title="Your performance dashboard"
+          description="Live visual snapshot of your practice and mock test performance."
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportMocksCSV}
+                disabled={filtered.mocks.length === 0}
+                className="gap-1.5"
+                aria-label="Export mock test results as CSV"
+              >
+                <Download className="h-4 w-4" aria-hidden />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="gap-1.5"
+                aria-label="Print or save as PDF"
+              >
+                <Printer className="h-4 w-4" aria-hidden />
+                Print / PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (confirm("Reset locally cached analytics on this device? (Server data is preserved.)")) {
+                    clearProgress(userId);
+                    const local = getProgress(userId);
+                    setRaw(local);
+                    setA(computeAnalytics(local));
+                  }
+                }}
+                className="gap-1.5 hover:text-destructive hover:border-destructive"
+                aria-label="Reset locally cached analytics"
+              >
+                <RotateCcw className="h-4 w-4" aria-hidden />
+                Reset
+              </Button>
+            </div>
+          }
+        />
 
         {!hasAnyData && (
           <div className="mt-8 rounded-2xl border border-dashed border-border bg-card p-10 text-center">
@@ -369,11 +378,11 @@ function AnalyticsPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Analytics will appear after you attempt practice questions or mock tests.
             </p>
-            <div className="mt-4 flex justify-center gap-3">
-              <Link to="/practice" className="rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold">
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              <Link to="/practice" className="rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold min-h-11 inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 Start practicing
               </Link>
-              <Link to="/mock-tests" className="rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold">
+              <Link to="/mock-tests" className="rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold min-h-11 inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 Take a mock test
               </Link>
             </div>
@@ -383,42 +392,57 @@ function AnalyticsPage() {
         {hasAnyData && (
           <>
             {/* Filters */}
-            <section className="mt-6 rounded-xl border border-border bg-card p-4 flex flex-wrap items-center gap-3 text-sm">
-              <span className="font-semibold text-muted-foreground">Filter:</span>
-              <select
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
-                className="rounded-md border border-border bg-background px-2 py-1.5"
-              >
-                <option value="all">All time</option>
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-                <option value="90">Last 90 days</option>
-              </select>
-              <select
-                value={testFilter}
-                onChange={(e) => setTestFilter(e.target.value)}
-                className="rounded-md border border-border bg-background px-2 py-1.5"
-              >
-                <option value="all">All mock tests</option>
-                {allTests.map(([id, name]) => (
-                  <option key={id} value={id}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={unitFilter}
-                onChange={(e) => setUnitFilter(e.target.value)}
-                className="rounded-md border border-border bg-background px-2 py-1.5"
-              >
-                <option value="all">All units</option>
-                {Object.keys(UNIT_NAMES).map((u) => (
-                  <option key={u} value={u}>
-                    {UNIT_NAMES[Number(u)]}
-                  </option>
-                ))}
-              </select>
+            <section
+              aria-label="Analytics filters"
+              className="mt-6 rounded-xl border border-border bg-card p-4 flex flex-wrap items-center gap-3 text-sm"
+            >
+              <span className="font-semibold text-muted-foreground" aria-hidden>Filter:</span>
+              <label className="flex items-center gap-2">
+                <span className="sr-only">Date range</span>
+                <select
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
+                  aria-label="Date range"
+                  className="h-9 rounded-md border border-border bg-background px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="all">All time</option>
+                  <option value="7">Last 7 days</option>
+                  <option value="30">Last 30 days</option>
+                  <option value="90">Last 90 days</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2">
+                <span className="sr-only">Mock test</span>
+                <select
+                  value={testFilter}
+                  onChange={(e) => setTestFilter(e.target.value)}
+                  aria-label="Mock test"
+                  className="h-9 max-w-[220px] rounded-md border border-border bg-background px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="all">All mock tests</option>
+                  {allTests.map(([id, name]) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex items-center gap-2">
+                <span className="sr-only">Unit</span>
+                <select
+                  value={unitFilter}
+                  onChange={(e) => setUnitFilter(e.target.value)}
+                  aria-label="Unit"
+                  className="h-9 rounded-md border border-border bg-background px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="all">All units</option>
+                  {Object.keys(UNIT_NAMES).map((u) => (
+                    <option key={u} value={u}>
+                      {UNIT_NAMES[Number(u)]}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </section>
 
             {/* Summary cards */}
