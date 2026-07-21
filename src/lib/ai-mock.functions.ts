@@ -573,28 +573,41 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
     const answerMap = new Map(data.answers.map((a) => [a.question_id, a]));
     let marksObtained = 0;
     let totalMarks = 0;
+    let codePassed: number | null = null;
+    let codeTotal: number | null = null;
     const gradedAnswers = questions.map((q) => {
       totalMarks += q.marks;
       const a = answerMap.get(q.id);
       const response = a?.response ?? "";
       let awarded = 0;
       let correct = false;
+      codePassed = null;
+      codeTotal = null;
       if (q.type === "code") {
-        // Code is executed client-side (Pyodide). Award partial marks
-        // proportional to the fraction of hidden tests passed, rounded
-        // to the nearest whole mark. Full marks only when every test
-        // passes; correctness flag stays true only for a full pass.
+        // Server-side grading: bind each server-held test case to the
+        // student's submitted run by stdin match, then diff stdout against
+        // the server-held expected output. Client-reported pass counts are
+        // never trusted.
         const tests = Array.isArray((q as any).code_tests) ? (q as any).code_tests : [];
         const total = tests.length;
-        const passed = Math.min(Math.max(a?.code_passed ?? 0, 0), total);
-        const reportedTotal = a?.code_total ?? 0;
-        if (total > 0 && reportedTotal === total) {
+        const runs = a?.runs ?? [];
+        let passed = 0;
+        for (const tc of tests as Array<{ stdin: string; expected: string }>) {
+          const run = runs.find(
+            (r) => normalizeOutput(r.stdin ?? "") === normalizeOutput(tc.stdin ?? ""),
+          );
+          if (!run || !run.ok) continue;
+          if (normalizeOutput(run.stdout ?? "") === normalizeOutput(tc.expected ?? "")) {
+            passed++;
+          }
+        }
+        if (total > 0) {
           const ratio = passed / total;
-          // Round to nearest 0.5 mark so students get partial credit
-          // for partially-correct solutions.
           awarded = Math.min(q.marks, Math.round(ratio * q.marks * 2) / 2);
           correct = passed === total;
         }
+        codePassed = passed;
+        codeTotal = total;
       } else if (q.type === "mcq" || q.type === "tf" || q.type === "fill") {
         if (normalizeAnswer(response) === normalizeAnswer(q.correct_answer)) {
           awarded = q.marks;
@@ -618,8 +631,8 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
         marks_total: q.marks,
         correct_answer: q.correct_answer,
         explanation: q.explanation,
-        code_passed: a?.code_passed ?? null,
-        code_total: a?.code_total ?? null,
+        code_passed: codePassed,
+        code_total: codeTotal,
       };
     });
 
