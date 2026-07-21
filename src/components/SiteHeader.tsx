@@ -156,23 +156,36 @@ export function SiteHeader() {
     const Icon = item.icon;
     const badge = item.badgeKey === "notifications" ? unread : 0;
     const commonClass = cn(
-      "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium border border-transparent transition-all duration-150",
+      "group relative flex items-center gap-3 rounded-lg pl-4 pr-3 min-h-11 text-sm font-medium",
+      "transition-colors duration-150",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       item.disabled
-        ? "cursor-not-allowed opacity-60 text-foreground/60"
+        ? "cursor-not-allowed opacity-60 text-muted-foreground"
         : cn(
-            "hover:border-primary/40 hover:bg-primary/5 hover:translate-x-0.5",
+            "hover:bg-muted",
             active
-              ? "bg-primary/15 text-primary border-primary/30 shadow-[0_0_0_1px_var(--color-primary)]/0"
-              : "text-foreground/75 hover:text-foreground",
+              ? "bg-primary/10 text-primary font-semibold"
+              : "text-foreground/80 hover:text-foreground",
           ),
-      opts?.compact && "px-2 py-2",
+      opts?.compact && "min-h-10 pl-3",
     );
     const inner = (
       <>
-        <span className="relative inline-flex items-center justify-center">
-          <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+        {/* Active indicator bar */}
+        <span
+          aria-hidden
+          className={cn(
+            "absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full transition-colors",
+            active ? "bg-primary" : "bg-transparent",
+          )}
+        />
+        <span className="relative inline-flex items-center justify-center shrink-0">
+          <Icon size={20} strokeWidth={active ? 2.4 : 1.9} aria-hidden />
           {badge > 0 && (
-            <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+            <span
+              className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none"
+              aria-label={`${badge} unread`}
+            >
               {badge > 9 ? "9+" : badge}
             </span>
           )}
@@ -205,6 +218,7 @@ export function SiteHeader() {
         to={item.to}
         data-tour={item.tour}
         aria-label={item.label}
+        aria-current={active ? "page" : undefined}
         className={commonClass}
       >
         {inner}
@@ -212,44 +226,53 @@ export function SiteHeader() {
     );
   }
 
+
   return (
     <>
       {/* Desktop sidebar */}
       <aside
-        className="hidden lg:flex fixed inset-y-0 left-0 w-60 z-40 flex-col border-r border-border/60 bg-background/95 backdrop-blur"
+        className="hidden lg:flex fixed inset-y-0 left-0 w-60 z-40 flex-col border-r border-border bg-card"
         aria-label="Primary navigation"
       >
-        <div className="px-4 pt-5 pb-4 border-b border-border/60">
-          <Link to="/" className="flex items-center gap-2">
+        <div className="px-4 pt-5 pb-4 border-b border-border">
+          <Link
+            to="/"
+            aria-label="PY Kidda — Home"
+            className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
             <BrandLogo size={36} />
           </Link>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1">
+        <nav
+          className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-0.5"
+          aria-label="Main"
+        >
           {items.map((item) => renderNavLink(item))}
           {email && isAdmin && (
             <Link
               to="/admin"
+              aria-label="Admin"
+              aria-current={pathname.startsWith("/admin") ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold border border-transparent mt-1 transition-all duration-150",
-                "hover:border-primary/50 hover:translate-x-0.5",
-                pathname.startsWith("/admin")
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-primary/90 text-primary-foreground",
+                "relative flex items-center gap-3 rounded-lg pl-4 pr-3 min-h-11 mt-2 text-sm font-semibold",
+                "border border-primary/40 bg-primary text-primary-foreground",
+                "hover:bg-primary/90 transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               )}
             >
-              <Shield size={20} strokeWidth={2.2} />
+              <Shield size={20} strokeWidth={2.2} aria-hidden />
               <span>Admin</span>
             </Link>
           )}
         </nav>
 
-        <div className="px-3 py-3 border-t border-border/60 flex flex-col gap-2">
-          <div className="flex items-center justify-between px-1">
+        <div className="px-3 py-3 border-t border-border flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2 px-1">
             <ThemeToggle />
             {email && (
               <span
-                className="max-w-[130px] truncate rounded-full border border-border bg-secondary/60 px-2 py-1 text-[11px] text-muted-foreground"
+                className="min-w-0 max-w-[130px] truncate rounded-full border border-border bg-muted px-2 py-1 text-[11px] text-muted-foreground"
                 title={email}
               >
                 {email}
@@ -259,24 +282,28 @@ export function SiteHeader() {
           {email ? (
             <>
               <button
+                type="button"
                 onClick={handleSwitchAccount}
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
+                aria-label="Switch account"
+                className="flex items-center gap-2 rounded-lg px-3 min-h-10 text-sm font-medium border border-border bg-background hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
-                <UserCog size={18} />
+                <UserCog size={18} aria-hidden />
                 <span>Switch account</span>
               </button>
               <button
+                type="button"
                 onClick={handleSignOut}
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border border-border bg-background hover:border-destructive/50 hover:text-destructive transition-colors"
+                aria-label="Sign out"
+                className="flex items-center gap-2 rounded-lg px-3 min-h-10 text-sm font-medium border border-destructive/30 bg-background text-destructive hover:bg-destructive/10 hover:border-destructive/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
-                <LogOut size={18} />
+                <LogOut size={18} aria-hidden />
                 <span>Sign out</span>
               </button>
             </>
           ) : (
             <Link
               to="/auth"
-              className="flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+              className="flex items-center justify-center gap-2 rounded-lg px-3 min-h-10 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               style={{ backgroundImage: "var(--gradient-sunrise)" }}
             >
               Sign in
@@ -284,6 +311,7 @@ export function SiteHeader() {
           )}
         </div>
       </aside>
+
 
       {/* Mobile top bar */}
       <header className="lg:hidden border-b border-border/60 backdrop-blur sticky top-0 z-30 bg-background/85">

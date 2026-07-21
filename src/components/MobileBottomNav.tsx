@@ -86,7 +86,7 @@ export function MobileBottomNav() {
         aria-label="Primary mobile navigation"
         className={cn(
           "lg:hidden fixed inset-x-0 bottom-0 z-40",
-          "border-t border-border/60 bg-background/95 backdrop-blur",
+          "border-t border-border bg-background/95 pk-blur-lite backdrop-blur",
           "pb-[max(env(safe-area-inset-bottom),0px)]",
         )}
       >
@@ -101,13 +101,22 @@ export function MobileBottomNav() {
                   aria-label={item.label}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors",
+                    "relative flex h-14 min-h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                     active
                       ? "text-primary"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+                  {/* Active indicator */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-b-full transition-colors",
+                      active ? "bg-primary" : "bg-transparent",
+                    )}
+                  />
+                  <Icon size={20} strokeWidth={active ? 2.4 : 2} aria-hidden />
                   <span className="truncate max-w-[62px]">{item.label}</span>
                 </Link>
               </li>
@@ -120,16 +129,25 @@ export function MobileBottomNav() {
               aria-label={moreOpen ? "Close more menu" : "Open more menu"}
               aria-expanded={moreOpen}
               className={cn(
-                "flex h-14 w-full flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors",
+                "relative flex h-14 min-h-14 w-full flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                 moreOpen ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <MoreHorizontal size={20} strokeWidth={moreOpen ? 2.4 : 2} />
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-b-full transition-colors",
+                  moreOpen ? "bg-primary" : "bg-transparent",
+                )}
+              />
+              <MoreHorizontal size={20} strokeWidth={moreOpen ? 2.4 : 2} aria-hidden />
               <span>More</span>
             </button>
           </li>
         </ul>
       </nav>
+
 
       {moreOpen && (
         <div
