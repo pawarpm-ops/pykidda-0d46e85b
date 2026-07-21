@@ -58,6 +58,7 @@ function ResultPage() {
   const { attempt } = Route.useSearch();
   const [result, setResult] = useState<Result | null>(null);
   const [testTitle, setTestTitle] = useState("");
+  const [testKind, setTestKind] = useState<string>("");
   const [questions, setQuestions] = useState<Record<string, QuestionRow>>({});
   const [pendingReview, setPendingReview] = useState(false);
 
@@ -72,7 +73,10 @@ function ResultPage() {
         const res = await getAiMockAttemptResult({ data: { attempt_id: attempt } });
         setResult(res.attempt as unknown as Result);
         setPendingReview(!!(res as { pending_review?: boolean }).pending_review);
-        if (res.test) setTestTitle((res.test as { title: string }).title);
+        if (res.test) {
+          setTestTitle((res.test as { title: string }).title);
+          setTestKind((res.test as { test_kind?: string }).test_kind ?? "");
+        }
         const map: Record<string, QuestionRow> = {};
         for (const q of res.questions as unknown as QuestionRow[]) map[q.id] = q;
         setQuestions(map);
@@ -81,6 +85,7 @@ function ResultPage() {
       }
     })();
   }, [attempt, testId]);
+
 
   if (!result) return <div className="p-10 text-center">Loading result…</div>;
 
