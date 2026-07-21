@@ -455,7 +455,7 @@ export const getAdminAiTest = createServerFn({ method: "POST" })
 export const getStudentAiTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server") as unknown as { supabaseAdmin: any };
     const { data: test, error: tErr } = await supabaseAdmin
       .from("ai_mock_tests")
