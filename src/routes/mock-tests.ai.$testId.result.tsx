@@ -365,6 +365,16 @@ function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAi
           <p className="mt-1 text-xs whitespace-pre-wrap">{a.teacher_comment}</p>
         </div>
       )}
+
+      {showAiExplain && q && (
+        <MockAiCorrector
+          title={`${testTitle} · Q${index + 1}`}
+          prompt={q.prompt ?? ""}
+          userCode={a.response ?? ""}
+          referenceSolution={a.correct_answer ?? q.correct_answer ?? ""}
+          failingTests={[]}
+        />
+      )}
     </li>
 
   );
