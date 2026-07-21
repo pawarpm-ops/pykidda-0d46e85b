@@ -98,12 +98,23 @@ function writeLocal(v: Status) {
   }
 }
 
+function isMockPathname(pathname: string): boolean {
+  return (
+    /\/mock-tests\/[^/]+\/run(\/|$)/.test(pathname) ||
+    /\/mock-tests\/ai\/[^/]+\/take(\/|$)/.test(pathname)
+  );
+}
+function isAuthPathname(pathname: string): boolean {
+  return pathname === "/auth" || pathname.startsWith("/auth/");
+}
+
 export function OnboardingTutorial() {
   const [open, setOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   // Decide whether to show
   useEffect(() => {
@@ -162,13 +173,16 @@ export function OnboardingTutorial() {
 
   const step = STEPS[stepIdx];
 
+  // Suppress while on /auth or during an active mock test — do NOT mark complete
+  const suppressed = isAuthPathname(pathname) || isMockPathname(pathname);
+
   // Auto-navigate if step requires
   useEffect(() => {
-    if (!open || !step?.navigateTo) return;
+    if (!open || suppressed || !step?.navigateTo) return;
     if (pathname !== step.navigateTo) {
       navigate({ to: step.navigateTo });
     }
-  }, [open, step, pathname, navigate]);
+  }, [open, step, pathname, navigate, suppressed]);
 
   async function persist(status: Status) {
     writeLocal(status);
@@ -183,10 +197,18 @@ export function OnboardingTutorial() {
     }
   }
 
+  function close() {
+    setOpen(false);
+    // restore focus to whatever launched the tour
+    const prev = previouslyFocused.current;
+    if (prev && typeof prev.focus === "function") {
+      requestAnimationFrame(() => prev.focus());
+    }
+  }
   function next() {
     if (stepIdx >= STEPS.length - 1) {
       void persist("completed");
-      setOpen(false);
+      close();
       return;
     }
     setStepIdx((i) => i + 1);
@@ -196,16 +218,24 @@ export function OnboardingTutorial() {
   }
   function skip() {
     void persist("skipped");
-    setOpen(false);
+    close();
   }
 
-  if (!open) return null;
+  // Capture focus when opening
+  useEffect(() => {
+    if (open) {
+      previouslyFocused.current = (document.activeElement as HTMLElement) ?? null;
+    }
+  }, [open]);
+
+  if (!open || suppressed) return null;
   if (typeof document === "undefined") return null;
   return createPortal(
     <TutorialOverlay step={step} stepIdx={stepIdx} total={STEPS.length} onNext={next} onPrev={prev} onSkip={skip} />,
     document.body,
   );
 }
+
 
 function TutorialOverlay({
   step,
