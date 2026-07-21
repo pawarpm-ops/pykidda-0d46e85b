@@ -87,41 +87,31 @@ export function TopStudentsChart({ students }: { students: Student[] }) {
         <h2 className="text-base font-semibold">Top Students Performance</h2>
         <p className="text-xs text-muted-foreground mt-0.5">Average score compared with best score</p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {ranked.length > 5 && (
-            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-              {([5, 10] as const).map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setTopN(n)}
-                  className={`px-3 py-1 rounded-md font-medium transition ${
-                    topN === n ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Top {n}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-            {(
-              [
-                { key: "roll", label: "Roll no." },
-                { key: "high", label: "High → Low" },
-                { key: "low", label: "Low → High" },
-              ] as { key: SortMode; label: string }[]
-            ).map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setSortMode(opt.key)}
-                className={`px-3 py-1 rounded-md font-medium transition ${
-                  sortMode === opt.key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <select
+            value={`${topN}|${sortMode}`}
+            onChange={(e) => {
+              const [n, mode] = e.target.value.split("|");
+              setTopN(Number(n) as 5 | 10);
+              setSortMode(mode as SortMode);
+            }}
+            className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          >
+            {([5, 10] as const).flatMap((n) =>
+              (
+                [
+                  { key: "high", label: "High → Low" },
+                  { key: "low", label: "Low → High" },
+                  { key: "roll", label: "Roll no." },
+                ] as { key: SortMode; label: string }[]
+              ).map((opt) => (
+                <option key={`${n}-${opt.key}`} value={`${n}|${opt.key}`}>
+                  Top {n} · {opt.label}
+                </option>
+              )),
+            )}
+          </select>
         </div>
+
       </div>
 
 
