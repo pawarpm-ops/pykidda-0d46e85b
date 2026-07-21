@@ -426,7 +426,7 @@ function StreakLeaderboard({
                     <td className="px-4 py-3 text-right text-yellow-500 tabular-nums">{r.longest_streak}</td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`inline-block h-2 w-2 rounded-full ${alive ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"}`}
+                        className={`inline-block h-2 w-2 rounded-full ${alive ? "bg-emerald-500 motion-safe:animate-pulse" : "bg-muted-foreground/30"}`}
                         title={alive ? "Streak alive today" : "Not active today"}
                       />
                     </td>
@@ -544,7 +544,7 @@ function StreakPodiumCard({
       </div>
       <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-black/20 px-2 py-0.5 text-[11px] font-semibold">
         <span
-          className={`inline-block h-1.5 w-1.5 rounded-full ${alive ? "bg-emerald-400 animate-pulse" : "bg-white/40"}`}
+          className={`inline-block h-1.5 w-1.5 rounded-full ${alive ? "bg-emerald-400 motion-safe:animate-pulse" : "bg-white/40"}`}
         />
         {alive ? "Active today" : "Idle"}
       </div>
