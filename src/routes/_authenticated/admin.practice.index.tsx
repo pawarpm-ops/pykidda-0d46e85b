@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import {
   adminListPracticeQuestions,
   adminDeletePracticeQuestion,
