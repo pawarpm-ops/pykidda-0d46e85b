@@ -415,16 +415,19 @@ function ProfilePage() {
                     <span className="text-sm font-medium">Avatar image</span>
                     <div className="flex flex-wrap items-center gap-3">
                       <label
-                        className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted ${
+                        className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium transition hover:bg-muted focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card ${
                           uploading ? "pointer-events-none opacity-60" : ""
                         }`}
+                        aria-busy={uploading || undefined}
                       >
+                        <Upload className="h-4 w-4" aria-hidden="true" />
                         {uploading ? "Uploading…" : avatarUrl ? "Change photo" : "Choose photo"}
                         <input
                           type="file"
                           accept="image/png,image/jpeg,image/webp,image/gif"
-                          className="hidden"
+                          className="sr-only"
                           disabled={uploading}
+                          aria-label="Upload avatar image"
                           onChange={(e) => {
                             const f = e.target.files?.[0];
                             e.target.value = "";
@@ -436,8 +439,10 @@ function ProfilePage() {
                         <button
                           type="button"
                           onClick={() => setAvatarUrl("")}
-                          className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+                          aria-label="Remove avatar"
+                          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                         >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                           Remove
                         </button>
                       )}
@@ -449,6 +454,8 @@ function ProfilePage() {
 
                   {msg && (
                     <div
+                      role={msg.kind === "err" ? "alert" : "status"}
+                      aria-live="polite"
                       className={`rounded-md border p-3 text-sm ${
                         msg.kind === "ok"
                           ? "border-[oklch(0.65_0.15_145)]/40 bg-[oklch(0.65_0.15_145)]/10 text-[oklch(0.45_0.15_145)]"
@@ -463,7 +470,7 @@ function ProfilePage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
+                      className="inline-flex min-h-11 items-center justify-center rounded-md px-5 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] outline-none transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:opacity-50"
                       style={{ backgroundImage: "var(--gradient-sunrise)" }}
                     >
                       {saving ? "Saving…" : "Save profile"}
