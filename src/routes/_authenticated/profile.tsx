@@ -219,9 +219,11 @@ function ProfilePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-        <button
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8 pb-24">
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={() => {
             if (typeof window !== "undefined" && window.history.length > 1) {
               window.history.back();
@@ -229,19 +231,21 @@ function ProfilePage() {
               window.location.href = "/";
             }
           }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-accent hover:text-accent-foreground"
           aria-label="Go back"
+          className="mb-4 gap-1.5"
         >
-          <span aria-hidden="true">←</span> Back
-        </button>
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+        </Button>
 
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Your profile</h1>
-        <p className="mt-1 text-muted-foreground">
-          Customize how you appear across PY Kidda.
-        </p>
+        <PageHeader
+          eyebrow="Account"
+          title="Your profile"
+          description="Customize how you appear across PY Kidda."
+          icon={<UserCircle2 className="h-5 w-5" aria-hidden="true" />}
+        />
 
         {loading ? (
-          <p className="mt-10 text-muted-foreground">Loading…</p>
+          <LoadingState label="Loading your profile…" className="min-h-[240px]" />
         ) : (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
             {/* Vertical sidebar nav */}
