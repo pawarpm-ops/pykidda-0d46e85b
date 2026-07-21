@@ -982,6 +982,48 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
     }
   };
 
+  const [assigningRoll, setAssigningRoll] = useState(false);
+  const [rollOverrides, setRollOverrides] = useState<Record<string, string | null>>({});
+  const getRollFor = (uid: string): string | null =>
+    uid in rollOverrides ? rollOverrides[uid] : (profiles[uid]?.student_unique_id ?? null);
+  const handleAssignRoll = async () => {
+    if (!selStudent) return;
+    const current = getRollFor(selStudent.user_id) ?? "";
+    const input = window.prompt(
+      `Assign roll number for ${selStudent.name}\n\nEnter a roll number (leave empty to clear):`,
+      current,
+    );
+    if (input === null) return;
+    const value = input.trim();
+    setAssigningRoll(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ student_unique_id: value === "" ? null : value })
+        .eq("id", selStudent.user_id);
+      if (error) throw error;
+      setRollOverrides((prev) => ({ ...prev, [selStudent.user_id]: value === "" ? null : value }));
+      toast.success(value === "" ? "Roll number cleared" : `Roll number set to ${value}`);
+      void logAdminActionClient({
+        actionType: "profile.roll_number_assigned",
+        description: value === "" ? `Cleared roll number for ${selStudent.name}` : `Assigned roll number ${value} to ${selStudent.name}`,
+        moduleName: "student",
+        relatedStudentId: selStudent.user_id,
+        targetTitle: selStudent.name,
+      });
+    } catch (err) {
+      console.error("Assign roll failed", err);
+      toast.error("Could not assign roll number", {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setAssigningRoll(false);
+    }
+  };
+
+
+
+
 
   const filteredStudents = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1079,7 +1121,15 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
           <p className="text-sm text-muted-foreground">Select a student to view their detailed report.</p>
         ) : (
           <>
-            <div className="mb-3 flex justify-end">
+            <div className="mb-3 flex flex-wrap justify-end gap-2">
+              <button
+                onClick={handleAssignRoll}
+                disabled={assigningRoll}
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 text-sm font-semibold text-secondary-foreground hover:bg-secondary/80 disabled:opacity-60"
+                title="Manually assign a roll number to this student"
+              >
+                {assigningRoll ? "Saving…" : (getRollFor(selStudent.user_id) ? `Roll: ${getRollFor(selStudent.user_id)} · Edit` : "＋ Assign roll no.")}
+              </button>
               <button
                 onClick={handleDownloadStudentPdf}
                 disabled={downloadingPdf}
@@ -1089,6 +1139,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                 {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
               </button>
             </div>
+
             <div ref={reportRef} className="bg-background p-2">
             <div className="flex items-end justify-between gap-3 flex-wrap">
 
