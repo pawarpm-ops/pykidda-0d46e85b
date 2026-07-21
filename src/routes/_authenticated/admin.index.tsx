@@ -1121,7 +1121,15 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
           <p className="text-sm text-muted-foreground">Select a student to view their detailed report.</p>
         ) : (
           <>
-            <div className="mb-3 flex justify-end">
+            <div className="mb-3 flex flex-wrap justify-end gap-2">
+              <button
+                onClick={handleAssignRoll}
+                disabled={assigningRoll}
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 text-sm font-semibold text-secondary-foreground hover:bg-secondary/80 disabled:opacity-60"
+                title="Manually assign a roll number to this student"
+              >
+                {assigningRoll ? "Saving…" : (getRollFor(selStudent.user_id) ? `Roll: ${getRollFor(selStudent.user_id)} · Edit` : "＋ Assign roll no.")}
+              </button>
               <button
                 onClick={handleDownloadStudentPdf}
                 disabled={downloadingPdf}
@@ -1131,6 +1139,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
                 {downloadingPdf ? "Preparing PDF…" : "⬇ Download PDF"}
               </button>
             </div>
+
             <div ref={reportRef} className="bg-background p-2">
             <div className="flex items-end justify-between gap-3 flex-wrap">
 
