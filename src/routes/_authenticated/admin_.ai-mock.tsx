@@ -780,10 +780,8 @@ function QuestionEditor({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold rounded bg-accent/20 text-accent px-2 py-0.5">Q{i + 1}</span>
-          <select value={q.type} onChange={(e) => onChange({ type: e.target.value as QType })} className="text-xs rounded border border-border bg-card px-2 py-1">
-            {(Object.keys(TYPE_LABEL) as QType[]).map((t) => (
-              <option key={t} value={t}>{TYPE_LABEL[t]}</option>
-            ))}
+          <select value={q.type} onChange={(e) => onChange({ type: e.target.value as QType })} className="text-xs rounded border border-border bg-card px-2 py-1" disabled>
+            <option value="code">{TYPE_LABEL.code}</option>
           </select>
           <label className="text-xs text-muted-foreground">Marks
             <input type="number" min={1} value={q.marks} onChange={(e) => onChange({ marks: Number(e.target.value) || 1 })} className="ml-1 w-14 rounded border border-border bg-card px-1 py-0.5 text-xs" />
