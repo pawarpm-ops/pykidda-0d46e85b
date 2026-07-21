@@ -170,10 +170,11 @@ function LeaderboardPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-6 py-10">
-        <header className="mb-6 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-accent">PY Kidda Hall of Fame</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">Leaderboard</h1>
-        </header>
+        <PageHeader
+          eyebrow="PY Kidda Hall of Fame"
+          title="Leaderboard"
+          description="Ranked by best percentage per scheduled mock test."
+        />
 
         {/* Tabs */}
         <div className="mb-6 flex justify-center">
