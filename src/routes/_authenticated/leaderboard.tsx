@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, Trophy, Flame } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingState, EmptyState, ErrorState } from "@/components/ui/state";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { fetchLeaderboard, syncMyScore, type LeaderboardRow } from "@/lib/leaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchStreakLeaderboard, getCurrentRank, type StreakLeaderRow } from "@/lib/streaks";
@@ -46,10 +48,11 @@ function StudentIdChip({ entry }: { entry: DirectoryEntry | undefined }) {
       <Link
         to="/u/$publicId"
         params={{ publicId: entry!.public_profile_id! }}
-        className={`${base} hover:bg-accent/20 hover:border-accent transition-colors`}
+        className={`${base} hover:bg-accent/20 hover:border-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
         title="Open student profile"
+        aria-label={`Open public profile ${id}`}
       >
-        {id}
+        <span className="truncate max-w-[140px]">{id}</span>
       </Link>
     );
   }
@@ -71,7 +74,7 @@ function NameLink({
       <Link
         to="/u/$publicId"
         params={{ publicId: entry!.public_profile_id! }}
-        className={`hover:text-accent hover:underline underline-offset-4 transition-colors ${className}`}
+        className={`hover:text-accent hover:underline underline-offset-4 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${className}`}
         title="Open student profile"
       >
         {children}
@@ -178,41 +181,45 @@ function LeaderboardPage() {
 
         {/* Tabs */}
         <div className="mb-6 flex justify-center">
-          <div className="inline-flex rounded-xl border border-border bg-card p-1">
-            {(["score", "streak"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                  tab === t
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 shadow"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t === "score" ? "🏆 Score" : "🔥 Streak"}
-              </button>
-            ))}
-          </div>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "score" | "streak")}>
+            <TabsList aria-label="Leaderboard mode" className="h-10">
+              <TabsTrigger value="score" className="gap-2 px-4 py-1.5 text-sm font-semibold">
+                <Trophy className="h-4 w-4" aria-hidden />
+                Score
+              </TabsTrigger>
+              <TabsTrigger value="streak" className="gap-2 px-4 py-1.5 text-sm font-semibold">
+                <Flame className="h-4 w-4" aria-hidden />
+                Streak
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {/* Search bar */}
         <div className="mx-auto mb-8 max-w-xl">
-          <div className="group relative flex items-center rounded-full border border-border bg-card px-4 py-2.5 shadow-sm transition-all focus-within:border-accent focus-within:shadow-[0_0_0_4px_color-mix(in_oklch,var(--accent)_20%,transparent)]">
-            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <input
-              type="text"
+          <label htmlFor="leaderboard-search" className="sr-only">
+            Search students by name or ID
+          </label>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id="leaderboard-search"
+              type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value.slice(0, 60))}
               placeholder="Search by student name or ID…"
-              className="ml-3 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-              aria-label="Search students"
+              className="h-11 rounded-full pl-10 pr-10"
+              autoComplete="off"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery("")}
                 aria-label="Clear search"
-                className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -272,9 +279,9 @@ function LeaderboardPage() {
                         >
                           <td className="px-4 py-3 font-mono text-muted-foreground">#{rank}</td>
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
                               <Avatar row={r} size={32} />
-                              <NameLink entry={directory.get(r.user_id)} className="font-medium">
+                              <NameLink entry={directory.get(r.user_id)} className="font-medium truncate max-w-[220px]">
                                 {r.display_name || "Anonymous"}
                               </NameLink>
                               {isMe && (
@@ -387,9 +394,9 @@ function StreakLeaderboard({
                   >
                     <td className="px-4 py-3 font-mono text-muted-foreground">#{rank}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         <StreakAvatar row={r} size={32} />
-                        <NameLink entry={directory.get(r.user_id)} className="font-medium">
+                        <NameLink entry={directory.get(r.user_id)} className="font-medium truncate max-w-[220px]">
                           {r.display_name || "Anonymous"}
                         </NameLink>
                         {isMe && (
@@ -419,7 +426,7 @@ function StreakLeaderboard({
                     <td className="px-4 py-3 text-right text-yellow-500 tabular-nums">{r.longest_streak}</td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`inline-block h-2 w-2 rounded-full ${alive ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"}`}
+                        className={`inline-block h-2 w-2 rounded-full ${alive ? "bg-emerald-500 motion-safe:animate-pulse" : "bg-muted-foreground/30"}`}
                         title={alive ? "Streak alive today" : "Not active today"}
                       />
                     </td>
@@ -537,7 +544,7 @@ function StreakPodiumCard({
       </div>
       <div className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-black/20 px-2 py-0.5 text-[11px] font-semibold">
         <span
-          className={`inline-block h-1.5 w-1.5 rounded-full ${alive ? "bg-emerald-400 animate-pulse" : "bg-white/40"}`}
+          className={`inline-block h-1.5 w-1.5 rounded-full ${alive ? "bg-emerald-400 motion-safe:animate-pulse" : "bg-white/40"}`}
         />
         {alive ? "Active today" : "Idle"}
       </div>
