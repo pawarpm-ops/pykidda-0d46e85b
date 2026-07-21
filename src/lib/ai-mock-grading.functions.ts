@@ -222,6 +222,26 @@ export const saveGrading = createServerFn({ method: "POST" })
       } catch (e) {
         console.error("[saveGrading] leaderboard sync failed", e);
       }
+
+      // Notify the student their scheduled mock has been graded.
+      try {
+        const { data: testRow } = await supabaseAdmin
+          .from("ai_mock_tests")
+          .select("title")
+          .eq("id", attempt.test_id)
+          .maybeSingle();
+        const title = testRow?.title ?? "your scheduled mock test";
+        await supabaseAdmin.from("announcements").insert({
+          author_id: context.userId,
+          title: `Your grade is ready: ${title}`,
+          body: `Your teacher has graded your submission. You scored ${marksObtained}/${totalMarks} (${percentage}%). Tap View to see per-question feedback.`,
+          priority: "high",
+          target_user_id: attempt.user_id,
+          action_url: `/mock-tests/ai/${attempt.test_id}/result?attempt=${data.attempt_id}`,
+        });
+      } catch (e) {
+        console.error("[saveGrading] notification insert failed", e);
+      }
     }
 
     await logAdminActivity(context.supabase, {
