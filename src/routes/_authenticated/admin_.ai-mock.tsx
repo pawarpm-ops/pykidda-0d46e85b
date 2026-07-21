@@ -468,6 +468,24 @@ function Editor() {
     }
   };
 
+  const onDeleteAll = async () => {
+    if (tests.length === 0) return;
+    if (!confirm(`Delete ALL ${tests.length} test(s) permanently? This cannot be undone. Past attempts stay in history.`)) return;
+    if (!confirm("Are you absolutely sure? This will remove every test in the list.")) return;
+    setBusy(`Deleting ${tests.length} tests…`);
+    try {
+      for (const t of tests) {
+        await deleteFn({ data: { id: t.id } });
+      }
+      resetForm();
+      await refreshTests();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const updateQ = (i: number, patch: Partial<EditableQ>) => {
     setQuestions((qs) => qs.map((q, idx) => (idx === i ? { ...q, ...patch } : q)));
   };
