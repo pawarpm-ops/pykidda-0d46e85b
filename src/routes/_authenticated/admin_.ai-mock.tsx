@@ -592,8 +592,7 @@ function Editor() {
           </div>
         </section>
 
-        {busy && <div className="rounded-md border border-accent/40 bg-accent/10 px-4 py-3 text-sm">⏳ {busy}</div>}
-        {error && <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">⚠️ {error}</div>}
+{error && <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">⚠️ {error}</div>}
 
         {questions.length > 0 && (
           <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
