@@ -332,13 +332,14 @@ function StreakLeaderboard({
   directory: Directory;
   searching: boolean;
 }) {
-  if (!rows) return <div className="py-16 text-center text-muted-foreground">Loading streak leaders…</div>;
+  if (!rows) return <LoadingState label="Loading streak leaders…" />;
   if (rows.length === 0) {
     if (searching) return <EmptySearch />;
     return (
-      <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
-        No streaks yet — solve a question today to start yours!
-      </div>
+      <EmptyState
+        title="No streaks yet"
+        description="Solve a question today to start yours!"
+      />
     );
   }
 
