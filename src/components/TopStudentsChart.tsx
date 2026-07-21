@@ -149,11 +149,43 @@ export function TopStudentsChart({ students }: { students: Student[] }) {
               <Bar dataKey="best" fill={COLORS.best} name="Best %" radius={[4, 4, 4, 4]} />
             </BarChart>
           </ResponsiveContainer>
+
+          {canExpand && (
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                aria-expanded={expanded}
+                aria-label={expanded ? "Show fewer students" : "Show all students"}
+                className="group inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-4 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+              >
+                <span>
+                  {expanded
+                    ? `Show top ${DEFAULT_COUNT}`
+                    : `Show all ${sorted.length} students`}
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
   );
 }
+
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
