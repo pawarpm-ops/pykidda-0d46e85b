@@ -106,10 +106,12 @@ export function TopStudentsChart({ students }: { students: Student[] }) {
               ).map((opt) => (
                 <option key={`${n}-${opt.key}`} value={`${n}|${opt.key}`}>
                   Top {n} · {opt.label}
-              </button>
-            ))}
-          </div>
+                </option>
+              )),
+            )}
+          </select>
         </div>
+
       </div>
 
 
