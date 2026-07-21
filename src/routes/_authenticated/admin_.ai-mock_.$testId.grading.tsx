@@ -289,10 +289,9 @@ function AttemptEditor({ attemptId, onPublished, onSaved }: { attemptId: string;
             )}
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold">{totals.awarded}/{totals.total}</p>
-            <p className="text-xs text-muted-foreground">{totals.pct}% · Auto: {attempt.auto_percentage ?? 0}%</p>
             <StatusChip status={attempt.grading_status} />
           </div>
+
         </div>
       </div>
 
