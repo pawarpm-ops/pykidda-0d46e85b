@@ -17,10 +17,15 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in · PY Kidda" },
-      { name: "description", content: "Sign in with Google to practice Python on PY Kidda." },
+      {
+        name: "description",
+        content: "Sign in with Google to practice Python on PY Kidda.",
+      },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>): { next?: string } => ({ next: safeNext(s.next) }),
+  validateSearch: (s: Record<string, unknown>): { next?: string } => ({
+    next: safeNext(s.next),
+  }),
   component: AuthPage,
   ssr: false,
 });
@@ -30,22 +35,29 @@ function AuthPage() {
   const { next } = Route.useSearch();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
     supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
       if (data.session) {
         if (next && next !== "/") window.location.href = next;
         else navigate({ to: "/", replace: true });
+        return;
       }
+      setCheckingSession(false);
     });
+    return () => {
+      mounted = false;
+    };
   }, [navigate, next]);
 
   async function signInGoogle() {
+    if (busy) return;
     setError(null);
     setBusy(true);
     try {
-      // Preserve `next` through the Google round-trip so the user returns to
-      // the same page (e.g. the OAuth consent screen).
       const returnTo =
         window.location.origin +
         "/auth" +
@@ -54,7 +66,10 @@ function AuthPage() {
         redirect_uri: returnTo,
       });
       if (result.error) {
-        const msg = result.error instanceof Error ? result.error.message : "Google login failed. Please try again.";
+        const msg =
+          result.error instanceof Error
+            ? result.error.message
+            : "Google login failed. Please try again.";
         setError(msg);
         void logHealthEventClient({
           category: "login",
@@ -68,11 +83,11 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      // Session already set by wrapper — honor `next` if present.
       if (next && next !== "/") window.location.href = next;
       else navigate({ to: "/", replace: true });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Google login failed. Please try again.";
+      const msg =
+        e instanceof Error ? e.message : "Google login failed. Please try again.";
       setError(msg);
       void logHealthEventClient({
         category: "login",
@@ -87,191 +102,213 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-[#0b0720] text-white">
-      {/* Animated gradient backdrop */}
+    <div className="min-h-dvh relative overflow-hidden bg-background text-foreground">
+      {/* Ambient background — subtle, theme-aware, reduced-motion friendly */}
       <div
-        className="absolute inset-0 -z-10"
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-70 dark:opacity-60"
         style={{
           background:
-            "radial-gradient(1200px 700px at 10% 10%, #5b21b6 0%, transparent 60%), radial-gradient(900px 600px at 90% 80%, #7c3aed 0%, transparent 55%), radial-gradient(700px 500px at 50% 50%, #4338ca 0%, transparent 60%), linear-gradient(135deg, #1e0a3c 0%, #0b0720 100%)",
+            "radial-gradient(900px 520px at 12% 8%, color-mix(in oklab, var(--accent) 28%, transparent) 0%, transparent 60%), radial-gradient(720px 480px at 90% 92%, color-mix(in oklab, var(--chart-5) 22%, transparent) 0%, transparent 60%), radial-gradient(600px 420px at 60% 40%, color-mix(in oklab, var(--chart-4) 18%, transparent) 0%, transparent 65%)",
         }}
-        aria-hidden
       />
-      {/* Grid overlay */}
+      {/* Fine grid — decorative, low contrast */}
       <div
-        className="absolute inset-0 -z-10 opacity-[0.12]"
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.05] dark:opacity-[0.08]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)",
+            "linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)",
           backgroundSize: "44px 44px",
-          maskImage: "radial-gradient(ellipse at center, black 40%, transparent 75%)",
+          maskImage:
+            "radial-gradient(ellipse at center, black 40%, transparent 75%)",
         }}
-        aria-hidden
       />
 
-      {/* Floating orbs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute top-[12%] left-[42%] h-24 w-24 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 shadow-2xl shadow-amber-500/40 animate-[float_7s_ease-in-out_infinite]" />
-        <div className="absolute top-[22%] left-[55%] h-14 w-14 rounded-full bg-gradient-to-br from-fuchsia-400 to-violet-600 shadow-2xl shadow-fuchsia-500/40 animate-[float_9s_ease-in-out_infinite_reverse]" />
-        <div className="absolute bottom-[18%] left-[8%] h-20 w-20 rounded-full bg-gradient-to-br from-cyan-300 to-blue-600 shadow-2xl shadow-cyan-500/40 animate-[float_8s_ease-in-out_infinite]" />
-        <div className="absolute bottom-[30%] right-[12%] h-16 w-16 rounded-2xl rotate-12 bg-gradient-to-br from-pink-400 to-rose-600 shadow-2xl shadow-rose-500/40 animate-[float_10s_ease-in-out_infinite_reverse]" />
-        <div className="absolute top-[60%] right-[28%] h-10 w-10 rounded-full bg-gradient-to-br from-emerald-300 to-teal-600 shadow-2xl shadow-emerald-500/40 animate-[float_6s_ease-in-out_infinite]" />
-      </div>
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) translateX(0px); }
-          50% { transform: translateY(-22px) translateX(10px); }
-        }
-        @keyframes shine {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
-
-      <div className="absolute top-4 right-4 z-20">
+      <header className="absolute top-3 right-3 z-20">
         <ThemeToggle />
-      </div>
+      </header>
 
-      <div className="relative z-10 min-h-screen grid lg:grid-cols-2">
-        {/* Left: branding / pitch */}
-        <div className="hidden lg:flex flex-col justify-between p-12">
-          <div className="flex items-center gap-3">
-            <BrandLogo size={44} />
-            <span className="text-lg font-bold tracking-wide">PY Kidda Hub</span>
-          </div>
+      <main className="relative z-10 min-h-dvh grid lg:grid-cols-2">
+        {/* Left: brand pitch (desktop) */}
+        <section className="hidden lg:flex flex-col justify-between p-10 xl:p-14">
+          <BrandLogo size={44} />
 
-          <div className="space-y-6 max-w-lg">
-            <h1
-              className="text-5xl xl:text-6xl font-black leading-[1.05] bg-clip-text text-transparent"
-              style={{
-                backgroundImage:
-                  "linear-gradient(90deg, #ffffff 0%, #fcd34d 50%, #c4b5fd 100%)",
-                backgroundSize: "200% auto",
-                animation: "shine 6s linear infinite",
-              }}
-            >
-              Learn Python the fun, fearless way.
+          <div className="space-y-5 max-w-lg">
+            <h1 className="text-4xl xl:text-5xl font-black leading-[1.08] tracking-tight text-foreground">
+              Learn Python the{" "}
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              >
+                fun, fearless
+              </span>{" "}
+              way.
             </h1>
-            <p className="text-lg text-white/80 leading-relaxed">
-              Practice problems, live mock tests, real-time analytics — all in one
-              colorful hub built for curious coders.
+            <p className="text-base xl:text-lg text-muted-foreground leading-relaxed">
+              Practice problems, live mock tests and real-time analytics — all in
+              one colorful hub built for curious coders.
             </p>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Badge>⏱ Timed Mock Tests</Badge>
-              <Badge>📊 Smart Analytics</Badge>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Badge>⏱ Timed mock tests</Badge>
+              <Badge>📊 Smart analytics</Badge>
+              <Badge>🐍 Python-first</Badge>
             </div>
-
           </div>
 
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-muted-foreground">
             Crafted by Siddharth Prashant Pawar
           </p>
-        </div>
+        </section>
 
         {/* Right: auth card */}
-        <div className="flex items-center justify-center p-6 lg:p-12">
-          <div className="relative w-full max-w-md">
-            {/* Glow */}
+        <section className="flex items-center justify-center p-4 sm:p-6 lg:p-12">
+          <div className="w-full max-w-md">
             <div
-              className="absolute -inset-1 rounded-3xl blur-2xl opacity-60"
-              style={{
-                background:
-                  "linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6)",
-              }}
-              aria-hidden
-            />
-
-            <div className="relative rounded-3xl border border-white/15 bg-white/[0.07] backdrop-blur-2xl p-8 sm:p-10 shadow-2xl">
-              <div className="lg:hidden flex items-center gap-3 mb-6">
+              className="rounded-2xl border border-border bg-card text-card-foreground shadow-[var(--shadow-elevated)] p-6 sm:p-8"
+              role="region"
+              aria-labelledby="signin-heading"
+            >
+              <div className="lg:hidden mb-5 flex justify-center">
                 <BrandLogo size={40} />
-                <span className="font-bold">PY Kidda Hub</span>
               </div>
 
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                <span
+                  aria-hidden
+                  className="h-1.5 w-1.5 rounded-full bg-[color:var(--success)]"
+                />
                 Welcome back
               </div>
 
-              <h2 className="mt-4 text-3xl font-black tracking-tight">
+              <h2
+                id="signin-heading"
+                className="mt-3 text-2xl sm:text-3xl font-black tracking-tight"
+              >
                 Sign in to your{" "}
                 <span
                   className="bg-clip-text text-transparent"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(90deg, #fcd34d, #fb7185)",
-                  }}
+                  style={{ backgroundImage: "var(--gradient-sunrise)" }}
                 >
                   coding journey
                 </span>
               </h2>
-              <p className="mt-2 text-sm text-white/70">
+              <p className="mt-2 text-sm text-muted-foreground">
                 One click with Google — we'll remember your progress, attempts and
                 achievements.
               </p>
 
               <button
+                type="button"
                 onClick={signInGoogle}
-                disabled={busy}
-                className="group relative mt-7 w-full overflow-hidden rounded-xl px-4 py-3.5 text-sm font-semibold text-slate-900 shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
-                style={{
-                  background:
-                    "linear-gradient(90deg, #fde047 0%, #f59e0b 50%, #fb923c 100%)",
-                  boxShadow: "0 10px 30px -10px rgba(245, 158, 11, 0.6)",
-                }}
+                disabled={busy || checkingSession}
+                aria-label="Continue with Google"
+                aria-busy={busy}
+                className="mt-6 inline-flex w-full min-h-12 items-center justify-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-[var(--shadow-card)] transition-colors duration-[var(--duration-base)] ease-[var(--ease-standard)] hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
               >
-                <span className="relative z-10 inline-flex items-center justify-center gap-3">
-                  <GoogleIcon />
-                  {busy ? "Opening Google…" : "Continue with Google"}
-                </span>
-                <span
-                  className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
-                  }}
-                />
+                {busy ? (
+                  <>
+                    <Spinner />
+                    <span>Opening Google…</span>
+                  </>
+                ) : checkingSession ? (
+                  <>
+                    <Spinner />
+                    <span>Checking your session…</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    <span>Continue with Google</span>
+                  </>
+                )}
               </button>
 
-              {error && (
-                <p className="mt-4 rounded-lg border border-rose-400/40 bg-rose-500/15 p-3 text-sm text-rose-100">
-                  {error}
-                </p>
-              )}
-
-              <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-widest text-white/40">
-                <div className="h-px flex-1 bg-white/15" />
-                secure sign-in
-                <div className="h-px flex-1 bg-white/15" />
+              <div
+                aria-live="polite"
+                aria-atomic="true"
+                className="min-h-0"
+              >
+                {error && (
+                  <div
+                    role="alert"
+                    className="mt-4 flex items-start gap-2 rounded-lg border border-[color:var(--destructive)]/40 bg-[color:var(--destructive)]/10 p-3 text-sm text-[color:var(--destructive)]"
+                  >
+                    <svg
+                      aria-hidden
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mt-0.5 shrink-0"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <span>
+                      <span className="font-semibold">Sign-in failed. </span>
+                      {error}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <ul className="space-y-2 text-xs text-white/70">
+              <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-widest text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                secure sign-in
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <ul className="space-y-2 text-xs text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <span className="mt-0.5">🔒</span>
+                  <span aria-hidden className="mt-0.5">🔒</span>
                   We never see your Google password.
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-0.5">🎯</span>
+                  <span aria-hidden className="mt-0.5">🎯</span>
                   Auto-submit kicks in if you exit full-screen during a mock test.
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-0.5">✨</span>
+                  <span aria-hidden className="mt-0.5">✨</span>
                   Your progress syncs across all your devices.
                 </li>
               </ul>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium backdrop-blur">
+    <span className="rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-card-foreground shadow-[var(--shadow-card)]">
       {children}
     </span>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      aria-hidden
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      className="animate-spin motion-reduce:animate-none"
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
   );
 }
 
