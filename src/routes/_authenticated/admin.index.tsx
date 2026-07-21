@@ -21,6 +21,8 @@ import {
   createAnnouncement,
   deleteAnnouncement,
   listAnnouncements,
+  updateAnnouncement,
+  resendAnnouncement,
   type Announcement,
 } from "@/lib/notifications";
 import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
