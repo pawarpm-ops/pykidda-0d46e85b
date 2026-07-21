@@ -262,7 +262,7 @@ function ProfilePage() {
                     type="button"
                     onClick={() => setActiveTab(t.key)}
                     aria-current={selected ? "page" : undefined}
-                    className={`inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition text-left whitespace-nowrap ${
+                    className={`inline-flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition text-left whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
                       selected
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
