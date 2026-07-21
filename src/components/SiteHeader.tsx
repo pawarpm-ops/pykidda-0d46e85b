@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Bell,
   LogOut,
+  UserCog,
   Shield,
   HelpCircle,
   type LucideIcon,
@@ -144,6 +145,12 @@ export function SiteHeader() {
     navigate({ to: "/" });
   }
 
+  async function handleSwitchAccount() {
+    await supabase.auth.signOut();
+    router.invalidate();
+    navigate({ to: "/auth" });
+  }
+
   function renderNavLink(item: NavItem, opts?: { compact?: boolean }) {
     const active = isActive(item.to);
     const Icon = item.icon;
@@ -250,13 +257,22 @@ export function SiteHeader() {
             )}
           </div>
           {email ? (
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border border-border bg-background hover:border-destructive/50 hover:text-destructive transition-colors"
-            >
-              <LogOut size={18} />
-              <span>Sign out</span>
-            </button>
+            <>
+              <button
+                onClick={handleSwitchAccount}
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
+              >
+                <UserCog size={18} />
+                <span>Switch account</span>
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border border-border bg-background hover:border-destructive/50 hover:text-destructive transition-colors"
+              >
+                <LogOut size={18} />
+                <span>Sign out</span>
+              </button>
+            </>
           ) : (
             <Link
               to="/auth"
@@ -318,17 +334,26 @@ export function SiteHeader() {
                 </Link>
               )}
               {email && (
-                <div className="mt-2 pt-2 border-t border-border/60 flex items-center justify-between gap-2">
+                <div className="mt-2 pt-2 border-t border-border/60 flex flex-col gap-2">
                   <span className="truncate text-xs text-muted-foreground" title={email}>
                     {email}
                   </span>
-                  <button
-                    onClick={handleSignOut}
-                    className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-destructive/50 hover:text-destructive transition-colors"
-                  >
-                    <LogOut size={14} />
-                    Sign out
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleSwitchAccount}
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-primary/50 hover:text-primary transition-colors"
+                    >
+                      <UserCog size={14} />
+                      Switch account
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-destructive/50 hover:text-destructive transition-colors"
+                    >
+                      <LogOut size={14} />
+                      Sign out
+                    </button>
+                  </div>
                 </div>
               )}
             </nav>

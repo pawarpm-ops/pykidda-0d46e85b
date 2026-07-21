@@ -7,9 +7,9 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { logHealthEventClient } from "@/lib/system-health-client";
 
 // Only allow same-origin relative paths as post-login destinations.
-function safeNext(v: unknown): string {
-  if (typeof v !== "string") return "/";
-  if (!v.startsWith("/") || v.startsWith("//")) return "/";
+function safeNext(v: unknown): string | undefined {
+  if (typeof v !== "string") return undefined;
+  if (!v.startsWith("/") || v.startsWith("//")) return undefined;
   return v;
 }
 
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Sign in with Google to practice Python on PY Kidda." },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({ next: safeNext(s.next) }),
+  validateSearch: (s: Record<string, unknown>): { next?: string } => ({ next: safeNext(s.next) }),
   component: AuthPage,
   ssr: false,
 });
