@@ -21,7 +21,7 @@ import { ReviewPopup } from "@/components/ReviewPopup";
 import { StreakUnlockModal } from "@/components/StreakUnlockModal";
 import { WhatsNewPopups } from "@/components/WhatsNewPopups";
 import { InactivityLogout } from "@/components/InactivityLogout";
-import { BadgeToaster } from "@/components/BadgeToaster";
+
 import { DailyStreakToaster } from "@/components/DailyStreakToaster";
 import { StreakWarningToaster } from "@/components/StreakWarningToaster";
 import { recordStreakActivity } from "@/lib/streaks";
