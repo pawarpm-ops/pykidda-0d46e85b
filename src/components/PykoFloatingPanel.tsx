@@ -432,13 +432,14 @@ export function PykoFloatingPanel() {
                 </div>
               ))}
               {busy && (
-                <div className="mr-auto flex items-center gap-2 max-w-[85%] rounded-lg bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
+                <div className="mr-auto flex items-center gap-2 max-w-[85%] rounded-lg bg-muted px-2.5 py-1.5 text-xs text-muted-foreground" role="status">
                   <img
                     src={pykoMascot.url}
                     alt=""
-                    className="h-5 w-5 object-contain animate-[pyko-thinking_1.4s_ease-in-out_infinite]"
+                    aria-hidden="true"
+                    className="h-5 w-5 object-contain animate-[pyko-thinking_1.4s_ease-in-out_infinite] motion-reduce:animate-none"
                   />
-                  <span className="animate-pulse">Pyko is thinking…</span>
+                  <span className="animate-pulse motion-reduce:animate-none">Pyko is thinking…</span>
                 </div>
               )}
               {err && (
