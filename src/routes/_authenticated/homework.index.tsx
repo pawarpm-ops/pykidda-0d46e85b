@@ -2,8 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { BookOpen, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState, EmptyState } from "@/components/ui/state";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listStudentHomework } from "@/lib/homework.functions";
+
 
 export const Route = createFileRoute("/_authenticated/homework/")({
   head: () => ({
