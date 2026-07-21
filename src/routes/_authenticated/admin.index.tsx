@@ -654,7 +654,60 @@ function AdminPage() {
         </div>
       </main>
 
+      {confirmReset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-destructive/40 bg-card p-6 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive">
+                <Trash2 className="h-5 w-5" aria-hidden />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold">Clear all dashboard data?</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  This permanently deletes <strong>mock results, streaks, activity logs,
+                  leaderboard scores, earned badges, mock comments and audit logs</strong> for
+                  every student. Profiles, users, homework and questions are not affected.
+                </p>
+                <p className="mt-2 text-sm font-semibold text-destructive">
+                  This cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <label className="mt-4 block text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Type <span className="text-destructive">CLEAR</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={resetConfirmText}
+              onChange={(e) => setResetConfirmText(e.target.value)}
+              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-destructive focus:outline-none"
+              placeholder="CLEAR"
+              autoFocus
+            />
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => { setConfirmReset(false); setResetConfirmText(""); }}
+                disabled={resetting}
+                className="rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearAll}
+                disabled={resetting || resetConfirmText.trim() !== "CLEAR"}
+                className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+                {resetting ? "Clearing…" : "Yes, clear everything"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
 
