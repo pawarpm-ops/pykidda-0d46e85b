@@ -201,7 +201,9 @@ function AnalyticsPage() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
-        <main className="mx-auto max-w-7xl px-6 py-10">Loading analytics…</main>
+        <main className="mx-auto max-w-7xl px-4 sm:px-6 py-10 pb-24">
+          <LoadingState label="Loading your analytics…" />
+        </main>
       </div>
     );
   }
