@@ -10,7 +10,8 @@ import {
   YAxis,
 } from "recharts";
 
-type Student = { name: string; avg: number; best: number };
+type Student = { name: string; avg: number; best: number; rollNo?: string | null };
+type SortMode = "rank" | "roll" | "high" | "low";
 
 const COLORS = {
   avg: "oklch(0.62 0.18 250)",
