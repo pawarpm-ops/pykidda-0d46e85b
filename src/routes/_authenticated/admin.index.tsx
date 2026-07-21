@@ -681,23 +681,8 @@ function AdminPage() {
             <section className="mt-6 grid gap-6 lg:grid-cols-2">
               <TopStudentsChart students={studentChart} />
 
-              <ChartCard title="Score distribution">
-                {allPcts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No data.</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie data={bands} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100}>
-                        {bands.map((b, i) => (
-                          <Cell key={i} fill={b.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </ChartCard>
+              <ScoreDistributionCard bands={bands} total={allPcts.length} />
+
 
 
               <ChartCard title="Submission integrity">
