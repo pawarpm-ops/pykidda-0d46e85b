@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Bell,
   LogOut,
+  UserCog,
   Shield,
   HelpCircle,
   type LucideIcon,
