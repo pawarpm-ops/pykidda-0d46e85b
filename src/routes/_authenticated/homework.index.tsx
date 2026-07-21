@@ -70,7 +70,7 @@ function HomeworkListPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8 pb-24">
         <div className="mb-4 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
           <span
             className="rounded-md px-3 py-1.5 font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
@@ -80,58 +80,56 @@ function HomeworkListPage() {
           </span>
           <Link
             to="/practice"
-            className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-secondary"
+            className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Practice
           </Link>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Homework 📚</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Complete each homework — answer all questions, then submit before the deadline.
-          </p>
-        </div>
 
+        <PageHeader
+          eyebrow="Assignments"
+          icon={<BookOpen className="h-5 w-5" aria-hidden />}
+          title="My Homework"
+          description="Complete each homework — answer all questions, then submit before the deadline."
+        />
 
-        <div className="mt-6 inline-flex rounded-lg border border-border bg-card p-1 text-sm">
-          {(["pending", "submitted", "checked"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 capitalize transition ${
-                tab === t
-                  ? "font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
-                  : "text-muted-foreground hover:bg-secondary"
-              }`}
-              style={tab === t ? { backgroundImage: "var(--gradient-sunrise)" } : undefined}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="mt-2">
+          <TabsList>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="submitted">Submitted</TabsTrigger>
+            <TabsTrigger value="checked">Checked</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        {isLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
-        {error && <p className="mt-6 text-sm text-destructive">{(error as Error).message}</p>}
-        {data && filtered.length === 0 && (
-          <div className="mt-8 rounded-xl border border-dashed border-border bg-card p-8 text-center">
-            <p className="text-lg font-semibold">Nothing here 🎉</p>
-            <p className="mt-1 text-sm text-muted-foreground">Check another tab or come back later.</p>
+        {isLoading && <LoadingState label="Loading homework…" />}
+        {error && (
+          <div role="alert" className="mt-6 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            {(error as Error).message}
           </div>
+        )}
+        {data && filtered.length === 0 && !isLoading && (
+          <EmptyState
+            className="mt-6"
+            icon={<CheckCircle2 className="h-5 w-5" aria-hidden />}
+            title="Nothing here"
+            description="Check another tab or come back later."
+          />
         )}
 
         <ul className="mt-6 grid gap-3 sm:grid-cols-2">
           {filtered.map((h: HRow) => {
             const badge = statusBadge(h.submission);
             const due = fmtDue(h.due_at);
+            const DueIcon = due.tone === "bad" ? AlertTriangle : Clock;
             return (
               <li key={h.id}>
                 <Link
                   to="/homework/$id"
                   params={{ id: h.id }}
-                  className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-md"
+                  className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition hover:border-accent/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 motion-safe:hover:-translate-y-0.5"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <h2 className="text-base font-semibold leading-tight line-clamp-2">{h.title}</h2>
+                    <h2 className="text-base font-semibold leading-tight line-clamp-2 break-words">{h.title}</h2>
                     <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap ${badge.cls}`}>
                       {badge.text}
                     </span>
@@ -147,7 +145,8 @@ function HomeworkListPage() {
                       {Number(h.total_marks)} marks
                     </span>
                     <span
-                      className={`rounded-full border px-2 py-0.5 ${
+                      aria-label={`Deadline: ${due.text}`}
+                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 ${
                         due.tone === "bad"
                           ? "border-destructive/40 bg-destructive/10 text-destructive"
                           : due.tone === "warn"
@@ -155,7 +154,7 @@ function HomeworkListPage() {
                           : "border-border bg-secondary/40"
                       }`}
                     >
-                      ⏰ {due.text}
+                      <DueIcon className="h-3 w-3" aria-hidden /> {due.text}
                     </span>
                   </div>
                 </Link>
@@ -167,3 +166,4 @@ function HomeworkListPage() {
     </div>
   );
 }
+
