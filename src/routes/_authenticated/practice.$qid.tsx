@@ -146,17 +146,18 @@ function PracticeSolvePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <main className="mx-auto max-w-4xl px-4 py-6 pb-24 sm:px-6 sm:py-8 sm:pb-10">
+        <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between">
           <Link
             to="/practice"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"
+            aria-label="Back to all practice questions"
+            className="inline-flex min-h-11 min-w-0 items-center rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:border-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            ← All practice questions
+            <span className="truncate">← All practice questions</span>
           </Link>
-          <span className="rounded-full border border-border bg-secondary/40 px-2 py-0.5 text-[11px] font-semibold">
+          <span className="shrink-0 rounded-full border border-border bg-secondary/40 px-2.5 py-1 text-[11px] font-semibold">
             Unit {question.unit} · {question.marks} marks
           </span>
         </div>
@@ -172,3 +173,4 @@ function PracticeSolvePage() {
     </div>
   );
 }
+
