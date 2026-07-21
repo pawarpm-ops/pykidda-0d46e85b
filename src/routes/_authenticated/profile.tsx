@@ -467,13 +467,6 @@ function ProfilePage() {
 
               {activeTab === "streak" && <StreakCard />}
 
-              {activeTab === "badges" && (
-                <div className="flex flex-col gap-6">
-                  <YourNextBadges />
-                  {userId && <BadgesGrid studentId={userId} />}
-                </div>
-              )}
-
               {activeTab === "qr" && (
                 <div className="flex flex-col gap-6">
                   {publicId && (
