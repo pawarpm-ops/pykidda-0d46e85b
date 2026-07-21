@@ -207,7 +207,7 @@ function ProfilePage() {
   const tabs: { key: TabKey; label: string; icon: LucideIcon }[] = [
     { key: "profile", label: "Your Profile", icon: User },
     { key: "streak", label: "Streak", icon: Flame },
-    { key: "badges", label: "Badges", icon: Award },
+    
     { key: "qr", label: "QR & Privacy", icon: QrCode },
     { key: "reports", label: "Reports", icon: FileText },
     { key: "tutorial", label: "Website Tutorial", icon: GraduationCap },
