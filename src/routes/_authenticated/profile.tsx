@@ -286,7 +286,9 @@ function ProfilePage() {
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
-                        alt="Avatar preview"
+                        alt={`${displayName || "Your"} avatar`}
+                        width={64}
+                        height={64}
                         className="h-16 w-16 rounded-full object-cover border border-border"
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = "none";
