@@ -328,7 +328,7 @@ function ProfilePage() {
                           aria-label={`Status: ${presenceStatus}`}
                         >
                           <span
-                            className={`inline-block h-2 w-2 rounded-full ${presenceStatus === "active" ? "animate-pulse" : ""}`}
+                            className={`inline-block h-2 w-2 rounded-full ${presenceStatus === "active" ? "motion-safe:animate-pulse" : ""}`}
                             style={{
                               backgroundColor:
                                 presenceStatus === "active"
