@@ -474,13 +474,13 @@ export function PykoFloatingPanel() {
                   placeholder="Ask Pyko about PY Kidda…"
                   disabled={busy}
                   aria-label="Message to Pyko"
-                  className="flex-1 rounded-md border border-input bg-background px-2 py-1.5 text-xs outline-none focus:border-primary disabled:opacity-50"
+                  className="flex-1 min-h-11 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 />
                 <button
                   onClick={send}
                   disabled={busy || !input.trim()}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
-                  aria-label="Send message"
+                  className="min-h-11 min-w-11 rounded-md bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                  aria-label="Send message to Pyko"
                 >
                   Send
                 </button>
