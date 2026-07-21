@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
 import { SiteHeader } from "@/components/SiteHeader";
+import { MockAiCorrector } from "@/components/MockAiCorrector";
 import { getAiMockAttemptResult } from "@/lib/ai-mock.functions";
 
 const SearchSchema = z.object({ attempt: z.string().optional() });
@@ -115,7 +116,7 @@ function ResultPage() {
             ) : (
               <ol className="space-y-4">
                 {result.answers.map((a, i) => (
-                  <AnswerCard key={a.question_id} answer={a} question={questions[a.question_id]} index={i} tab="key" />
+                  <AnswerCard key={a.question_id} answer={a} question={questions[a.question_id]} index={i} tab="key" testTitle={testTitle} showAiExplain />
                 ))}
               </ol>
             )}
@@ -161,7 +162,7 @@ function ResultPage() {
           </div>
         )}
 
-        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} answerKeyOnly={testKind === "scheduled"} />
+        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} answerKeyOnly={testKind === "scheduled"} testTitle={testTitle} showAiExplain={testKind === "scheduled"} />
 
         <div className="mt-8 flex gap-3">
           <Link to="/mock-tests" className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground">Back to tests</Link>
@@ -175,7 +176,7 @@ function ResultPage() {
 
 type TabKey = "correct" | "incorrect" | "key";
 
-function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean }) {
+function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false, testTitle = "", showAiExplain = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean; testTitle?: string; showAiExplain?: boolean }) {
   const [tab, setTab] = useState<TabKey>(answerKeyOnly ? "key" : "correct");
 
   const tabs: { key: TabKey; label: string; count: number }[] = answerKeyOnly
@@ -223,6 +224,8 @@ function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false 
                 question={q}
                 index={origIdx}
                 tab={tab}
+                testTitle={testTitle}
+                showAiExplain={showAiExplain}
               />
             );
           })}
@@ -232,7 +235,7 @@ function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false 
   );
 }
 
-function AnswerCard({ answer: a, question: q, index, tab }: { answer: GradedAnswer; question: QuestionRow | undefined; index: number; tab: TabKey }) {
+function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAiExplain = false }: { answer: GradedAnswer; question: QuestionRow | undefined; index: number; tab: TabKey; testTitle?: string; showAiExplain?: boolean }) {
   const isMcq = (q?.type ?? "").toLowerCase() === "mcq";
   const options = useMemo(() => {
     if (!q) return [] as string[];
@@ -361,6 +364,16 @@ function AnswerCard({ answer: a, question: q, index, tab }: { answer: GradedAnsw
           <p className="text-[11px] font-bold uppercase tracking-widest text-primary">💬 Teacher's comment</p>
           <p className="mt-1 text-xs whitespace-pre-wrap">{a.teacher_comment}</p>
         </div>
+      )}
+
+      {showAiExplain && q && (
+        <MockAiCorrector
+          title={`${testTitle} · Q${index + 1}`}
+          prompt={q.prompt ?? ""}
+          userCode={a.response ?? ""}
+          referenceSolution={a.correct_answer ?? q.correct_answer ?? ""}
+          failingTests={[]}
+        />
       )}
     </li>
 
