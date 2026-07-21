@@ -235,7 +235,7 @@ function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false,
   );
 }
 
-function AnswerCard({ answer: a, question: q, index, tab }: { answer: GradedAnswer; question: QuestionRow | undefined; index: number; tab: TabKey }) {
+function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAiExplain = false }: { answer: GradedAnswer; question: QuestionRow | undefined; index: number; tab: TabKey; testTitle?: string; showAiExplain?: boolean }) {
   const isMcq = (q?.type ?? "").toLowerCase() === "mcq";
   const options = useMemo(() => {
     if (!q) return [] as string[];
