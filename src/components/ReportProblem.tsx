@@ -301,15 +301,6 @@ export function ReportProblem() {
                   </select>
                 </label>
                 <label className="text-sm">
-                  <span className="mb-1 block font-semibold">Question ID</span>
-                  <input
-                    value={questionId}
-                    onChange={(e) => setQuestionId(e.target.value)}
-                    placeholder="auto"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  />
-                </label>
-                <label className="text-sm">
                   <span className="mb-1 block font-semibold">Test ID</span>
                   <input
                     value={testId}
