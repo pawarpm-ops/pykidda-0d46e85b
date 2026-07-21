@@ -1,46 +1,61 @@
-# PY Kidda — UI Consistency & Responsive Overhaul
 
-This is a large, cross-cutting UI-only change. To keep it safe and reviewable, I'll ship it in phases and check in after each phase before continuing. No routes, permissions, DB logic, popups, assessment rules, sidebar options, or Pyko behavior will change.
+## Manual grading for scheduled mock tests
 
-## Hard exclusions (locked)
-- **Do not** add Practice to the desktop sidebar.
-- **Do not** touch popups, modals, onboarding, What's New, review popup, streak popup, Badge Toaster, Pyko, or Report Problem behavior/timing.
-- No route renames, no DB migrations, no auth changes, no grading/anti-cheat changes.
+Scheduled mocks will stop auto-scoring on submit. Every question — MCQ, TF, fill, short answer, code — waits for the teacher. Students see "Awaiting review" until the teacher publishes.
 
-## Phase 1 — Design foundation (this turn if approved)
-1. Audit `src/styles.css`, shared UI in `src/components/ui/*`, `SiteHeader`, sidebar, and duplicated card/button implementations. Record findings in `.lovable/ui-audit.md`.
-2. Extend semantic tokens in `src/styles.css` (surfaces, status, focus ring, shadows, radii, motion durations, z-index) — additive only, no rename of existing tokens.
-3. Add/normalize shadcn variants: Button (primary/secondary/outline/ghost/destructive/success/icon/link), Card (standard/interactive/elevated/glass/status/destructive), Badge (status set), Input/Select/Textarea sizing, focus-visible ring.
-4. Add typography scale utilities (display/h1/h2/h3/card/body/meta/code) using `clamp()`.
-5. Add global `prefers-reduced-motion` guards.
+### Data model changes
 
-## Phase 2 — Shared shell
-- Standardize page header component (title + optional breadcrumb + primary action).
-- Restyle existing desktop sidebar visuals only (no option changes).
-- Add mobile bottom nav (Home, Practice, Homework, Tests, More) with role-aware visibility, safe-area insets, hidden during active assessments; "More" sheet exposes existing destinations only.
-- Standard loading/empty/error state components.
-- Verify theme persistence + no FOUC (already patched in `__root.tsx`).
+Add to `public.ai_mock_attempts`:
+- `grading_status` — `pending_review` | `in_review` | `published` (default `pending_review` for scheduled tests, `published` for normal AI mocks so nothing else breaks)
+- `reviewed_by` (uuid → auth.users), `reviewed_at`, `teacher_feedback` (text overall comment)
+- `auto_marks_obtained`, `auto_percentage` — keep the machine's guess as a starting point for the teacher, never shown to the student
 
-## Phase 3 — Core student pages
-Apply shared shell + variants to: Login, Dashboard, Practice, Code Runner, Mock Tests, Homework, Leaderboard, Analytics, Profile, Notifications, Teacher Comments, Help. Visual-only edits; keep data queries, routes, and dialogs intact.
+The existing `answers` jsonb keeps per-question rows; each row gets:
+- `auto_marks_awarded` (what the grader computed)
+- `marks_awarded` (final, teacher-editable — starts equal to auto value)
+- `teacher_comment` (per-question note)
 
-## Phase 4 — Special interfaces
-Pyko responsive shell (desktop panel / tablet overlay / mobile sheet) — presentation only, no logic changes. Onboarding visual alignment. Admin workspace: standardize header, tables, filters, empty/loading/error states; visually group existing 12 sections without changing routes.
+`leaderboard_scores` continues to sum best percentage per scheduled test, but **only counts attempts where `grading_status = 'published'`**.
 
-## Phase 5 — Quality gate
-Accessibility audit (contrast, focus, aria), responsive audit at 320/360/390/430/768/1024/1280/1440, reduced-motion audit, low-end perf pass (reduce mobile blur, lazy assets), theme audit both modes, typecheck + build.
+### Backend
 
-## Technical notes
-- Tailwind v4: tokens live in `src/styles.css` under `@theme` / `@theme inline`; custom utilities via `@utility`; no `tailwind.config.js`.
-- All colors via semantic tokens — no `text-white`, `bg-[#...]`, no hardcoded hex in components.
-- shadcn primitives kept; variants extended via `cva`.
-- Mobile bottom nav gated by `useAssessmentActive`-style check already used to suppress popups, so it hides during mock tests.
-- I will not introduce new libraries.
+**Change `submitAiMockAttempt`** (`src/lib/ai-mock.functions.ts`):
+- For `test_kind = 'scheduled'`: still compute auto grades (server-side, same as today), but store them in the `auto_*` fields, set `marks_obtained = 0`, `percentage = 0`, `grading_status = 'pending_review'`.
+- For normal AI mocks: unchanged — publish immediately.
 
-## What I'll do this turn if you approve
-Only **Phase 1** (foundation + audit doc). No page-level rewrites yet. I'll show you the token/variant changes and a summary, then ask before moving to Phase 2.
+**New admin server fns** (`src/lib/ai-mock-grading.functions.ts`, `requireSupabaseAuth` + admin role check via `has_role`):
+- `listAttemptsForReview({ testId })` — attempts + student name/roll for a scheduled test with counts (pending / published).
+- `getAttemptForGrading({ attemptId })` — full attempt with questions (including correct_answer, expected outputs, per-test code run results) so the teacher can judge.
+- `saveGrading({ attemptId, perQuestion: [{ questionId, marks_awarded, teacher_comment }], teacher_feedback, publish: boolean })` — validates marks ≤ question total, recomputes totals + %, sets `reviewed_by/reviewed_at`, moves to `in_review` (save) or `published` (publish), then calls `syncMyScore` for that student when published so the leaderboard updates.
 
-## Deliverable per phase
-Short changelog + files touched + any screenshots relevant to that phase. Full completion report after Phase 5.
+**Student result route** (`src/routes/mock-tests.ai.$testId.result.tsx`):
+- When `grading_status !== 'published'` for a scheduled test, show "Awaiting teacher review" state instead of the score/answer key. No auto marks leaked.
+- When published, show the final marks and the teacher's per-question comments + overall feedback alongside the existing answer key.
 
-Approve to start Phase 1, or tell me to reorder / narrow scope (e.g. "skip mobile bottom nav" or "start with Admin tables only").
+### Teacher UI
+
+New route `src/routes/_authenticated/admin_.ai-mock.$testId.grading.tsx`:
+- List of submissions with status chips, filter by pending/published, click to open grading view.
+- Grading view: one card per question showing the prompt, correct answer / expected output, the student's response (and code runs with pass/fail per test case for code questions), an editable marks input (0 → question total), and a comment box. Overall feedback box + Save draft / Publish buttons.
+
+Add a "Grade submissions" link from the existing admin AI mock list next to scheduled tests.
+
+### Technical notes
+
+- Migration adds columns with sensible defaults so existing published normal-mock attempts stay untouched.
+- Leaderboard fetcher filters `grading_status = 'published'` when summing scheduled scores.
+- The client no longer needs `runs` back to display test-case-level info to students; that stays server-side, only surfaced in the teacher grading view.
+- All grading endpoints check `has_role(auth.uid(), 'admin')` and reject otherwise; the client never writes to `ai_mock_attempts` directly (existing RLS already denies client writes).
+- Onboarding of previously-submitted scheduled attempts: backfill sets them to `published` with current scores so leaderboard doesn't lose data.
+
+### Files touched
+
+```text
+supabase migration           — new columns, backfill, leaderboard view/policy
+src/lib/ai-mock.functions.ts — split scheduled vs normal on submit
+src/lib/ai-mock-grading.functions.ts  — NEW admin grading fns
+src/lib/leaderboard.functions.ts      — filter by grading_status=published
+src/routes/mock-tests.ai.$testId.result.tsx  — awaiting-review state
+src/routes/_authenticated/admin_.ai-mock.tsx — add "Grade" link
+src/routes/_authenticated/admin_.ai-mock.$testId.grading.tsx — NEW
+```

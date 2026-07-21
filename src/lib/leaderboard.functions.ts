@@ -15,12 +15,16 @@ export const syncMyScoreServer = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Pull this user's attempts that belong to a scheduled ai_mock_test.
+    // Only PUBLISHED attempts count — pending/in-review ones (waiting on
+    // the teacher's manual grading) do not contribute to the leaderboard.
     const { data: attempts, error: aErr } = await supabaseAdmin
       .from("ai_mock_attempts")
       .select("percentage, test_id, ai_mock_tests!inner(test_kind)")
       .eq("user_id", userId)
+      .eq("grading_status", "published")
       .eq("ai_mock_tests.test_kind", "scheduled");
     if (aErr) throw new Error(aErr.message);
+
 
     const rows = (attempts ?? []) as Array<{ percentage: number | null; test_id: string }>;
     const bestByTest = new Map<string, number>();

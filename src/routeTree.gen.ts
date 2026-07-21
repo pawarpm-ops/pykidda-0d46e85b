@@ -47,6 +47,7 @@ import { Route as MockTestsAiTestIdResultRouteImport } from './routes/mock-tests
 import { Route as AuthenticatedMockTestsScheduledTestIdRouteImport } from './routes/_authenticated/mock-tests.scheduled.$testId'
 import { Route as AuthenticatedAdminHomeworkNewRouteImport } from './routes/_authenticated/admin.homework.new'
 import { Route as AuthenticatedAdminHomeworkIdRouteImport } from './routes/_authenticated/admin.homework.$id'
+import { Route as AuthenticatedAdminAiMockTestIdGradingRouteImport } from './routes/_authenticated/admin_.ai-mock.$testId.grading'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -257,6 +258,12 @@ const AuthenticatedAdminHomeworkIdRoute =
     path: '/admin/homework/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminAiMockTestIdGradingRoute =
+  AuthenticatedAdminAiMockTestIdGradingRouteImport.update({
+    id: '/$testId/grading',
+    path: '/$testId/grading',
+    getParentRoute: () => AuthenticatedAdminAiMockRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -277,7 +284,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/assignments': typeof AuthenticatedAdminAssignmentsRoute
-  '/admin/ai-mock': typeof AuthenticatedAdminAiMockRoute
+  '/admin/ai-mock': typeof AuthenticatedAdminAiMockRouteWithChildren
   '/assignments/$id': typeof AuthenticatedAssignmentsIdRoute
   '/homework/$id': typeof AuthenticatedHomeworkIdRoute
   '/practice/$qid': typeof AuthenticatedPracticeQidRoute
@@ -296,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/mock-tests/ai/$testId/warning': typeof MockTestsAiTestIdWarningRoute
   '/admin/homework/': typeof AuthenticatedAdminHomeworkIndexRoute
   '/admin/practice/': typeof AuthenticatedAdminPracticeIndexRoute
+  '/admin/ai-mock/$testId/grading': typeof AuthenticatedAdminAiMockTestIdGradingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -316,7 +324,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/assignments': typeof AuthenticatedAdminAssignmentsRoute
-  '/admin/ai-mock': typeof AuthenticatedAdminAiMockRoute
+  '/admin/ai-mock': typeof AuthenticatedAdminAiMockRouteWithChildren
   '/assignments/$id': typeof AuthenticatedAssignmentsIdRoute
   '/homework/$id': typeof AuthenticatedHomeworkIdRoute
   '/practice/$qid': typeof AuthenticatedPracticeQidRoute
@@ -335,6 +343,7 @@ export interface FileRoutesByTo {
   '/mock-tests/ai/$testId/warning': typeof MockTestsAiTestIdWarningRoute
   '/admin/homework': typeof AuthenticatedAdminHomeworkIndexRoute
   '/admin/practice': typeof AuthenticatedAdminPracticeIndexRoute
+  '/admin/ai-mock/$testId/grading': typeof AuthenticatedAdminAiMockTestIdGradingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -357,7 +366,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/assignments': typeof AuthenticatedAdminAssignmentsRoute
-  '/_authenticated/admin_/ai-mock': typeof AuthenticatedAdminAiMockRoute
+  '/_authenticated/admin_/ai-mock': typeof AuthenticatedAdminAiMockRouteWithChildren
   '/_authenticated/assignments/$id': typeof AuthenticatedAssignmentsIdRoute
   '/_authenticated/homework/$id': typeof AuthenticatedHomeworkIdRoute
   '/_authenticated/practice/$qid': typeof AuthenticatedPracticeQidRoute
@@ -376,6 +385,7 @@ export interface FileRoutesById {
   '/mock-tests/ai/$testId/warning': typeof MockTestsAiTestIdWarningRoute
   '/_authenticated/admin/homework/': typeof AuthenticatedAdminHomeworkIndexRoute
   '/_authenticated/admin/practice/': typeof AuthenticatedAdminPracticeIndexRoute
+  '/_authenticated/admin_/ai-mock/$testId/grading': typeof AuthenticatedAdminAiMockTestIdGradingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/mock-tests/ai/$testId/warning'
     | '/admin/homework/'
     | '/admin/practice/'
+    | '/admin/ai-mock/$testId/grading'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -456,6 +467,7 @@ export interface FileRouteTypes {
     | '/mock-tests/ai/$testId/warning'
     | '/admin/homework'
     | '/admin/practice'
+    | '/admin/ai-mock/$testId/grading'
   id:
     | '__root__'
     | '/'
@@ -496,6 +508,7 @@ export interface FileRouteTypes {
     | '/mock-tests/ai/$testId/warning'
     | '/_authenticated/admin/homework/'
     | '/_authenticated/admin/practice/'
+    | '/_authenticated/admin_/ai-mock/$testId/grading'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -787,8 +800,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminHomeworkIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin_/ai-mock/$testId/grading': {
+      id: '/_authenticated/admin_/ai-mock/$testId/grading'
+      path: '/$testId/grading'
+      fullPath: '/admin/ai-mock/$testId/grading'
+      preLoaderRoute: typeof AuthenticatedAdminAiMockTestIdGradingRouteImport
+      parentRoute: typeof AuthenticatedAdminAiMockRoute
+    }
   }
 }
+
+interface AuthenticatedAdminAiMockRouteChildren {
+  AuthenticatedAdminAiMockTestIdGradingRoute: typeof AuthenticatedAdminAiMockTestIdGradingRoute
+}
+
+const AuthenticatedAdminAiMockRouteChildren: AuthenticatedAdminAiMockRouteChildren =
+  {
+    AuthenticatedAdminAiMockTestIdGradingRoute:
+      AuthenticatedAdminAiMockTestIdGradingRoute,
+  }
+
+const AuthenticatedAdminAiMockRouteWithChildren =
+  AuthenticatedAdminAiMockRoute._addFileChildren(
+    AuthenticatedAdminAiMockRouteChildren,
+  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
@@ -798,7 +833,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStreakJourneyRoute: typeof AuthenticatedStreakJourneyRoute
   AuthenticatedTeacherCommentsRoute: typeof AuthenticatedTeacherCommentsRoute
   AuthenticatedAdminAssignmentsRoute: typeof AuthenticatedAdminAssignmentsRoute
-  AuthenticatedAdminAiMockRoute: typeof AuthenticatedAdminAiMockRoute
+  AuthenticatedAdminAiMockRoute: typeof AuthenticatedAdminAiMockRouteWithChildren
   AuthenticatedAssignmentsIdRoute: typeof AuthenticatedAssignmentsIdRoute
   AuthenticatedHomeworkIdRoute: typeof AuthenticatedHomeworkIdRoute
   AuthenticatedPracticeQidRoute: typeof AuthenticatedPracticeQidRoute
@@ -821,7 +856,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStreakJourneyRoute: AuthenticatedStreakJourneyRoute,
   AuthenticatedTeacherCommentsRoute: AuthenticatedTeacherCommentsRoute,
   AuthenticatedAdminAssignmentsRoute: AuthenticatedAdminAssignmentsRoute,
-  AuthenticatedAdminAiMockRoute: AuthenticatedAdminAiMockRoute,
+  AuthenticatedAdminAiMockRoute: AuthenticatedAdminAiMockRouteWithChildren,
   AuthenticatedAssignmentsIdRoute: AuthenticatedAssignmentsIdRoute,
   AuthenticatedHomeworkIdRoute: AuthenticatedHomeworkIdRoute,
   AuthenticatedPracticeQidRoute: AuthenticatedPracticeQidRoute,
@@ -864,13 +899,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

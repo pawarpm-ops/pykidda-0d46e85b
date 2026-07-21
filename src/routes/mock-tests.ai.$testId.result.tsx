@@ -26,7 +26,9 @@ type GradedAnswer = {
   explanation: string;
   code_passed: number | null;
   code_total: number | null;
+  teacher_comment?: string | null;
 };
+
 
 type Result = {
   marks_obtained: number;
@@ -34,7 +36,11 @@ type Result = {
   percentage: number;
   grade: string;
   answers: GradedAnswer[];
+  grading_status?: string;
+  teacher_feedback?: string | null;
+  reviewed_at?: string | null;
 };
+
 
 type QuestionRow = {
   id: string;
@@ -53,6 +59,7 @@ function ResultPage() {
   const [result, setResult] = useState<Result | null>(null);
   const [testTitle, setTestTitle] = useState("");
   const [questions, setQuestions] = useState<Record<string, QuestionRow>>({});
+  const [pendingReview, setPendingReview] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -64,6 +71,7 @@ function ResultPage() {
       try {
         const res = await getAiMockAttemptResult({ data: { attempt_id: attempt } });
         setResult(res.attempt as unknown as Result);
+        setPendingReview(!!(res as { pending_review?: boolean }).pending_review);
         if (res.test) setTestTitle((res.test as { title: string }).title);
         const map: Record<string, QuestionRow> = {};
         for (const q of res.questions as unknown as QuestionRow[]) map[q.id] = q;
@@ -75,6 +83,30 @@ function ResultPage() {
   }, [attempt, testId]);
 
   if (!result) return <div className="p-10 text-center">Loading result…</div>;
+
+  if (pendingReview) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <SiteHeader />
+        <main className="mx-auto max-w-2xl px-6 py-16">
+          <p className="text-xs uppercase tracking-widest text-accent font-semibold">Awaiting review</p>
+          <h1 className="mt-1 text-3xl font-bold">{testTitle || "Scheduled Mock Test"}</h1>
+          <div className="mt-8 rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+            <div className="text-5xl">📝</div>
+            <p className="mt-4 text-xl font-semibold">Your teacher is grading this test</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Scheduled mock tests are reviewed manually. You'll see your marks, per-question feedback,
+              and the answer key here once the teacher publishes them. You'll also get a notification.
+            </p>
+          </div>
+          <div className="mt-8 flex gap-3">
+            <Link to="/mock-tests" className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground">Back to tests</Link>
+            <Link to="/" className="rounded-md border border-border px-4 py-2 font-semibold">Home</Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const gradeColor =
     result.percentage >= 80 ? "text-[oklch(0.55_0.16_145)]" :
@@ -94,7 +126,17 @@ function ResultPage() {
         <div className="mt-6 rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
           <p className={`text-6xl font-bold ${gradeColor}`}>{result.percentage}%</p>
           <p className="mt-2 text-lg">Grade <b>{result.grade}</b> · {result.marks_obtained} / {result.total_marks} marks</p>
+          {result.reviewed_at && (
+            <p className="mt-2 text-xs text-muted-foreground">Reviewed by your teacher on {new Date(result.reviewed_at).toLocaleString()}</p>
+          )}
         </div>
+
+        {result.teacher_feedback && (
+          <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-primary">💬 Teacher's overall feedback</p>
+            <p className="mt-2 text-sm whitespace-pre-wrap">{result.teacher_feedback}</p>
+          </div>
+        )}
 
         <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} />
 
@@ -106,6 +148,7 @@ function ResultPage() {
     </div>
   );
 }
+
 
 type TabKey = "correct" | "incorrect" | "key";
 
@@ -286,6 +329,14 @@ function AnswerCard({ answer: a, question: q, index, tab }: { answer: GradedAnsw
           <p className="mt-1 text-xs whitespace-pre-wrap">{a.explanation || q?.explanation}</p>
         </div>
       )}
+
+      {a.teacher_comment && (
+        <div className="mt-3 rounded-md border border-primary/40 bg-primary/5 p-3">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-primary">💬 Teacher's comment</p>
+          <p className="mt-1 text-xs whitespace-pre-wrap">{a.teacher_comment}</p>
+        </div>
+      )}
     </li>
+
   );
 }
