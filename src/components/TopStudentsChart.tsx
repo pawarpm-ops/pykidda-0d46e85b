@@ -38,21 +38,40 @@ function CustomTooltip({ active, payload }: any) {
 
 export function TopStudentsChart({ students }: { students: Student[] }) {
   const [topN, setTopN] = useState<5 | 10>(10);
+  const [sortMode, setSortMode] = useState<SortMode>("rank");
 
   const ranked = useMemo(
     () => [...students].sort((a, b) => b.avg - a.avg).map((s, i) => ({ ...s, rank: i + 1 })),
     [students],
   );
+
+  const sorted = useMemo(() => {
+    const arr = [...ranked];
+    if (sortMode === "roll") {
+      arr.sort((a, b) => {
+        const ar = (a.rollNo ?? "").toString();
+        const br = (b.rollNo ?? "").toString();
+        if (!ar && !br) return a.name.localeCompare(b.name);
+        if (!ar) return 1;
+        if (!br) return -1;
+        return ar.localeCompare(br, undefined, { numeric: true, sensitivity: "base" });
+      });
+    } else if (sortMode === "low") {
+      arr.sort((a, b) => a.avg - b.avg);
+    } // "rank" and "high" already sorted by avg desc
+    return arr;
+  }, [ranked, sortMode]);
+
   const shown = useMemo(
     () =>
-      ranked.slice(0, topN).map((s) => ({
+      sorted.slice(0, topN).map((s) => ({
         fullName: s.name,
         name: truncate(s.name),
         avg: s.avg,
         best: s.best,
         rank: s.rank,
       })),
-    [ranked, topN],
+    [sorted, topN],
   );
 
   const topPerformer = ranked[0];
@@ -69,21 +88,42 @@ export function TopStudentsChart({ students }: { students: Student[] }) {
           <h2 className="text-base font-semibold">Top Students Performance</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Average score compared with best score</p>
         </div>
-        {ranked.length > 5 && (
+        <div className="flex flex-col items-end gap-2">
+          {ranked.length > 5 && (
+            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
+              {([5, 10] as const).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setTopN(n)}
+                  className={`px-3 py-1 rounded-md font-medium transition ${
+                    topN === n ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Top {n}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-            {([5, 10] as const).map((n) => (
+            {(
+              [
+                { key: "roll", label: "Roll no." },
+                { key: "high", label: "High → Low" },
+                { key: "low", label: "Low → High" },
+              ] as { key: SortMode; label: string }[]
+            ).map((opt) => (
               <button
-                key={n}
-                onClick={() => setTopN(n)}
+                key={opt.key}
+                onClick={() => setSortMode(opt.key)}
                 className={`px-3 py-1 rounded-md font-medium transition ${
-                  topN === n ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  sortMode === opt.key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Top {n}
+                {opt.label}
               </button>
             ))}
           </div>
-        )}
+        </div>
       </div>
 
       {ranked.length === 0 ? (
