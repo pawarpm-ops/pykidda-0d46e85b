@@ -134,29 +134,38 @@ export const saveGrading = createServerFn({ method: "POST" })
 
     const { data: questions, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
-      .select("id,marks")
-      .eq("test_id", attempt.test_id);
+      .select("id,marks,correct_answer,explanation")
+      .eq("test_id", attempt.test_id)
+      .order("order_index");
     if (qErr) throw new Error(qErr.message);
-    const qMarks = new Map<string, number>();
-    for (const q of (questions ?? []) as Array<{ id: string; marks: number }>) qMarks.set(q.id, q.marks);
+    const qList = (questions ?? []) as Array<{ id: string; marks: number; correct_answer: string; explanation: string }>;
 
     const edits = new Map(data.per_question.map((p) => [p.question_id, p]));
+    const existing = Array.isArray(attempt.answers) ? (attempt.answers as Array<Record<string, unknown>>) : [];
+    const existingByQ = new Map(existing.map((r) => [String((r as any).question_id ?? ""), r]));
+
+    // Iterate over QUESTIONS (source of truth). Every question contributes to
+    // totalMarks; teacher edits are applied; missing edits fall back to any
+    // previously stored per-question value.
     let marksObtained = 0;
     let totalMarks = 0;
-    const existing = Array.isArray(attempt.answers) ? (attempt.answers as Array<Record<string, unknown>>) : [];
-    const nextAnswers = existing.map((row) => {
-      const qid = String((row as any).question_id ?? "");
-      const cap = qMarks.get(qid) ?? Number((row as any).marks_total ?? 0);
+    const nextAnswers = qList.map((q) => {
+      const row = (existingByQ.get(q.id) ?? {}) as Record<string, unknown>;
+      const cap = q.marks;
       totalMarks += cap;
-      const edit = edits.get(qid);
-      const finalMarks = edit
-        ? Math.max(0, Math.min(cap, Number(edit.marks_awarded) || 0))
-        : Number((row as any).marks_awarded ?? 0);
+      const edit = edits.get(q.id);
+      const raw = edit ? Number(edit.marks_awarded) : Number((row as any).marks_awarded ?? 0);
+      const finalMarks = Math.max(0, Math.min(cap, Number.isFinite(raw) ? raw : 0));
       marksObtained += finalMarks;
       return {
         ...row,
+        question_id: q.id,
+        response: String((row as any).response ?? ""),
         marks_awarded: finalMarks,
         marks_total: cap,
+        auto_marks_awarded: Number((row as any).auto_marks_awarded ?? 0),
+        correct_answer: (row as any).correct_answer ?? q.correct_answer,
+        explanation: (row as any).explanation ?? q.explanation,
         teacher_comment: edit ? edit.teacher_comment : String((row as any).teacher_comment ?? ""),
         correct: cap > 0 && finalMarks >= cap,
       };
@@ -171,6 +180,7 @@ export const saveGrading = createServerFn({ method: "POST" })
       .update({
         answers: nextAnswers,
         marks_obtained: data.publish ? marksObtained : 0,
+        total_marks: totalMarks,
         percentage: data.publish ? percentage : 0,
         grade,
         teacher_feedback: data.teacher_feedback,
