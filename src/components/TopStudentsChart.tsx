@@ -37,8 +37,9 @@ function CustomTooltip({ active, payload }: any) {
 }
 
 export function TopStudentsChart({ students }: { students: Student[] }) {
-  const [topN, setTopN] = useState<5 | 10>(10);
   const [sortMode, setSortMode] = useState<SortMode>("rank");
+  const [expanded, setExpanded] = useState(false);
+  const DEFAULT_COUNT = 10;
 
   const ranked = useMemo(
     () => [...students].sort((a, b) => b.avg - a.avg).map((s, i) => ({ ...s, rank: i + 1 })),
@@ -62,17 +63,21 @@ export function TopStudentsChart({ students }: { students: Student[] }) {
     return arr;
   }, [ranked, sortMode]);
 
+  const visibleCount = expanded ? sorted.length : Math.min(DEFAULT_COUNT, sorted.length);
+  const canExpand = sorted.length > DEFAULT_COUNT;
+
   const shown = useMemo(
     () =>
-      sorted.slice(0, topN).map((s) => ({
+      sorted.slice(0, visibleCount).map((s) => ({
         fullName: s.name,
         name: truncate(s.name),
         avg: s.avg,
         best: s.best,
         rank: s.rank,
       })),
-    [sorted, topN],
+    [sorted, visibleCount],
   );
+
 
   const topPerformer = ranked[0];
   const highestBest = useMemo(
