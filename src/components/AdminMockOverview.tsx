@@ -898,31 +898,40 @@ function StudentAnalysis(props: {
 
       {showCommentBox && (
         <div className="rounded-2xl border border-accent/40 bg-accent/5 p-4">
-          <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <label htmlFor="teacher-comment-textarea" className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Teacher comment for {props.studentName}
           </label>
           <textarea
+            id="teacher-comment-textarea"
             value={commentDraft}
             onChange={(e) => setCommentDraft(e.target.value)}
             rows={3}
             maxLength={2000}
             placeholder="Write feedback for this student's attempt…"
-            className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background break-words"
           />
-          <div className="mt-2 flex justify-end gap-2">
-            <button
-              onClick={() => setShowCommentBox(false)}
-              className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary transition"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={saveComment}
-              disabled={savingComment}
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-60"
-            >
-              {savingComment ? "Saving…" : "Save comment"}
-            </button>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="text-[11px] text-muted-foreground tabular-nums" aria-live="polite">
+              {commentDraft.length}/2000
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCommentBox(false)}
+                disabled={savingComment}
+                className="min-h-11 rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary transition disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveComment}
+                disabled={savingComment || commentDraft.trim().length === 0}
+                className="min-h-11 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-60"
+              >
+                {savingComment ? "Saving…" : "Save comment"}
+              </button>
+            </div>
           </div>
         </div>
       )}
