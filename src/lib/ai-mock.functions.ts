@@ -582,50 +582,50 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
       let correct = false;
       let codePassed: number | null = null;
       let codeTotal: number | null = null;
-      if (q.type === "code") {
-        // Server-side grading: bind each server-held test case to the
-        // student's submitted run by stdin match, then diff stdout against
-        // the server-held expected output. Client-reported pass counts are
-        // never trusted.
-        const tests = Array.isArray((q as any).code_tests) ? (q as any).code_tests : [];
-        const total = tests.length;
-        const runs = a?.runs ?? [];
-        let passed = 0;
-        for (const tc of tests as Array<{ stdin: string; expected: string }>) {
-          const run = runs.find(
-            (r) => normalizeOutput(r.stdin ?? "") === normalizeOutput(tc.stdin ?? ""),
-          );
-          if (!run || !run.ok) continue;
-          if (normalizeOutput(run.stdout ?? "") === normalizeOutput(tc.expected ?? "")) {
-            passed++;
+
+      // Scheduled tests are graded manually by the teacher — no auto-grading
+      // is performed on submit. We just capture the student's response and
+      // keep the correct answer available for the answer-key view.
+      if (!isScheduled) {
+        if (q.type === "code") {
+          const tests = Array.isArray((q as any).code_tests) ? (q as any).code_tests : [];
+          const total = tests.length;
+          const runs = a?.runs ?? [];
+          let passed = 0;
+          for (const tc of tests as Array<{ stdin: string; expected: string }>) {
+            const run = runs.find(
+              (r) => normalizeOutput(r.stdin ?? "") === normalizeOutput(tc.stdin ?? ""),
+            );
+            if (!run || !run.ok) continue;
+            if (normalizeOutput(run.stdout ?? "") === normalizeOutput(tc.expected ?? "")) {
+              passed++;
+            }
           }
-        }
-        if (total > 0) {
-          const ratio = passed / total;
-          awarded = Math.min(q.marks, Math.round(ratio * q.marks * 2) / 2);
-          correct = passed === total;
-        }
-        codePassed = passed;
-        codeTotal = total;
-      } else if (q.type === "mcq" || q.type === "tf" || q.type === "fill") {
-        if (normalizeAnswer(response) === normalizeAnswer(q.correct_answer)) {
-          awarded = q.marks;
-          correct = true;
-        }
-      } else if (q.type === "short") {
-        // Simple heuristic: award full marks if the model answer's key tokens appear.
-        const key = normalizeAnswer(q.correct_answer);
-        const resp = normalizeAnswer(response);
-        if (key && resp && (resp.includes(key) || key.split(" ").every((tok) => tok.length < 3 || resp.includes(tok)))) {
-          awarded = q.marks;
-          correct = true;
+          if (total > 0) {
+            const ratio = passed / total;
+            awarded = Math.min(q.marks, Math.round(ratio * q.marks * 2) / 2);
+            correct = passed === total;
+          }
+          codePassed = passed;
+          codeTotal = total;
+        } else if (q.type === "mcq" || q.type === "tf" || q.type === "fill") {
+          if (normalizeAnswer(response) === normalizeAnswer(q.correct_answer)) {
+            awarded = q.marks;
+            correct = true;
+          }
+        } else if (q.type === "short") {
+          const key = normalizeAnswer(q.correct_answer);
+          const resp = normalizeAnswer(response);
+          if (key && resp && (resp.includes(key) || key.split(" ").every((tok) => tok.length < 3 || resp.includes(tok)))) {
+            awarded = q.marks;
+            correct = true;
+          }
         }
       }
       autoMarks += awarded;
       return {
         question_id: q.id,
         response,
-        // For scheduled tests these fields are teacher-editable; we seed with the auto values.
         correct,
         marks_awarded: awarded,
         auto_marks_awarded: awarded,
@@ -637,6 +637,7 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
         code_total: codeTotal,
       };
     });
+
 
     const autoPercentage = totalMarks > 0 ? Math.round((autoMarks / totalMarks) * 100) : 0;
 
@@ -728,30 +729,50 @@ export const getAiMockAttemptResult = createServerFn({ method: "POST" })
       .eq("id", attempt.test_id)
       .single();
 
-    // Student view: if scheduled and not yet published, strip answer key so
-    // the teacher's un-reviewed auto marks don't leak.
+    // Student view: if scheduled and not yet published, strip grading data
+    // (marks / correctness) but expose the answer key so students can review
+    // the correct answer of every question while waiting for the teacher.
     const isOwnerNotAdmin = attempt.user_id === context.userId && !isAdmin;
     const pending = attempt.grading_status !== "published";
-    if (isOwnerNotAdmin && pending) {
-      return {
-        attempt: {
-          ...attempt,
-          answers: [],
-          teacher_feedback: null,
-        },
-        test,
-        questions: [],
-        pending_review: true,
-      };
-    }
-
     const { data: questions, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
       .select("id,prompt,type,options,correct_answer,starter_code,explanation,order_index")
       .eq("test_id", attempt.test_id)
       .order("order_index");
     if (qErr) throw new Error(qErr.message);
+
+    if (isOwnerNotAdmin && pending) {
+      const sanitizedAnswers = Array.isArray(attempt.answers)
+        ? (attempt.answers as any[]).map((a) => ({
+            question_id: a.question_id,
+            response: a.response ?? "",
+            correct: false,
+            marks_awarded: 0,
+            marks_total: a.marks_total ?? 0,
+            correct_answer: a.correct_answer ?? "",
+            explanation: a.explanation ?? "",
+            code_passed: null,
+            code_total: null,
+            teacher_comment: null,
+          }))
+        : [];
+      return {
+        attempt: {
+          ...attempt,
+          marks_obtained: 0,
+          percentage: 0,
+          grade: "-",
+          answers: sanitizedAnswers,
+          teacher_feedback: null,
+        },
+        test,
+        questions: questions ?? [],
+        pending_review: true,
+      };
+    }
+
     return { attempt, test, questions: questions ?? [], pending_review: false };
+
   });
 
 

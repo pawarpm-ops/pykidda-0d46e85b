@@ -88,17 +88,31 @@ function ResultPage() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
-        <main className="mx-auto max-w-2xl px-6 py-16">
-          <p className="text-xs uppercase tracking-widest text-accent font-semibold">Awaiting review</p>
+        <main className="mx-auto max-w-4xl px-6 py-10">
+          <p className="text-xs uppercase tracking-widest text-accent font-semibold">Answer Key</p>
           <h1 className="mt-1 text-3xl font-bold">{testTitle || "Scheduled Mock Test"}</h1>
-          <div className="mt-8 rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
-            <div className="text-5xl">📝</div>
-            <p className="mt-4 text-xl font-semibold">Your teacher is grading this test</p>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Scheduled mock tests are reviewed manually. You'll see your marks, per-question feedback,
-              and the answer key here once the teacher publishes them. You'll also get a notification.
+
+          <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-6">
+            <p className="text-lg font-semibold">📝 Your test has been submitted</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Scheduled mock tests are graded manually by your teacher. Marks, grade,
+              and per-question feedback will appear here after the teacher publishes results.
+              In the meantime, review the correct answer for every question below.
             </p>
           </div>
+
+          <section className="mt-8 space-y-4">
+            {result.answers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No questions to display.</p>
+            ) : (
+              <ol className="space-y-4">
+                {result.answers.map((a, i) => (
+                  <AnswerCard key={a.question_id} answer={a} question={questions[a.question_id]} index={i} tab="key" />
+                ))}
+              </ol>
+            )}
+          </section>
+
           <div className="mt-8 flex gap-3">
             <Link to="/mock-tests" className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground">Back to tests</Link>
             <Link to="/" className="rounded-md border border-border px-4 py-2 font-semibold">Home</Link>
@@ -107,6 +121,7 @@ function ResultPage() {
       </div>
     );
   }
+
 
   const gradeColor =
     result.percentage >= 80 ? "text-[oklch(0.55_0.16_145)]" :
