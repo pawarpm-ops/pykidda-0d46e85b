@@ -219,7 +219,7 @@ function HelpPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12 pb-28">
       {/* Header */}
       <div className="mb-8">
         <Button
@@ -227,33 +227,35 @@ function HelpPage() {
           size="sm"
           onClick={handleBack}
           aria-label="Go back"
-          title="Go back"
-          className="mb-4 -ml-2 gap-1.5 text-muted-foreground hover:text-foreground"
+          className="mb-4 -ml-2 gap-1.5 min-h-11 text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          <span>Back</span>
         </Button>
         <PageHeader
           eyebrow="Support"
           title="Help & FAQ"
           description="Quick answers about homework, mock tests, streaks, results and coding. Search below or pick a category."
-          icon={<HelpCircle className="h-5 w-5" />}
+          icon={<HelpCircle className="h-5 w-5" aria-hidden />}
         />
       </div>
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <label htmlFor="help-search" className="sr-only">Search help topics</label>
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden />
         <Input
+          id="help-search"
+          type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search help topics…"
           className="pl-10 h-11"
-          aria-label="Search help topics"
         />
       </div>
 
       {/* Quick cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+      <nav aria-label="Quick help topics" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
         {QUICK_CARDS.map((c) => {
           const Icon = c.icon;
           return (
@@ -261,23 +263,24 @@ function HelpPage() {
               key={c.target}
               type="button"
               onClick={() => jumpTo(c.target)}
-              className="group text-left rounded-xl border border-border bg-card/60 p-4 hover:border-primary/50 hover:bg-card transition-colors"
+              className="group text-left rounded-xl border border-border bg-card/60 p-4 min-h-16 hover:border-primary/50 hover:bg-card transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <Icon className="h-5 w-5 text-primary mb-2" />
+              <Icon className="h-5 w-5 text-primary mb-2" aria-hidden />
               <div className="text-sm font-semibold">{c.title}</div>
               <div className="text-xs text-muted-foreground mt-0.5">{c.desc}</div>
             </button>
           );
         })}
-      </div>
+      </nav>
 
       {/* Category filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div role="group" aria-label="Filter by category" className="flex flex-wrap gap-2 mb-4">
         <button
           type="button"
           onClick={() => setActiveCat("All")}
+          aria-pressed={activeCat === "All"}
           className={cn(
-            "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+            "px-3 py-1.5 min-h-9 rounded-full text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             activeCat === "All"
               ? "bg-primary text-primary-foreground border-primary"
               : "border-border bg-background hover:border-primary/50",
@@ -293,14 +296,15 @@ function HelpPage() {
               key={c.key}
               type="button"
               onClick={() => setActiveCat(c.key)}
+              aria-pressed={active}
               className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                "inline-flex items-center gap-1.5 px-3 py-1.5 min-h-9 rounded-full text-xs font-medium border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 active
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-border bg-background hover:border-primary/50",
               )}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-3.5 w-3.5" aria-hidden />
               {c.key}
             </button>
           );
@@ -309,8 +313,25 @@ function HelpPage() {
 
       {/* FAQ list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card/40 p-10 text-center">
-          <p className="text-sm text-muted-foreground">No help topic found.</p>
+        <div className="rounded-xl border border-dashed border-border bg-card/40 p-10 text-center" role="status" aria-live="polite">
+          <p className="text-sm font-medium text-foreground">
+            {query.trim() ? "No results" : "No help topics"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {query.trim()
+              ? `No help topic matches "${query.trim()}". Try a different word or clear the search.`
+              : "Nothing to show yet."}
+          </p>
+          {query.trim() && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => { setQuery(""); setActiveCat("All"); }}
+            >
+              Clear search
+            </Button>
+          )}
         </div>
       ) : (
         <Accordion
@@ -327,15 +348,15 @@ function HelpPage() {
               id={`faq-${f.id}`}
               className="px-4 border-b-0 hover:bg-primary/[0.03] transition-colors"
             >
-              <AccordionTrigger className="text-left hover:no-underline">
+              <AccordionTrigger className="text-left hover:no-underline min-h-11">
                 <div className="flex items-start gap-3">
                   <Badge variant="outline" className="mt-0.5 shrink-0 text-[10px]">
                     {f.category}
                   </Badge>
-                  <span className="font-medium">{f.q}</span>
+                  <span className="font-medium break-words">{f.q}</span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground pt-1 pb-4 pl-1">
+              <AccordionContent className="text-sm text-muted-foreground pt-1 pb-4 pl-1 break-words">
                 {f.a}
               </AccordionContent>
             </AccordionItem>
@@ -346,7 +367,7 @@ function HelpPage() {
       {/* Report problem CTA */}
       <div className="mt-10 rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card/60 to-card p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/30">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/30" aria-hidden>
             <LifeBuoy className="h-5 w-5" />
           </span>
           <div>
@@ -356,19 +377,15 @@ function HelpPage() {
             </p>
           </div>
         </div>
-        <button
+        <Button
           type="button"
           onClick={openReport}
-          className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm"
-          style={{
-            backgroundImage:
-              "linear-gradient(135deg,#f59e0b 0%,#ea580c 50%,#dc2626 100%)",
-          }}
+          className="min-h-11"
         >
           Report a problem
-        </button>
+        </Button>
       </div>
-      </div>
+      </main>
     </div>
   );
 }
