@@ -224,6 +224,8 @@ function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false,
                 question={q}
                 index={origIdx}
                 tab={tab}
+                testTitle={testTitle}
+                showAiExplain={showAiExplain}
               />
             );
           })}
