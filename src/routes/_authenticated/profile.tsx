@@ -57,7 +57,7 @@ function ProfilePage() {
   const [publicSettings, setPublicSettings] = useState<PublicProfileSettings>(DEFAULT_PUBLIC_SETTINGS);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
 
-  type TabKey = "profile" | "streak" | "badges" | "qr" | "reports" | "tutorial";
+  type TabKey = "profile" | "streak" | "qr" | "reports" | "tutorial";
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
 
 
