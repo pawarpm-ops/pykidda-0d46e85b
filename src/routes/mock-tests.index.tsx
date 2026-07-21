@@ -61,7 +61,9 @@ function scheduledStatus(t: AiTestRow): { label: "Upcoming" | "Available Now" | 
 
 function MockTestsList() {
   const listFn = useServerFn(listAiMockTests);
+  const attemptsFn = useServerFn(listMyAiMockAttempts);
   const [aiTests, setAiTests] = useState<AiTestRow[]>([]);
+  const [latestAttempts, setLatestAttempts] = useState<Record<string, { id: string; grading_status?: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window !== "undefined" && window.location.hash.replace("#", "") === "scheduled") return "scheduled";
@@ -91,6 +93,31 @@ function MockTestsList() {
 
   const normalAi = aiTests.filter((t) => (t.test_kind ?? "normal") === "normal");
   const scheduledAi = aiTests.filter((t) => t.test_kind === "scheduled");
+
+  useEffect(() => {
+    if (scheduledAi.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        scheduledAi.map(async (t) => {
+          try {
+            const rows = await attemptsFn({ data: { test_id: t.id } });
+            const first = (rows as Array<{ id: string; grading_status?: string | null }>)[0];
+            return first ? ([t.id, { id: first.id, grading_status: first.grading_status }] as const) : null;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      if (cancelled) return;
+      const map: Record<string, { id: string; grading_status?: string | null }> = {};
+      for (const e of entries) if (e) map[e[0]] = e[1];
+      setLatestAttempts(map);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiTests]);
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
