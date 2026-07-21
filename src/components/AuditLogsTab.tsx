@@ -310,25 +310,23 @@ export function AuditLogsTab({
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <FilterField label="From">
-            <input
-              type="date"
+            <DatePicker
               value={from}
-              onChange={(e) => {
-                setFrom(e.target.value);
+              onChange={(v) => {
+                setFrom(v);
                 setPage(0);
               }}
-              className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+              placeholder="From date"
             />
           </FilterField>
           <FilterField label="To">
-            <input
-              type="date"
+            <DatePicker
               value={to}
-              onChange={(e) => {
-                setTo(e.target.value);
+              onChange={(v) => {
+                setTo(v);
                 setPage(0);
               }}
-              className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+              placeholder="To date"
             />
           </FilterField>
           {isAdmin && (
