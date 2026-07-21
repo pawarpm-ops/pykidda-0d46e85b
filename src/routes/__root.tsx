@@ -303,6 +303,7 @@ function AuthGate({ children }: { children: ReactNode }) {
           
           <DailyStreakToaster />
           <StreakWarningToaster />
+          <SonnerToaster />
           {!isSecureRoute && <PykoFloatingPanel />}
         </>
       )}
