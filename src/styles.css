@@ -177,6 +177,15 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --success: oklch(0.72 0.17 155);
+  --success-foreground: oklch(0.15 0.02 250);
+  --warning: oklch(0.82 0.16 82);
+  --warning-foreground: oklch(0.18 0.03 60);
+  --info: oklch(0.72 0.14 240);
+  --info-foreground: oklch(0.12 0.02 250);
+  --surface: oklch(0.19 0.04 265);
+  --surface-elevated: oklch(0.24 0.045 265);
+  --surface-muted: oklch(0.22 0.04 260);
 }
 
 @layer base {
