@@ -36,9 +36,10 @@ import { StreakDebugTab } from "@/components/StreakDebugTab";
 import { AuditLogsTab } from "@/components/AuditLogsTab";
 import { SystemHealthTab } from "@/components/SystemHealthTab";
 import { logAdminActionClient } from "@/lib/audit-log-client";
-import { BadgesGrid } from "@/components/BadgesGrid";
+
+
 import { DatePicker } from "@/components/ui/date-picker";
-import { AdminBadgesOverview } from "@/components/AdminBadgesOverview";
+
 import {
   LayoutDashboard,
   Users,
@@ -280,7 +281,7 @@ function ScoreDistributionCard({
 function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks" | "audit" | "health" | "badges">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks" | "audit" | "health">("overview");
   const [overviewSubTab, setOverviewSubTab] = useState<"complete" | "mocks">("complete");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
@@ -736,12 +737,6 @@ function AdminPage() {
 
         {tab === "health" && <SystemHealthTab />}
 
-        {tab === "badges" && (
-          <section className="mt-6">
-            <h2 className="mb-4 text-xl font-semibold">Badge overview</h2>
-            <AdminBadgesOverview />
-          </section>
-        )}
 
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
@@ -1179,7 +1174,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
               );
             })()}
 
-            {selected && <BadgesGrid studentId={selected} title="Student badges" />}
+            
 
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Recent practice</h3>
             {selPractice.length === 0 ? (

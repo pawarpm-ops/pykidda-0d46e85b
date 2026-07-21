@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { User, Flame, Award, FileText, GraduationCap, QrCode, type LucideIcon } from "lucide-react";
+import { User, Flame, FileText, GraduationCap, QrCode, type LucideIcon } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StreakCard } from "@/components/StreakCard";
 import { ProfileQrCard } from "@/components/ProfileQrCard";
-import { BadgesGrid } from "@/components/BadgesGrid";
-import { YourNextBadges } from "@/components/YourNextBadges";
 import { DEFAULT_PUBLIC_SETTINGS, type PublicProfileSettings } from "@/lib/publicProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { restartTutorial } from "@/components/OnboardingTutorial";
@@ -59,7 +57,7 @@ function ProfilePage() {
   const [publicSettings, setPublicSettings] = useState<PublicProfileSettings>(DEFAULT_PUBLIC_SETTINGS);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
 
-  type TabKey = "profile" | "streak" | "badges" | "qr" | "reports" | "tutorial";
+  type TabKey = "profile" | "streak" | "qr" | "reports" | "tutorial";
   const [activeTab, setActiveTab] = useState<TabKey>("profile");
 
 
@@ -209,7 +207,7 @@ function ProfilePage() {
   const tabs: { key: TabKey; label: string; icon: LucideIcon }[] = [
     { key: "profile", label: "Your Profile", icon: User },
     { key: "streak", label: "Streak", icon: Flame },
-    { key: "badges", label: "Badges", icon: Award },
+    
     { key: "qr", label: "QR & Privacy", icon: QrCode },
     { key: "reports", label: "Reports", icon: FileText },
     { key: "tutorial", label: "Website Tutorial", icon: GraduationCap },
@@ -468,13 +466,6 @@ function ProfilePage() {
               )}
 
               {activeTab === "streak" && <StreakCard />}
-
-              {activeTab === "badges" && (
-                <div className="flex flex-col gap-6">
-                  <YourNextBadges />
-                  {userId && <BadgesGrid studentId={userId} />}
-                </div>
-              )}
 
               {activeTab === "qr" && (
                 <div className="flex flex-col gap-6">
