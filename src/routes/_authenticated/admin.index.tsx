@@ -162,6 +162,118 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
+function ScoreDistributionCard({
+  bands,
+  total,
+}: {
+  bands: { name: string; value: number; color: string }[];
+  total: number;
+}) {
+  const avg = total > 0
+    ? Math.round(bands.reduce((sum, b, i) => {
+        // midpoint per band: 90, 70, 50, 20
+        const mid = [90, 70, 50, 20][i] ?? 0;
+        return sum + b.value * mid;
+      }, 0) / total)
+    : 0;
+  const topBand = bands.reduce((m, b) => (b.value > m.value ? b : m), bands[0]);
+
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40">
+      <div
+        className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full opacity-[0.08] blur-3xl"
+        style={{ background: `radial-gradient(circle, ${topBand?.color ?? "var(--primary)"}, transparent 70%)` }}
+        aria-hidden
+      />
+
+      <div className="relative flex items-start justify-between gap-3 mb-1">
+        <div>
+          <h2 className="text-base font-semibold">Score distribution</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            How students performed across all mock attempts
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-muted/40 px-2.5 py-1 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+          Avg {avg}%
+        </div>
+      </div>
+
+      {total === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">No data.</p>
+      ) : (
+        <div className="relative mt-4 grid gap-5 md:grid-cols-[1fr_1.1fr] items-center">
+          <div className="relative mx-auto h-[220px] w-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={bands}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  stroke="var(--card)"
+                  strokeWidth={2}
+                >
+                  {bands.map((b, i) => (
+                    <Cell key={i} fill={b.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    color: "var(--popover-foreground)",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                Attempts
+              </span>
+              <span className="text-3xl font-bold tabular-nums">{total}</span>
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            {bands.map((b) => {
+              const pct = total > 0 ? Math.round((b.value / total) * 100) : 0;
+              return (
+                <div
+                  key={b.name}
+                  className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/60"
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ background: b.color, boxShadow: `0 0 10px ${b.color}` }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium text-foreground truncate">{b.name}</p>
+                    <div className="mt-1 h-1.5 w-full rounded-full bg-border/60 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-[width] duration-500"
+                        style={{ width: `${pct}%`, background: b.color }}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold tabular-nums leading-none">{b.value}</p>
+                    <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">{pct}%</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
