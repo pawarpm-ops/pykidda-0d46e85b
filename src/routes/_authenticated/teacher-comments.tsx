@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_TESTS } from "@/lib/questions";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState, EmptyState } from "@/components/ui/state";
 
 export const Route = createFileRoute("/_authenticated/teacher-comments")({
   head: () => ({
