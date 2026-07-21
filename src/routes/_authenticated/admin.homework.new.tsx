@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { adminCreateHomework } from "@/lib/homework.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/homework/new")({
@@ -51,26 +53,22 @@ function NewHomeworkPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-3xl px-6 py-8">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin · New homework</p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Pencil size={22} className="text-accent" /> Create Homework Manually
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Fill in the basics — you'll add questions on the next step.
-            </p>
-          </div>
-          <Link
-            to="/admin/homework"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"
-          >
-            ← Back
-          </Link>
-        </div>
+      <main className="mx-auto max-w-3xl px-6 py-8 pb-28">
+        <PageHeader
+          eyebrow="Admin · New homework"
+          icon={<Pencil size={20} />}
+          title="Create Homework Manually"
+          description="Fill in the basics — you'll add questions on the next step."
+          breadcrumbs={[{ label: "Admin", to: "/admin" }, { label: "Homework", to: "/admin/homework" }, { label: "New" }]}
+          actions={
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin/homework">← Back</Link>
+            </Button>
+          }
+        />
 
-        <div className="mt-6 rounded-2xl border border-border bg-card p-6 space-y-4">
+        <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Title

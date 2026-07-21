@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Pencil, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   adminListHomework,
   adminDeleteHomework,
@@ -95,20 +96,14 @@ function AdminHomeworkList() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <Link
-          to="/admin"
-          className="inline-flex w-fit items-center rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"
-        >
-          ← Back to admin
-        </Link>
-        <div className="mt-4">
-          <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Homework 📚</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create multi-question homework, publish it, and grade student submissions.
-          </p>
-        </div>
+      <main className="mx-auto max-w-6xl px-6 py-8 pb-28">
+        <PageHeader
+          eyebrow="Admin"
+          title="Homework 📚"
+          description="Create multi-question homework, publish it, and grade student submissions."
+          breadcrumbs={[{ label: "Admin", to: "/admin" }, { label: "Homework" }]}
+        />
+
 
         {/* Homework / Practice switcher */}
         <div className="mt-6 inline-flex rounded-lg border border-border bg-card p-1 text-sm">

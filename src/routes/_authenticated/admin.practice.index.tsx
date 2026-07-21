@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import {
   adminListPracticeQuestions,
   adminDeletePracticeQuestion,
@@ -66,24 +68,21 @@ function AdminPracticePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin</p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight">Practice 🧠</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              AI-generated practice questions. Publish to make them appear in the student Practice tab.
-            </p>
-          </div>
-          <Link
-            to="/admin/homework"
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"
-          >
-            ← Back to Homework / Practice
-          </Link>
-        </div>
+      <main className="mx-auto max-w-6xl px-6 py-8 pb-28">
+        <PageHeader
+          eyebrow="Admin"
+          title="Practice 🧠"
+          description="AI-generated practice questions. Publish to make them appear in the student Practice tab."
+          breadcrumbs={[{ label: "Admin", to: "/admin" }, { label: "Practice" }]}
+          actions={
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin/homework">← Homework / Practice</Link>
+            </Button>
+          }
+        />
 
-        <div className="mt-6">
+        <div>
+
           <button
             onClick={() => setShowAi(true)}
             className="group w-full text-left rounded-2xl border-2 border-border bg-card p-6 transition-all duration-200 hover:border-primary hover:scale-[1.01] hover:shadow-[var(--shadow-warm)]"

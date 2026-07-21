@@ -100,7 +100,7 @@ function AdminHomeworkEditor() {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
-        <main className="mx-auto max-w-4xl px-6 py-8">Loading…</main>
+        <main className="mx-auto max-w-4xl px-6 py-8 pb-28">Loading…</main>
       </div>
     );
 
@@ -112,7 +112,7 @@ function AdminHomeworkEditor() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-4xl px-6 py-8">
+      <main className="mx-auto max-w-4xl px-6 py-8 pb-28">
         <Link
           to="/admin/homework"
           className="text-sm text-muted-foreground hover:text-accent"

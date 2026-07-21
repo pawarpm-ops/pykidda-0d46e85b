@@ -179,7 +179,7 @@ function AdminAssignmentsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-6 py-8 pb-28">
         <div className="flex items-baseline justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Homework Admin 📚</h1>

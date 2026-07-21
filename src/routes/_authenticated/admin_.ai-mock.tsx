@@ -5,6 +5,8 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { useIsAdmin } from "@/lib/role";
 import {
   generateAiMockTest,
@@ -89,19 +91,21 @@ function AiMockAdmin() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin · Beta</p>
-            <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">🧪 AI Mock Test Creator</h1>
-            <p className="mt-1 text-muted-foreground max-w-2xl">
-              Upload a syllabus PDF, let AI draft a full mock test, then review, edit and publish it for students.
-            </p>
-          </div>
-          <Link to="/admin" className="text-sm text-primary hover:underline">← Back to admin</Link>
-        </div>
+      <main className="mx-auto max-w-6xl px-6 py-10 pb-28">
+        <PageHeader
+          eyebrow="Admin · Beta"
+          title="🧪 AI Mock Test Creator"
+          description="Upload a syllabus PDF, let AI draft a full mock test, then review, edit and publish it for students."
+          breadcrumbs={[{ label: "Admin", to: "/admin" }, { label: "AI Mock Test" }]}
+          actions={
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin">← Back to admin</Link>
+            </Button>
+          }
+        />
 
         {isAdmin === null ? (
+
           <p className="mt-10 text-muted-foreground">Loading…</p>
         ) : (
           <Editor />
