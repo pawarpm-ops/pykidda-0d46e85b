@@ -538,21 +538,6 @@ function AdminPage() {
                 )}
               </ChartCard>
 
-              <ChartCard title="Unit-wise average performance">
-                {unitData.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No practice data.</p>
-                ) : (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={unitData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                      <CartesianGrid stroke="oklch(0.85 0.01 250)" strokeDasharray="3 3" opacity={0.4} />
-                      <XAxis dataKey="unit" tick={{ fontSize: 12 }} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={(v: number) => [`${v}%`, "Avg"]} />
-                      <Bar dataKey="avgPct" fill={C.teal} radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </ChartCard>
 
               <ChartCard title="Submission integrity">
                 {subBreakdown.length === 0 ? (
