@@ -95,48 +95,56 @@ function MockTestsList() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-5xl px-6 py-12">
-        <p className="text-xs font-semibold uppercase tracking-widest text-accent">Exam mode</p>
-        <h1 className="mt-2 text-3xl md:text-4xl font-bold tracking-tight">Choose a mock test</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">
-          Use a laptop or desktop. Tests run in full-screen mode and{" "}
-          <strong className="text-foreground">auto-submit if you exit</strong>. Coding questions are graded in your browser with real Python.
-        </p>
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12 pb-24">
+        <PageHeader
+          eyebrow="Exam mode"
+          icon={<ClipboardList className="h-5 w-5" aria-hidden />}
+          title="Choose a mock test"
+          description={
+            <>
+              Use a laptop or desktop. Tests run in full-screen mode and{" "}
+              <strong className="text-foreground">auto-submit if you exit</strong>. Coding questions are graded in your browser with real Python.
+            </>
+          }
+        />
 
-        <div className="mt-6 inline-flex rounded-lg border border-border bg-card p-1" role="tablist">
-          <button
-            role="tab"
-            aria-selected={tab === "normal"}
-            onClick={() => setTab("normal")}
-            className={`px-4 py-2 rounded-md text-sm font-semibold transition ${tab === "normal" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            📘 Normal Mock Tests
-          </button>
-          <button
-            role="tab"
-            aria-selected={tab === "scheduled"}
-            onClick={() => setTab("scheduled")}
-            className={`px-4 py-2 rounded-md text-sm font-semibold transition ${tab === "scheduled" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            📅 Scheduled Mock Tests {scheduledAi.length > 0 && <span className="ml-1 text-xs opacity-80">({scheduledAi.length})</span>}
-          </button>
-        </div>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="mt-2">
+          <TabsList>
+            <TabsTrigger value="normal" className="gap-2">
+              <ClipboardList className="h-4 w-4" aria-hidden />
+              <span>Normal</span>
+            </TabsTrigger>
+            <TabsTrigger value="scheduled" className="gap-2">
+              <CalendarClock className="h-4 w-4" aria-hidden />
+              <span>Scheduled</span>
+              {scheduledAi.length > 0 && (
+                <span className="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  {scheduledAi.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-        {tab === "normal" && (
-          <section className="mt-6">
+          <TabsContent value="normal" className="mt-6">
             {loading ? (
-              <p className="mt-3 text-sm text-muted-foreground">Loading tests…</p>
+              <LoadingState label="Loading tests…" />
+            ) : normalAi.length === 0 && MOCK_TESTS.length === 0 ? (
+              <EmptyState
+                icon={<ClipboardList className="h-5 w-5" aria-hidden />}
+                title="No mock tests available"
+                description="Ask your teacher to publish one, or check back later."
+              />
             ) : (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {normalAi.map((t) => (
                   <div
                     key={`ai-${t.id}`}
                     className="card-glow rounded-xl border border-border bg-card p-5 flex flex-col relative overflow-hidden"
                   >
-                    <div className="absolute top-0 right-0 rounded-bl-lg bg-[oklch(0.65_0.16_145)] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
-                      AI
+                    <div className="absolute top-0 right-0 rounded-bl-lg bg-[oklch(0.65_0.16_145)] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white inline-flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" aria-hidden /> AI
                     </div>
-                    <h3 className="font-semibold text-lg pr-12">{t.title}</h3>
+                    <h3 className="font-semibold text-lg pr-14">{t.title}</h3>
                     <p className="mt-2 text-sm text-muted-foreground flex-1">
                       {t.description || "AI-generated mock test."}
                     </p>
@@ -148,7 +156,7 @@ function MockTestsList() {
                         <Link
                           to="/mock-tests/ai/$testId/warning"
                           params={{ testId: t.id }}
-                          className="inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                          className="inline-flex min-h-11 items-center rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           style={{ backgroundImage: "var(--gradient-sunrise)" }}
                         >
                           Start
@@ -173,7 +181,7 @@ function MockTestsList() {
                         <Link
                           to="/mock-tests/$testId/warning"
                           params={{ testId: t.id }}
-                          className="inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                          className="inline-flex min-h-11 items-center rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           style={{ backgroundImage: "var(--gradient-sunrise)" }}
                         >
                           Start
@@ -185,19 +193,19 @@ function MockTestsList() {
                 })}
               </div>
             )}
-          </section>
-        )}
+          </TabsContent>
 
-        {tab === "scheduled" && (
-          <section className="mt-6">
+          <TabsContent value="scheduled" className="mt-6">
             {loading ? (
-              <p className="mt-3 text-sm text-muted-foreground">Loading scheduled tests…</p>
+              <LoadingState label="Loading scheduled tests…" />
             ) : scheduledAi.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-                No scheduled mock tests right now. Check back when your teacher publishes one.
-              </div>
+              <EmptyState
+                icon={<CalendarClock className="h-5 w-5" aria-hidden />}
+                title="No scheduled mock tests right now"
+                description="Your teacher hasn't published one yet. Check back soon."
+              />
             ) : (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {scheduledAi.map((t) => {
                   const st = scheduledStatus(t);
                   const badgeClass =
@@ -206,10 +214,10 @@ function MockTestsList() {
                     : "bg-muted text-muted-foreground";
                   return (
                     <div key={`sched-${t.id}`} className="card-glow rounded-xl border border-border bg-card p-5 flex flex-col relative overflow-hidden">
-                      <div className="absolute top-0 right-0 rounded-bl-lg bg-[oklch(0.55_0.18_260)] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
-                        📅 Scheduled
+                      <div className="absolute top-0 right-0 rounded-bl-lg bg-[oklch(0.55_0.18_260)] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white inline-flex items-center gap-1">
+                        <CalendarClock className="h-3 w-3" aria-hidden /> Scheduled
                       </div>
-                      <h3 className="font-semibold text-lg pr-24">{t.title}</h3>
+                      <h3 className="font-semibold text-lg pr-28">{t.title}</h3>
                       <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
                         {t.description || "AI-generated mock test."}
                       </p>
@@ -219,12 +227,16 @@ function MockTestsList() {
                         <p>⏱ {Math.round(t.duration_sec / 60)} min · {t.question_count} Qs · {t.total_marks} marks</p>
                       </div>
                       <div className="mt-3">
-                        <span className={`inline-block rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest ${badgeClass}`}>
+                        <span
+                          role="status"
+                          aria-label={`Status: ${st.label}`}
+                          className={`inline-block rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-widest ${badgeClass}`}
+                        >
                           {st.label}
                         </span>
                       </div>
                       <p className="mt-2 text-xs text-muted-foreground">{st.msg}</p>
-                      <div className="mt-4 flex items-center justify-between">
+                      <div className="mt-4 flex items-center justify-between gap-2">
                         <Link
                           to="/mock-tests/scheduled/$testId"
                           params={{ testId: t.id }}
@@ -236,7 +248,7 @@ function MockTestsList() {
                           <Link
                             to="/mock-tests/ai/$testId/warning"
                             params={{ testId: t.id }}
-                            className="inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                            className="inline-flex min-h-11 items-center rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             style={{ backgroundImage: "var(--gradient-sunrise)" }}
                           >
                             Attend Test
@@ -244,7 +256,9 @@ function MockTestsList() {
                         ) : (
                           <button
                             disabled
-                            className="inline-flex items-center rounded-md border border-border px-3 py-2 text-sm font-semibold text-muted-foreground opacity-60"
+                            aria-disabled="true"
+                            title={st.msg}
+                            className="inline-flex min-h-11 items-center rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground opacity-60 cursor-not-allowed"
                           >
                             Attend Test
                           </button>
@@ -255,12 +269,13 @@ function MockTestsList() {
                 })}
               </div>
             )}
-          </section>
-        )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
 }
+
 
 // ------- History components -------
 
