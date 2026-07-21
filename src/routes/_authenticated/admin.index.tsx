@@ -1174,7 +1174,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
               );
             })()}
 
-            {selected && <BadgesGrid studentId={selected} title="Student badges" />}
+            
 
             <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Recent practice</h3>
             {selPractice.length === 0 ? (
