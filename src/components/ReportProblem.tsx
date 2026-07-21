@@ -122,6 +122,7 @@ export function ReportProblem() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
     setErrMsg(null);
     setOkMsg(null);
     if (!userId) {
