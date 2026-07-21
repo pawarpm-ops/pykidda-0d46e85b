@@ -666,7 +666,18 @@ function Editor() {
 
 
       <aside className="lg:sticky lg:top-4 self-start rounded-2xl border border-border bg-card p-5 shadow-sm">
-        <h3 className="font-semibold flex items-center gap-2"><span>📚</span> My tests</h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-semibold flex items-center gap-2"><span>📚</span> My tests</h3>
+          {tests.length > 0 && (
+            <button
+              onClick={onDeleteAll}
+              disabled={!!busy}
+              className="text-xs rounded-md border border-destructive/50 text-destructive px-2 py-1 hover:bg-destructive/10 disabled:opacity-50"
+            >
+              Delete all
+            </button>
+          )}
+        </div>
         {loadingTests ? (
           <p className="text-sm text-muted-foreground mt-3">Loading…</p>
         ) : tests.length === 0 ? (
