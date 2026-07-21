@@ -95,7 +95,7 @@ function AdminHomeworkList() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-6 py-8 pb-28">
         <Link
           to="/admin"
           className="inline-flex w-fit items-center rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/60"

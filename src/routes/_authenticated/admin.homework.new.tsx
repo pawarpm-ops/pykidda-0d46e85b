@@ -51,7 +51,7 @@ function NewHomeworkPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <main className="mx-auto max-w-3xl px-6 py-8 pb-28">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin · New homework</p>

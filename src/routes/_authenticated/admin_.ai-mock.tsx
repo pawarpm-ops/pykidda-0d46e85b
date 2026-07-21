@@ -89,7 +89,7 @@ function AiMockAdmin() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <main className="mx-auto max-w-6xl px-6 py-10 pb-28">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <p className="text-xs uppercase tracking-widest text-accent font-semibold">Admin · Beta</p>
