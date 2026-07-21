@@ -1176,32 +1176,6 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
 
             
 
-            <h3 className="mt-6 text-sm font-semibold uppercase tracking-widest text-muted-foreground">Recent practice</h3>
-            {selPractice.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">None.</p>
-            ) : (
-              <ul className="mt-2 divide-y divide-border text-sm">
-                {selPractice.slice(0, 30).map((p) => (
-                  <li key={p.id} className="py-2 flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate">{p.question_id}</p>
-                      <p className="text-xs text-muted-foreground">Unit {p.unit} · {new Date(p.attempted_at).toLocaleString()}</p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
-                        p.solved
-                          ? "bg-[oklch(0.65_0.16_145)]/15 text-[oklch(0.4_0.16_145)]"
-                          : p.passed > 0
-                            ? "bg-accent/20 text-accent-foreground"
-                            : "bg-destructive/15 text-destructive"
-                      }`}
-                    >
-                      {p.passed}/{p.total}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
             </div>
           </>
 
