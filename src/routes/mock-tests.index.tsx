@@ -264,14 +264,32 @@ function MockTestsList() {
                       </div>
                       <p className="mt-2 text-xs text-muted-foreground">{st.msg}</p>
                       <div className="mt-4 flex items-center justify-between gap-2">
-                        <Link
-                          to="/mock-tests/scheduled/$testId"
-                          params={{ testId: t.id }}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          View details
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          <Link
+                            to="/mock-tests/scheduled/$testId"
+                            params={{ testId: t.id }}
+                            className="text-xs text-primary hover:underline"
+                          >
+                            View details
+                          </Link>
+                          {latestAttempts[t.id] ? (
+                            <Link
+                              to="/mock-tests/ai/$testId/result"
+                              params={{ testId: t.id }}
+                              search={{ attempt: latestAttempts[t.id].id }}
+                              className="inline-flex items-center rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
+                              title={
+                                latestAttempts[t.id].grading_status === "pending_review"
+                                  ? "Awaiting teacher review — you can view the answer key"
+                                  : "View your graded result"
+                              }
+                            >
+                              Result
+                            </Link>
+                          ) : null}
+                        </div>
                         {st.startable ? (
+
                           <Link
                             to="/mock-tests/ai/$testId/warning"
                             params={{ testId: t.id }}
