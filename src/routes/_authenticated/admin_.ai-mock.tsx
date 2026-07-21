@@ -147,7 +147,7 @@ function Editor() {
   const [refineDraft, setRefineDraft] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [counts, setCounts] = useState({ mcq: 5, tf: 3, fill: 2, short: 1, code: 2 });
+  const [counts, setCounts] = useState({ mcq: 0, tf: 0, fill: 0, short: 0, code: 5 });
   const fileRef = useRef<HTMLInputElement | null>(null);
 
 
@@ -549,14 +549,13 @@ function Editor() {
             </Field>
           </div>
           <div className="mt-5">
-            <p className="text-sm font-medium mb-2">Questions to generate:</p>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {(Object.keys(counts) as Array<keyof typeof counts>).map((k) => (
-                <Field key={k} label={TYPE_LABEL[k as QType]}>
-                  <input type="number" min={0} max={30} value={counts[k]} onChange={(e) => setCounts((c) => ({ ...c, [k]: Math.max(0, Number(e.target.value) || 0) }))} className="input" />
-                </Field>
-              ))}
+            <p className="text-sm font-medium mb-2">Coding questions to generate:</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <Field label={TYPE_LABEL.code}>
+                <input type="number" min={1} max={30} value={counts.code} onChange={(e) => setCounts((c) => ({ ...c, code: Math.max(1, Number(e.target.value) || 1) }))} className="input" />
+              </Field>
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">AI Mock Test Creator only generates coding questions.</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <button
@@ -579,9 +578,7 @@ function Editor() {
             <div className="flex items-center justify-between flex-wrap gap-3">
               <h2 className="text-lg font-semibold flex items-center gap-2"><span>📝</span> 4. Review & edit ({questions.length} Qs · {totalMarks} marks)</h2>
               <div className="flex gap-2 flex-wrap">
-                {(Object.keys(TYPE_LABEL) as QType[]).map((t) => (
-                  <button key={t} onClick={() => addBlankQ(t)} className="text-xs rounded border border-border px-2 py-1 hover:bg-secondary">+ {TYPE_LABEL[t]}</button>
-                ))}
+                <button onClick={() => addBlankQ("code")} className="text-xs rounded border border-border px-2 py-1 hover:bg-secondary">+ {TYPE_LABEL.code}</button>
               </div>
             </div>
             <div className="mt-5 space-y-4">
@@ -783,10 +780,8 @@ function QuestionEditor({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold rounded bg-accent/20 text-accent px-2 py-0.5">Q{i + 1}</span>
-          <select value={q.type} onChange={(e) => onChange({ type: e.target.value as QType })} className="text-xs rounded border border-border bg-card px-2 py-1">
-            {(Object.keys(TYPE_LABEL) as QType[]).map((t) => (
-              <option key={t} value={t}>{TYPE_LABEL[t]}</option>
-            ))}
+          <select value={q.type} onChange={(e) => onChange({ type: e.target.value as QType })} className="text-xs rounded border border-border bg-card px-2 py-1" disabled>
+            <option value="code">{TYPE_LABEL.code}</option>
           </select>
           <label className="text-xs text-muted-foreground">Marks
             <input type="number" min={1} value={q.marks} onChange={(e) => onChange({ marks: Number(e.target.value) || 1 })} className="ml-1 w-14 rounded border border-border bg-card px-1 py-0.5 text-xs" />
