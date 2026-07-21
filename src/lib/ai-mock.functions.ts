@@ -582,50 +582,50 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
       let correct = false;
       let codePassed: number | null = null;
       let codeTotal: number | null = null;
-      if (q.type === "code") {
-        // Server-side grading: bind each server-held test case to the
-        // student's submitted run by stdin match, then diff stdout against
-        // the server-held expected output. Client-reported pass counts are
-        // never trusted.
-        const tests = Array.isArray((q as any).code_tests) ? (q as any).code_tests : [];
-        const total = tests.length;
-        const runs = a?.runs ?? [];
-        let passed = 0;
-        for (const tc of tests as Array<{ stdin: string; expected: string }>) {
-          const run = runs.find(
-            (r) => normalizeOutput(r.stdin ?? "") === normalizeOutput(tc.stdin ?? ""),
-          );
-          if (!run || !run.ok) continue;
-          if (normalizeOutput(run.stdout ?? "") === normalizeOutput(tc.expected ?? "")) {
-            passed++;
+
+      // Scheduled tests are graded manually by the teacher — no auto-grading
+      // is performed on submit. We just capture the student's response and
+      // keep the correct answer available for the answer-key view.
+      if (!isScheduled) {
+        if (q.type === "code") {
+          const tests = Array.isArray((q as any).code_tests) ? (q as any).code_tests : [];
+          const total = tests.length;
+          const runs = a?.runs ?? [];
+          let passed = 0;
+          for (const tc of tests as Array<{ stdin: string; expected: string }>) {
+            const run = runs.find(
+              (r) => normalizeOutput(r.stdin ?? "") === normalizeOutput(tc.stdin ?? ""),
+            );
+            if (!run || !run.ok) continue;
+            if (normalizeOutput(run.stdout ?? "") === normalizeOutput(tc.expected ?? "")) {
+              passed++;
+            }
           }
-        }
-        if (total > 0) {
-          const ratio = passed / total;
-          awarded = Math.min(q.marks, Math.round(ratio * q.marks * 2) / 2);
-          correct = passed === total;
-        }
-        codePassed = passed;
-        codeTotal = total;
-      } else if (q.type === "mcq" || q.type === "tf" || q.type === "fill") {
-        if (normalizeAnswer(response) === normalizeAnswer(q.correct_answer)) {
-          awarded = q.marks;
-          correct = true;
-        }
-      } else if (q.type === "short") {
-        // Simple heuristic: award full marks if the model answer's key tokens appear.
-        const key = normalizeAnswer(q.correct_answer);
-        const resp = normalizeAnswer(response);
-        if (key && resp && (resp.includes(key) || key.split(" ").every((tok) => tok.length < 3 || resp.includes(tok)))) {
-          awarded = q.marks;
-          correct = true;
+          if (total > 0) {
+            const ratio = passed / total;
+            awarded = Math.min(q.marks, Math.round(ratio * q.marks * 2) / 2);
+            correct = passed === total;
+          }
+          codePassed = passed;
+          codeTotal = total;
+        } else if (q.type === "mcq" || q.type === "tf" || q.type === "fill") {
+          if (normalizeAnswer(response) === normalizeAnswer(q.correct_answer)) {
+            awarded = q.marks;
+            correct = true;
+          }
+        } else if (q.type === "short") {
+          const key = normalizeAnswer(q.correct_answer);
+          const resp = normalizeAnswer(response);
+          if (key && resp && (resp.includes(key) || key.split(" ").every((tok) => tok.length < 3 || resp.includes(tok)))) {
+            awarded = q.marks;
+            correct = true;
+          }
         }
       }
       autoMarks += awarded;
       return {
         question_id: q.id,
         response,
-        // For scheduled tests these fields are teacher-editable; we seed with the auto values.
         correct,
         marks_awarded: awarded,
         auto_marks_awarded: awarded,
@@ -637,6 +637,7 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
         code_total: codeTotal,
       };
     });
+
 
     const autoPercentage = totalMarks > 0 ? Math.round((autoMarks / totalMarks) * 100) : 0;
 
