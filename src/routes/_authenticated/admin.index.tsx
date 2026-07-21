@@ -553,16 +553,29 @@ function AdminPage() {
             {([
               { key: "overview", label: "Overview", icon: LayoutDashboard },
               { key: "students", label: "Students", icon: Users },
-              { key: "activity", label: "Activity logs", icon: ActivityIcon },
-              { key: "streaks", label: "Streaks", icon: Flame },
-              
+              { key: "homework", label: "Homework", icon: ClipboardList, to: "/admin/homework" as const },
+              { key: "ai-mock", label: "AI Mock Creator", icon: FlaskConical, to: "/admin/ai-mock" as const },
               { key: "announce", label: "Announcements", icon: Megaphone },
               { key: "reports", label: "Reports", icon: FileText },
+              { key: "streaks", label: "Streaks", icon: Flame },
               { key: "reviews", label: "Reviews", icon: Star },
               { key: "audit", label: "Audit log", icon: ScrollText },
               { key: "health", label: "System Health", icon: HeartPulse },
+              { key: "activity", label: "Activity logs", icon: ActivityIcon },
             ] as const).map((t) => {
               const Icon = t.icon;
+              if ("to" in t) {
+                return (
+                  <Link
+                    key={t.key}
+                    to={t.to}
+                    className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition whitespace-nowrap"
+                  >
+                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>{t.label}</span>
+                  </Link>
+                );
+              }
               const selected = tab === t.key;
               return (
                 <button
@@ -582,23 +595,7 @@ function AdminPage() {
               );
             })}
 
-            <Link
-              to="/admin/homework"
-              className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition whitespace-nowrap"
-            >
-              <ClipboardList className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>Homework</span>
-            </Link>
 
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/admin/ai-mock" })}
-              className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition whitespace-nowrap text-left"
-              title="Open AI Mock Test Creator"
-            >
-              <FlaskConical className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>AI Mock Creator</span>
-            </button>
 
 
           </nav>
