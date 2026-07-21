@@ -230,14 +230,14 @@ function LeaderboardPage() {
           />
         ) : (
           <>
-            {error && <ErrorState message={error} />}
+            {error && <ErrorState description={error} />}
 
-            {!rows && !error && <LoadingState message="Loading the rankings…" />}
+            {!rows && !error && <LoadingState label="Loading the rankings…" />}
 
             {rows && rows.length === 0 && (
               <EmptyState
                 title="No scores yet"
-                message="Solve your first practice question to claim rank #1!"
+                description="Solve your first practice question to claim rank #1!"
               />
             )}
 
