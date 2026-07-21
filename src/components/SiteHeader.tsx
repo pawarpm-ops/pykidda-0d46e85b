@@ -145,6 +145,12 @@ export function SiteHeader() {
     navigate({ to: "/" });
   }
 
+  async function handleSwitchAccount() {
+    await supabase.auth.signOut();
+    router.invalidate();
+    navigate({ to: "/auth" });
+  }
+
   function renderNavLink(item: NavItem, opts?: { compact?: boolean }) {
     const active = isActive(item.to);
     const Icon = item.icon;
