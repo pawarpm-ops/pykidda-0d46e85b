@@ -24,6 +24,7 @@ import { InactivityLogout } from "@/components/InactivityLogout";
 
 import { DailyStreakToaster } from "@/components/DailyStreakToaster";
 import { StreakWarningToaster } from "@/components/StreakWarningToaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { recordStreakActivity } from "@/lib/streaks";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { installGlobalErrorLogger, installSlowPageTracker } from "@/lib/system-health-client";
