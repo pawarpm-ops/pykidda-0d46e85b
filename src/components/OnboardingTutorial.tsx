@@ -98,12 +98,23 @@ function writeLocal(v: Status) {
   }
 }
 
+function isMockPathname(pathname: string): boolean {
+  return (
+    /\/mock-tests\/[^/]+\/run(\/|$)/.test(pathname) ||
+    /\/mock-tests\/ai\/[^/]+\/take(\/|$)/.test(pathname)
+  );
+}
+function isAuthPathname(pathname: string): boolean {
+  return pathname === "/auth" || pathname.startsWith("/auth/");
+}
+
 export function OnboardingTutorial() {
   const [open, setOpen] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   // Decide whether to show
   useEffect(() => {
@@ -162,13 +173,16 @@ export function OnboardingTutorial() {
 
   const step = STEPS[stepIdx];
 
+  // Suppress while on /auth or during an active mock test — do NOT mark complete
+  const suppressed = isAuthPathname(pathname) || isMockPathname(pathname);
+
   // Auto-navigate if step requires
   useEffect(() => {
-    if (!open || !step?.navigateTo) return;
+    if (!open || suppressed || !step?.navigateTo) return;
     if (pathname !== step.navigateTo) {
       navigate({ to: step.navigateTo });
     }
-  }, [open, step, pathname, navigate]);
+  }, [open, step, pathname, navigate, suppressed]);
 
   async function persist(status: Status) {
     writeLocal(status);
@@ -183,10 +197,18 @@ export function OnboardingTutorial() {
     }
   }
 
+  function close() {
+    setOpen(false);
+    // restore focus to whatever launched the tour
+    const prev = previouslyFocused.current;
+    if (prev && typeof prev.focus === "function") {
+      requestAnimationFrame(() => prev.focus());
+    }
+  }
   function next() {
     if (stepIdx >= STEPS.length - 1) {
       void persist("completed");
-      setOpen(false);
+      close();
       return;
     }
     setStepIdx((i) => i + 1);
@@ -196,16 +218,24 @@ export function OnboardingTutorial() {
   }
   function skip() {
     void persist("skipped");
-    setOpen(false);
+    close();
   }
 
-  if (!open) return null;
+  // Capture focus when opening
+  useEffect(() => {
+    if (open) {
+      previouslyFocused.current = (document.activeElement as HTMLElement) ?? null;
+    }
+  }, [open]);
+
+  if (!open || suppressed) return null;
   if (typeof document === "undefined") return null;
   return createPortal(
     <TutorialOverlay step={step} stepIdx={stepIdx} total={STEPS.length} onNext={next} onPrev={prev} onSkip={skip} />,
     document.body,
   );
 }
+
 
 function TutorialOverlay({
   step,
@@ -223,6 +253,22 @@ function TutorialOverlay({
   onSkip: () => void;
 }) {
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [viewport, setViewport] = useState(() => ({
+    w: typeof window !== "undefined" ? window.innerWidth : 1024,
+    h: typeof window !== "undefined" ? window.innerHeight : 768,
+  }));
+  const reducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nextBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Track viewport
+  useEffect(() => {
+    const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   // Track highlighted element position
   useLayoutEffect(() => {
@@ -236,13 +282,16 @@ function TutorialOverlay({
       if (el) {
         const r = el.getBoundingClientRect();
         setRect(r);
-        el.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+        el.scrollIntoView({
+          block: "center",
+          inline: "center",
+          behavior: reducedMotion ? "auto" : "smooth",
+        });
       } else {
         setRect(null);
       }
     };
     measure();
-    // re-measure a few times in case route just changed
     const tries = [60, 200, 500, 900];
     const timers = tries.map((t) => window.setTimeout(measure, t));
     const onResize = () => {
@@ -257,36 +306,76 @@ function TutorialOverlay({
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onResize, true);
     };
-  }, [step.selector]);
+  }, [step.selector, reducedMotion]);
+
+  // Focus Next button on step change; Escape = skip; simple focus trap
+  useEffect(() => {
+    nextBtnRef.current?.focus();
+  }, [stepIdx]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onSkip();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onSkip]);
+
+  const isMobile = viewport.w < 640;
+  const bubbleW = isMobile ? Math.min(viewport.w - 24, 360) : 360;
 
   // Position the speech bubble
   const bubblePos = useMemo(() => {
-    if (!rect) {
+    if (!rect || isMobile) {
+      // Center on mobile always; center when no target
+      if (isMobile) {
+        return {
+          style: {
+            left: "50%",
+            bottom: "max(16px, env(safe-area-inset-bottom, 0px))",
+            transform: "translateX(-50%)",
+            width: bubbleW,
+          } as React.CSSProperties,
+        };
+      }
       return {
         style: {
           left: "50%",
           top: "50%",
           transform: "translate(-50%, -50%)",
+          width: bubbleW,
         } as React.CSSProperties,
-        place: "center" as const,
       };
     }
     const margin = 16;
-    const bubbleW = 360;
     const bubbleH = 260;
     let left = rect.left + rect.width / 2 - bubbleW / 2;
     let top = rect.bottom + margin;
-    let place: "below" | "above" = "below";
-    if (top + bubbleH > window.innerHeight - 16) {
+    if (top + bubbleH > viewport.h - 16) {
       top = Math.max(16, rect.top - bubbleH - margin);
-      place = "above";
     }
-    left = Math.min(Math.max(16, left), window.innerWidth - bubbleW - 16);
-    return {
-      style: { left, top, width: bubbleW } as React.CSSProperties,
-      place,
-    };
-  }, [rect]);
+    left = Math.min(Math.max(16, left), viewport.w - bubbleW - 16);
+    return { style: { left, top, width: bubbleW } as React.CSSProperties };
+  }, [rect, isMobile, bubbleW, viewport.h, viewport.w]);
 
   const PAD = 8;
   const cutout = rect
@@ -303,7 +392,8 @@ function TutorialOverlay({
       className="fixed inset-0 z-[9999] pointer-events-none"
       role="dialog"
       aria-modal="true"
-      aria-label="Onboarding tutorial"
+      aria-labelledby="pyko-tour-title"
+      aria-describedby="pyko-tour-desc"
     >
       {/* Dim overlay with a cutout */}
       <svg className="absolute inset-0 h-full w-full pointer-events-auto" onClick={(e) => e.stopPropagation()}>
@@ -329,7 +419,9 @@ function TutorialOverlay({
       {/* Glow ring around highlighted element */}
       {cutout && (
         <div
-          className="absolute rounded-xl ring-4 ring-[oklch(0.85_0.18_85)] pointer-events-none animate-pulse"
+          className={`absolute rounded-xl ring-4 ring-[oklch(0.85_0.18_85)] pointer-events-none ${
+            reducedMotion ? "" : "animate-pulse motion-reduce:animate-none"
+          }`}
           style={{
             left: cutout.left,
             top: cutout.top,
@@ -341,40 +433,49 @@ function TutorialOverlay({
       )}
 
       {/* Speech bubble + mascot */}
-      <div
-        className="absolute pointer-events-auto"
-        style={bubblePos.style}
-      >
-        <div className="flex items-end gap-3">
-          <SnakeMascot />
+      <div ref={dialogRef} className="absolute pointer-events-auto" style={bubblePos.style}>
+        <div className={`flex ${isMobile ? "flex-col items-center" : "items-end"} gap-3`}>
+          {!isMobile && <SnakeMascot reducedMotion={!!reducedMotion} />}
           <div
-            className="relative flex-1 rounded-2xl border-2 border-[oklch(0.85_0.18_85)] bg-card text-card-foreground p-5 shadow-2xl"
+            className="relative flex-1 rounded-2xl border-2 border-[oklch(0.85_0.18_85)] bg-card text-card-foreground p-5 shadow-2xl max-h-[80vh] overflow-y-auto w-full"
             style={{
               boxShadow:
                 "0 20px 60px -10px rgba(0,0,0,0.5), 0 0 0 4px rgba(255, 209, 64, 0.15)",
             }}
           >
-            {/* tail */}
-            <div
-              className="absolute -left-2 bottom-6 h-4 w-4 rotate-45 border-l-2 border-b-2 border-[oklch(0.85_0.18_85)] bg-card"
-              aria-hidden
-            />
+            {!isMobile && (
+              <div
+                className="absolute -left-2 bottom-6 h-4 w-4 rotate-45 border-l-2 border-b-2 border-[oklch(0.85_0.18_85)] bg-card"
+                aria-hidden
+              />
+            )}
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[11px] font-semibold uppercase tracking-widest text-accent">
+              <div className="text-[11px] font-semibold uppercase tracking-widest text-accent" aria-live="polite">
                 Step {stepIdx + 1} of {total}
               </div>
               <button
+                type="button"
                 onClick={onSkip}
-                className="text-xs font-medium text-muted-foreground hover:text-foreground underline underline-offset-2"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
               >
                 Skip tutorial
               </button>
             </div>
-            <h3 className="mt-1 text-lg font-bold leading-tight">{step.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-foreground/90">{step.message}</p>
+            <h3 id="pyko-tour-title" className="mt-1 text-lg font-bold leading-tight">
+              {step.title}
+            </h3>
+            <p id="pyko-tour-desc" className="mt-2 text-sm leading-relaxed text-foreground/90">
+              {step.message}
+            </p>
 
             {/* progress bar */}
-            <div className="mt-4 h-1.5 rounded-full bg-secondary overflow-hidden">
+            <div
+              className="mt-4 h-1.5 rounded-full bg-secondary overflow-hidden"
+              role="progressbar"
+              aria-valuemin={1}
+              aria-valuemax={total}
+              aria-valuenow={stepIdx + 1}
+            >
               <div
                 className="h-full transition-all"
                 style={{
@@ -386,15 +487,18 @@ function TutorialOverlay({
 
             <div className="mt-4 flex items-center justify-between gap-2">
               <button
+                type="button"
                 onClick={onPrev}
                 disabled={stepIdx === 0}
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium disabled:opacity-40 hover:border-accent"
+                className="min-h-[44px] rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium disabled:opacity-40 hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 ← Previous
               </button>
               <button
+                ref={nextBtnRef}
+                type="button"
                 onClick={onNext}
-                className="rounded-md px-4 py-1.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)]"
+                className="min-h-[44px] rounded-md px-4 py-1.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 style={{ backgroundImage: "var(--gradient-sunrise)" }}
               >
                 {stepIdx === total - 1 ? "Finish 🎉" : "Next →"}
@@ -407,7 +511,7 @@ function TutorialOverlay({
   );
 }
 
-function SnakeMascot() {
+function SnakeMascot({ reducedMotion = false }: { reducedMotion?: boolean }) {
   return (
     <div className="shrink-0 select-none" aria-hidden>
       <svg
@@ -415,9 +519,10 @@ function SnakeMascot() {
         height="96"
         viewBox="0 0 84 96"
         xmlns="http://www.w3.org/2000/svg"
-        className="drop-shadow-xl"
-        style={{ animation: "pyko-bounce 2.2s ease-in-out infinite" }}
+        className="drop-shadow-xl motion-reduce:animate-none"
+        style={reducedMotion ? undefined : { animation: "pyko-bounce 2.2s ease-in-out infinite" }}
       >
+
         {/* Body coil */}
         <path
           d="M14 78 C 6 60, 22 50, 38 56 C 56 62, 74 52, 70 32 C 66 14, 46 10, 32 18"
