@@ -315,21 +315,48 @@ export function CodeRunner({
   return (
     <div className="flex flex-col gap-4">
       {!compact && (
-        <div>
-          <h2 className="text-xl font-semibold leading-snug">{question.title}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{question.prompt}</p>
-        </div>
+        <section aria-labelledby="cr-problem-title" className="rounded-xl border border-border bg-card/60 p-4 shadow-sm">
+          <h2 id="cr-problem-title" className="text-lg font-semibold leading-snug sm:text-xl">
+            {question.title}
+          </h2>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+            {question.prompt}
+          </p>
+        </section>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="flex flex-col gap-3">
-          <div className="rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner">
-            <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
+        <section aria-label="Code editor" className="flex flex-col gap-3">
+          <div className="overflow-hidden rounded-xl border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner">
+            <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2 text-xs">
               <span className="font-mono uppercase tracking-widest opacity-70">solution.py</span>
-              <span className="opacity-60">
-                {pyError ? "Python: error" : pyReady ? "Python: ready" : "Python: loading… (first run ~10s)"}
+              <span
+                className={
+                  "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold " +
+                  (pyError
+                    ? "border-red-400/50 bg-red-500/15 text-red-200"
+                    : pyReady
+                      ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-200"
+                      : "border-white/20 bg-white/10 text-white/80")
+                }
+                role="status"
+                aria-live="polite"
+              >
+                <span
+                  aria-hidden
+                  className={
+                    "h-1.5 w-1.5 rounded-full " +
+                    (pyError
+                      ? "bg-red-400"
+                      : pyReady
+                        ? "bg-emerald-400"
+                        : "animate-pulse bg-amber-300 motion-reduce:animate-none")
+                  }
+                />
+                {pyError ? "Python: error" : pyReady ? "Python: ready" : "Loading Python…"}
               </span>
             </div>
+            <label htmlFor="cr-editor" className="sr-only">Python code editor</label>
             <PythonCodeEditor
               value={code}
               onChange={setAndEmit}
@@ -340,48 +367,61 @@ export function CodeRunner({
 
           <div className="flex flex-wrap items-center gap-2">
             <button
+              type="button"
               onClick={handleRunAndSubmit}
               disabled={busy}
-              className="rounded-md border border-accent/50 bg-accent/10 px-3 py-2 text-sm font-semibold text-foreground disabled:opacity-50 hover:bg-accent/20"
+              aria-busy={busy}
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+              style={{ backgroundImage: "var(--gradient-sunrise)" }}
             >
+              <span aria-hidden>▶</span>
               {busy ? (pyReady ? "Running…" : "Loading Python…") : submitLabel ? `Run Tests & ${submitLabel}` : "Run Tests"}
             </button>
             {busy && (
               <button
+                type="button"
                 onClick={handleStop}
-                className="inline-flex items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/20"
+                aria-label="Stop code execution"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive" />
-                Stop Execution
+                <span aria-hidden className="inline-block h-2 w-2 animate-pulse rounded-full bg-destructive motion-reduce:animate-none" />
+                Stop
               </button>
             )}
             {allowHint && (
               <button
+                type="button"
                 onClick={() => setShowHint((v) => !v)}
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+                aria-expanded={showHint}
+                aria-controls="cr-hint-panel"
+                className="inline-flex min-h-11 items-center rounded-md border border-border bg-card px-3 py-2 text-sm font-medium transition-colors hover:border-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {showHint ? "Hide hint" : "Show hint"}
               </button>
             )}
             {allowSolution && (
               <button
+                type="button"
                 onClick={() => setShowSolution((v) => !v)}
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+                aria-expanded={showSolution}
+                aria-controls="cr-solution-panel"
+                className="inline-flex min-h-11 items-center rounded-md border border-border bg-card px-3 py-2 text-sm font-medium transition-colors hover:border-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {showSolution ? "Hide solution" : "Show solution"}
               </button>
             )}
           </div>
-        </div>
+        </section>
 
-        <div className="flex h-full flex-col rounded-lg border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner min-h-[280px]">
+        <section
+          aria-label="Program output"
+          className="flex h-full min-h-[280px] flex-col overflow-hidden rounded-xl border border-border bg-[oklch(0.18_0.02_250)] text-[oklch(0.97_0.005_85)] shadow-inner"
+        >
           <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs">
             <span className="font-mono uppercase tracking-widest opacity-70">output</span>
-            {plainOutput && (
-              <span className="opacity-60">program output</span>
-            )}
+            {plainOutput && <span className="opacity-60">program output</span>}
           </div>
-          <div className="flex-1 overflow-auto p-3 font-mono text-xs">
+          <div className="flex-1 overflow-auto p-3 font-mono text-xs" aria-live="polite">
             {busy && !plainOutput && (
               <div className="opacity-70">Running your code…</div>
             )}
@@ -403,8 +443,9 @@ export function CodeRunner({
               </div>
             )}
           </div>
-        </div>
+        </section>
       </div>
+
 
 
 
