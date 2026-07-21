@@ -104,26 +104,26 @@ function NotificationsPage() {
           title="Notifications"
           description={unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
           actions={
-            <div className="flex items-center gap-2 flex-wrap">
-
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition"
-              >
-                Mark all as read
-              </button>
-            )}
-            {visibleItems.length > 0 && (
-              <button
-                onClick={handleDeleteAll}
-                className="rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-1.5 text-sm hover:bg-destructive/20 transition"
-              >
-                Delete all
-              </button>
-            )}
-          </div>
-        </div>
+            <>
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition"
+                >
+                  Mark all as read
+                </button>
+              )}
+              {visibleItems.length > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  className="rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-1.5 text-sm hover:bg-destructive/20 transition"
+                >
+                  Delete all
+                </button>
+              )}
+            </>
+          }
+        />
 
         <section className="mt-8 space-y-3">
           {loading ? (
