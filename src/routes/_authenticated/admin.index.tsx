@@ -983,14 +983,17 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
   };
 
   const [assigningRoll, setAssigningRoll] = useState(false);
+  const [rollOverrides, setRollOverrides] = useState<Record<string, string | null>>({});
+  const getRollFor = (uid: string): string | null =>
+    uid in rollOverrides ? rollOverrides[uid] : (profiles[uid]?.student_unique_id ?? null);
   const handleAssignRoll = async () => {
     if (!selStudent) return;
-    const current = profiles[selStudent.user_id]?.student_unique_id ?? "";
+    const current = getRollFor(selStudent.user_id) ?? "";
     const input = window.prompt(
       `Assign roll number for ${selStudent.name}\n\nEnter a roll number (leave empty to clear):`,
       current,
     );
-    if (input === null) return; // cancelled
+    if (input === null) return;
     const value = input.trim();
     setAssigningRoll(true);
     try {
@@ -999,22 +1002,12 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
         .update({ student_unique_id: value === "" ? null : value })
         .eq("id", selStudent.user_id);
       if (error) throw error;
-      setProfiles((prev) => ({
-        ...prev,
-        [selStudent.user_id]: {
-          ...(prev[selStudent.user_id] ?? {
-            display_name: null, full_name: null, contact_number: null,
-            college_name: null, age: null, gender: null, birth_date: null,
-            onboarded: null, student_unique_id: null,
-          }),
-          student_unique_id: value === "" ? null : value,
-        },
-      }));
+      setRollOverrides((prev) => ({ ...prev, [selStudent.user_id]: value === "" ? null : value }));
       toast.success(value === "" ? "Roll number cleared" : `Roll number set to ${value}`);
       void logAdminActionClient({
         actionType: "profile.roll_number_assigned",
         description: value === "" ? `Cleared roll number for ${selStudent.name}` : `Assigned roll number ${value} to ${selStudent.name}`,
-        moduleName: "students",
+        moduleName: "student",
         relatedStudentId: selStudent.user_id,
         targetTitle: selStudent.name,
       });
@@ -1027,6 +1020,7 @@ function StudentsTab({ students, mocks, practice, authInfo, profiles }: { studen
       setAssigningRoll(false);
     }
   };
+
 
 
 
