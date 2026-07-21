@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
 import { SiteHeader } from "@/components/SiteHeader";
+import { MockAiCorrector } from "@/components/MockAiCorrector";
 import { getAiMockAttemptResult } from "@/lib/ai-mock.functions";
 
 const SearchSchema = z.object({ attempt: z.string().optional() });
