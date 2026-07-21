@@ -15,7 +15,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Download, Printer, RotateCcw } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/state";
+import { Button } from "@/components/ui/button";
 import { ViolationAnalytics } from "@/components/ViolationAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { computeAnalytics, getProgress, clearProgress, type Analytics } from "@/lib/progress";
