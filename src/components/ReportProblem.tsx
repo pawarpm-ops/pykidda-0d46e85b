@@ -300,15 +300,6 @@ export function ReportProblem() {
                     ))}
                   </select>
                 </label>
-                <label className="text-sm">
-                  <span className="mb-1 block font-semibold">Test ID</span>
-                  <input
-                    value={testId}
-                    onChange={(e) => setTestId(e.target.value)}
-                    placeholder="auto"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  />
-                </label>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
