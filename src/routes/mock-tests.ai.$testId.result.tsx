@@ -262,11 +262,11 @@ function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAi
         <p className="font-semibold text-sm">
           Q{index + 1}
           {q?.type ? <span className="ml-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">{q.type}</span> : null}
-          {!showAiExplain && (
+          {!showAiExplain && tab !== "key" && (
             <span className="ml-2 text-muted-foreground font-normal">· {a.marks_awarded}/{a.marks_total} marks</span>
           )}
         </p>
-        {!showAiExplain && (
+        {!showAiExplain && tab !== "key" && (
           <span
             className={`text-xs font-bold ${
               a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"
