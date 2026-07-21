@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { CalendarClock, ClipboardList, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState, EmptyState } from "@/components/ui/state";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MOCK_TESTS, mockTestQuestions } from "@/lib/questions";
 import { listAiMockTests, listMyAiMockAttempts } from "@/lib/ai-mock.functions";
 import { listMyMockResults } from "@/lib/mock-results.functions";
+
 
 export const Route = createFileRoute("/mock-tests/")({
   head: () => ({
