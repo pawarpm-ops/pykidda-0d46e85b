@@ -48,10 +48,11 @@ function StudentIdChip({ entry }: { entry: DirectoryEntry | undefined }) {
       <Link
         to="/u/$publicId"
         params={{ publicId: entry!.public_profile_id! }}
-        className={`${base} hover:bg-accent/20 hover:border-accent transition-colors`}
+        className={`${base} hover:bg-accent/20 hover:border-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
         title="Open student profile"
+        aria-label={`Open public profile ${id}`}
       >
-        {id}
+        <span className="truncate max-w-[140px]">{id}</span>
       </Link>
     );
   }
