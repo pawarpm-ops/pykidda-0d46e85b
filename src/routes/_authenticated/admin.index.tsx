@@ -1519,12 +1519,11 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
               <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-medium text-muted-foreground">Date</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={scheduledDate}
-                    onChange={(e) => setScheduledDate(e.target.value)}
+                    onChange={setScheduledDate}
                     min={new Date().toISOString().slice(0, 10)}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="Pick a date"
                     required
                   />
                 </div>
