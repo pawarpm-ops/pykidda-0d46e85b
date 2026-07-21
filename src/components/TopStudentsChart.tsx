@@ -87,21 +87,7 @@ export function TopStudentsChart({ students }: { students: Student[] }) {
         <h2 className="text-base font-semibold">Top Students Performance</h2>
         <p className="text-xs text-muted-foreground mt-0.5">Average score compared with best score</p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {ranked.length > 5 && (
-            <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-              {([5, 10] as const).map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setTopN(n)}
-                  className={`px-3 py-1 rounded-md font-medium transition ${
-                    topN === n ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Top {n}
-                </button>
-              ))}
-            </div>
-          )}
+
           <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
             {(
               [
