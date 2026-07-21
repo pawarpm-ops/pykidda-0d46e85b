@@ -287,20 +287,6 @@ export function ReportProblem() {
                 </span>
               </label>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <label className="text-sm">
-                  <span className="mb-1 block font-semibold">Priority</span>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value)}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  >
-                    {PRIORITIES.map((p) => (
-                      <option key={p}>{p}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-sm sm:col-span-2">
