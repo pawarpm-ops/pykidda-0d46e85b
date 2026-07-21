@@ -279,14 +279,17 @@ export function PykoFloatingPanel() {
     <>
       {!open && (
         <button
+          ref={launcherRef}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          aria-label="Open Pyko AI (draggable)"
+          aria-label="Open Pyko AI assistant (draggable)"
+          aria-haspopup="dialog"
+          aria-expanded={false}
           style={{ left: pos.x, top: pos.y, touchAction: "none" }}
-          className="fixed z-40 flex h-16 w-16 items-center justify-center rounded-full hover:scale-110 transition select-none"
+          className="fixed z-40 flex h-16 w-16 items-center justify-center rounded-full select-none transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <img draggable={false} src={pykoMascot.url} alt="Pyko" className="h-full w-full object-contain pointer-events-none animate-[pyko-thinking_1.6s_ease-in-out_infinite]" />
+          <img draggable={false} src={pykoMascot.url} alt="" aria-hidden="true" className="h-full w-full object-contain pointer-events-none animate-[pyko-thinking_1.6s_ease-in-out_infinite] motion-reduce:animate-none" />
         </button>
       )}
 
