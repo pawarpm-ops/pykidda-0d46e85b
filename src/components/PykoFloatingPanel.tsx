@@ -72,8 +72,30 @@ export function PykoFloatingPanel() {
   const [viewport, setViewport] = useState<{ w: number; h: number }>({ w: 1024, h: 768 });
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const launcherRef = useRef<HTMLButtonElement | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ dx: number; dy: number; moved: boolean; w: number; h: number; startX: number; startY: number } | null>(null);
+
+  // Escape closes the panel; focus returns to launcher.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Restore focus to launcher when panel closes.
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    if (prevOpen.current && !open) {
+      setTimeout(() => launcherRef.current?.focus(), 40);
+    }
+    prevOpen.current = open;
+  }, [open]);
 
   // Force-close if we entered an active assessment route.
   useEffect(() => {
