@@ -489,11 +489,20 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
 
 // ----------- Student: submit attempt (server-graded for non-code) -----------
 
+const CodeRunSchema = z.object({
+  stdin: z.string().max(200_000).default(""),
+  stdout: z.string().max(200_000).default(""),
+  stderr: z.string().max(200_000).optional().default(""),
+  ok: z.boolean().default(false),
+});
+
 const AnswerSchema = z.object({
   question_id: z.string().uuid(),
-  response: z.string().max(20000).default(""),
-  code_passed: z.number().int().min(0).optional(),
-  code_total: z.number().int().min(0).optional(),
+  response: z.string().max(200_000).default(""),
+  // For code questions: student-submitted runs (one per server-held stdin;
+  // server binds by stdin match). Client-reported pass/total counts are
+  // IGNORED — the server re-diffs stdout against the server-held expected.
+  runs: z.array(CodeRunSchema).max(50).optional(),
 });
 
 const SubmitInput = z.object({
@@ -503,6 +512,14 @@ const SubmitInput = z.object({
   time_taken_sec: z.number().int().min(0),
   answers: z.array(AnswerSchema),
 });
+
+function normalizeOutput(s: string): string {
+  return s
+    .split("\n")
+    .map((l) => l.replace(/\s+$/g, ""))
+    .join("\n")
+    .replace(/\n+$/g, "");
+}
 
 function normalizeAnswer(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
