@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { User, Flame, FileText, GraduationCap, QrCode, type LucideIcon } from "lucide-react";
+import { User, Flame, FileText, GraduationCap, QrCode, ArrowLeft, UserCircle2, Upload, Trash2, type LucideIcon } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StreakCard } from "@/components/StreakCard";
 import { ProfileQrCard } from "@/components/ProfileQrCard";
@@ -9,6 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { restartTutorial } from "@/components/OnboardingTutorial";
 import { toast } from "sonner";
 import { z } from "zod";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState } from "@/components/ui/state";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -216,9 +219,11 @@ function ProfilePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
-        <button
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8 pb-24">
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={() => {
             if (typeof window !== "undefined" && window.history.length > 1) {
               window.history.back();
@@ -226,19 +231,21 @@ function ProfilePage() {
               window.location.href = "/";
             }
           }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-accent hover:text-accent-foreground"
           aria-label="Go back"
+          className="mb-4 gap-1.5"
         >
-          <span aria-hidden="true">←</span> Back
-        </button>
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+        </Button>
 
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Your profile</h1>
-        <p className="mt-1 text-muted-foreground">
-          Customize how you appear across PY Kidda.
-        </p>
+        <PageHeader
+          eyebrow="Account"
+          title="Your profile"
+          description="Customize how you appear across PY Kidda."
+          icon={<UserCircle2 className="h-5 w-5" aria-hidden="true" />}
+        />
 
         {loading ? (
-          <p className="mt-10 text-muted-foreground">Loading…</p>
+          <LoadingState label="Loading your profile…" className="min-h-[240px]" />
         ) : (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
             {/* Vertical sidebar nav */}
@@ -255,7 +262,7 @@ function ProfilePage() {
                     type="button"
                     onClick={() => setActiveTab(t.key)}
                     aria-current={selected ? "page" : undefined}
-                    className={`inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition text-left whitespace-nowrap ${
+                    className={`inline-flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition text-left whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
                       selected
                         ? "bg-accent text-accent-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -279,7 +286,9 @@ function ProfilePage() {
                     {avatarUrl ? (
                       <img
                         src={avatarUrl}
-                        alt="Avatar preview"
+                        alt={`${displayName || "Your"} avatar`}
+                        width={64}
+                        height={64}
                         className="h-16 w-16 rounded-full object-cover border border-border"
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).style.display = "none";
@@ -321,7 +330,7 @@ function ProfilePage() {
                           aria-label={`Status: ${presenceStatus}`}
                         >
                           <span
-                            className={`inline-block h-2 w-2 rounded-full ${presenceStatus === "active" ? "animate-pulse" : ""}`}
+                            className={`inline-block h-2 w-2 rounded-full ${presenceStatus === "active" ? "motion-safe:animate-pulse" : ""}`}
                             style={{
                               backgroundColor:
                                 presenceStatus === "active"
@@ -363,7 +372,7 @@ function ProfilePage() {
                             aria-checked={selected}
                             disabled={savingStatus}
                             onClick={() => { if (!selected) void updatePresenceStatus(s); }}
-                            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                            className={`inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60 ${
                               selected ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                             }`}
                           >
@@ -386,9 +395,9 @@ function ProfilePage() {
                       onChange={(e) => setDisplayName(e.target.value)}
                       maxLength={60}
                       placeholder="e.g. Ada Lovelace"
-                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                     />
-                    <span className="text-xs text-muted-foreground">{displayName.length}/60</span>
+                    <span className="text-xs text-muted-foreground" aria-live="polite">{displayName.length}/60</span>
                   </label>
 
                   <label className="flex flex-col gap-1">
@@ -399,25 +408,28 @@ function ProfilePage() {
                       maxLength={280}
                       rows={4}
                       placeholder="A short intro — what are you learning?"
-                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-accent resize-y"
+                      className="rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card resize-y"
                     />
-                    <span className="text-xs text-muted-foreground">{bio.length}/280</span>
+                    <span className="text-xs text-muted-foreground" aria-live="polite">{bio.length}/280</span>
                   </label>
 
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-medium">Avatar image</span>
                     <div className="flex flex-wrap items-center gap-3">
                       <label
-                        className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted ${
+                        className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium transition hover:bg-muted focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-card ${
                           uploading ? "pointer-events-none opacity-60" : ""
                         }`}
+                        aria-busy={uploading || undefined}
                       >
+                        <Upload className="h-4 w-4" aria-hidden="true" />
                         {uploading ? "Uploading…" : avatarUrl ? "Change photo" : "Choose photo"}
                         <input
                           type="file"
                           accept="image/png,image/jpeg,image/webp,image/gif"
-                          className="hidden"
+                          className="sr-only"
                           disabled={uploading}
+                          aria-label="Upload avatar image"
                           onChange={(e) => {
                             const f = e.target.files?.[0];
                             e.target.value = "";
@@ -429,8 +441,10 @@ function ProfilePage() {
                         <button
                           type="button"
                           onClick={() => setAvatarUrl("")}
-                          className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+                          aria-label="Remove avatar"
+                          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                         >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                           Remove
                         </button>
                       )}
@@ -442,6 +456,8 @@ function ProfilePage() {
 
                   {msg && (
                     <div
+                      role={msg.kind === "err" ? "alert" : "status"}
+                      aria-live="polite"
                       className={`rounded-md border p-3 text-sm ${
                         msg.kind === "ok"
                           ? "border-[oklch(0.65_0.15_145)]/40 bg-[oklch(0.65_0.15_145)]/10 text-[oklch(0.45_0.15_145)]"
@@ -456,7 +472,7 @@ function ProfilePage() {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] disabled:opacity-50"
+                      className="inline-flex min-h-11 items-center justify-center rounded-md px-5 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] outline-none transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:opacity-50"
                       style={{ backgroundImage: "var(--gradient-sunrise)" }}
                     >
                       {saving ? "Saving…" : "Save profile"}
