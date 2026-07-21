@@ -262,16 +262,20 @@ function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAi
         <p className="font-semibold text-sm">
           Q{index + 1}
           {q?.type ? <span className="ml-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">{q.type}</span> : null}
-          <span className="ml-2 text-muted-foreground font-normal">· {a.marks_awarded}/{a.marks_total} marks</span>
+          {!showAiExplain && (
+            <span className="ml-2 text-muted-foreground font-normal">· {a.marks_awarded}/{a.marks_total} marks</span>
+          )}
         </p>
-        <span
-          className={`text-xs font-bold ${
-            a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"
-          }`}
-        >
-          {a.correct ? "✓ Correct" : "✗ Incorrect"}
-          {a.code_total !== null ? ` · ${a.code_passed}/${a.code_total} tests` : ""}
-        </span>
+        {!showAiExplain && (
+          <span
+            className={`text-xs font-bold ${
+              a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"
+            }`}
+          >
+            {a.correct ? "✓ Correct" : "✗ Incorrect"}
+            {a.code_total !== null ? ` · ${a.code_passed}/${a.code_total} tests` : ""}
+          </span>
+        )}
       </div>
 
       {/* Full question text */}
