@@ -552,7 +552,7 @@ function AdminPage() {
               { key: "students", label: "Students", icon: Users },
               { key: "activity", label: "Activity logs", icon: ActivityIcon },
               { key: "streaks", label: "Streaks", icon: Flame },
-              { key: "badges", label: "Badges", icon: Award },
+              
               { key: "announce", label: "Announcements", icon: Megaphone },
               { key: "reports", label: "Reports", icon: FileText },
               { key: "reviews", label: "Reviews", icon: Star },
