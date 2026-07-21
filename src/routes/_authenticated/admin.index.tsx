@@ -422,7 +422,7 @@ function AdminPage() {
         description: `Removed ${total} records across student activity tables.`,
       });
       setMocks([]);
-      setStreaks({});
+
       setConfirmReset(false);
       setResetConfirmText("");
       // Reload to pull fresh (empty) state everywhere.
