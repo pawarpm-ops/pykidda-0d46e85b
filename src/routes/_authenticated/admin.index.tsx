@@ -123,6 +123,7 @@ type ProfileInfo = {
   gender: string | null;
   birth_date: string | null;
   onboarded: boolean | null;
+  student_unique_id: string | null;
 };
 
 
