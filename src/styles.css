@@ -196,6 +196,14 @@
       padding-left: 15rem;
     }
   }
+
+  /* Reserve room for the mobile bottom nav (56px + safe-area). */
+  @media (max-width: 1023.98px) {
+    body.has-sidebar {
+      padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
 }
 
 /* Global clickable cursor — matches header/navbar link behavior across the app */
