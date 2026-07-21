@@ -729,30 +729,50 @@ export const getAiMockAttemptResult = createServerFn({ method: "POST" })
       .eq("id", attempt.test_id)
       .single();
 
-    // Student view: if scheduled and not yet published, strip answer key so
-    // the teacher's un-reviewed auto marks don't leak.
+    // Student view: if scheduled and not yet published, strip grading data
+    // (marks / correctness) but expose the answer key so students can review
+    // the correct answer of every question while waiting for the teacher.
     const isOwnerNotAdmin = attempt.user_id === context.userId && !isAdmin;
     const pending = attempt.grading_status !== "published";
-    if (isOwnerNotAdmin && pending) {
-      return {
-        attempt: {
-          ...attempt,
-          answers: [],
-          teacher_feedback: null,
-        },
-        test,
-        questions: [],
-        pending_review: true,
-      };
-    }
-
     const { data: questions, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
       .select("id,prompt,type,options,correct_answer,starter_code,explanation,order_index")
       .eq("test_id", attempt.test_id)
       .order("order_index");
     if (qErr) throw new Error(qErr.message);
+
+    if (isOwnerNotAdmin && pending) {
+      const sanitizedAnswers = Array.isArray(attempt.answers)
+        ? (attempt.answers as any[]).map((a) => ({
+            question_id: a.question_id,
+            response: a.response ?? "",
+            correct: false,
+            marks_awarded: 0,
+            marks_total: a.marks_total ?? 0,
+            correct_answer: a.correct_answer ?? "",
+            explanation: a.explanation ?? "",
+            code_passed: null,
+            code_total: null,
+            teacher_comment: null,
+          }))
+        : [];
+      return {
+        attempt: {
+          ...attempt,
+          marks_obtained: 0,
+          percentage: 0,
+          grade: "-",
+          answers: sanitizedAnswers,
+          teacher_feedback: null,
+        },
+        test,
+        questions: questions ?? [],
+        pending_review: true,
+      };
+    }
+
     return { attempt, test, questions: questions ?? [], pending_review: false };
+
   });
 
 
