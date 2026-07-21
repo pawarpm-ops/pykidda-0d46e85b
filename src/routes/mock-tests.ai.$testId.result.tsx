@@ -356,7 +356,7 @@ function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAi
         </p>
       )}
 
-      {(a.explanation || q?.explanation) && (
+      {!showAiExplain && (a.explanation || q?.explanation) && (
         <div className="mt-3 rounded-md border border-border bg-secondary/30 p-3">
           <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">💡 Explanation</p>
           <p className="mt-1 text-xs whitespace-pre-wrap">{a.explanation || q?.explanation}</p>
