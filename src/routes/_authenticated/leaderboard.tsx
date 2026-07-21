@@ -230,20 +230,15 @@ function LeaderboardPage() {
           />
         ) : (
           <>
-            {error && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+            {error && <ErrorState message={error} />}
 
-            {!rows && !error && (
-              <div className="py-16 text-center text-muted-foreground">Loading the rankings…</div>
-            )}
+            {!rows && !error && <LoadingState message="Loading the rankings…" />}
 
             {rows && rows.length === 0 && (
-              <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
-                No scores yet — solve your first practice question to claim rank #1!
-              </div>
+              <EmptyState
+                title="No scores yet"
+                message="Solve your first practice question to claim rank #1!"
+              />
             )}
 
             {searching && filteredRows && filteredRows.length === 0 && (
