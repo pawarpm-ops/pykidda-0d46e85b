@@ -175,14 +175,17 @@ function ResultPage() {
 
 type TabKey = "correct" | "incorrect" | "key";
 
-function AnswerTabs({ correct, incorrect, all, questions }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow> }) {
-  const [tab, setTab] = useState<TabKey>("correct");
+function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean }) {
+  const [tab, setTab] = useState<TabKey>(answerKeyOnly ? "key" : "correct");
 
-  const tabs: { key: TabKey; label: string; count: number }[] = [
-    { key: "correct", label: "Correct Questions", count: correct.length },
-    { key: "incorrect", label: "Incorrect Questions", count: incorrect.length },
-    { key: "key", label: "Answer Key", count: all.length },
-  ];
+  const tabs: { key: TabKey; label: string; count: number }[] = answerKeyOnly
+    ? [{ key: "key", label: "Answer Key", count: all.length }]
+    : [
+        { key: "correct", label: "Correct Questions", count: correct.length },
+        { key: "incorrect", label: "Incorrect Questions", count: incorrect.length },
+        { key: "key", label: "Answer Key", count: all.length },
+      ];
+
 
   const list = tab === "correct" ? correct : tab === "incorrect" ? incorrect : all;
 
