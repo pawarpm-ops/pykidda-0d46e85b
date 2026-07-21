@@ -147,7 +147,7 @@ function Editor() {
   const [refineDraft, setRefineDraft] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [counts, setCounts] = useState({ mcq: 5, tf: 3, fill: 2, short: 1, code: 2 });
+  const [counts, setCounts] = useState({ mcq: 0, tf: 0, fill: 0, short: 0, code: 5 });
   const fileRef = useRef<HTMLInputElement | null>(null);
 
 
