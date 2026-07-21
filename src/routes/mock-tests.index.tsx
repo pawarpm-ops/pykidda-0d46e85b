@@ -61,7 +61,9 @@ function scheduledStatus(t: AiTestRow): { label: "Upcoming" | "Available Now" | 
 
 function MockTestsList() {
   const listFn = useServerFn(listAiMockTests);
+  const attemptsFn = useServerFn(listMyAiMockAttempts);
   const [aiTests, setAiTests] = useState<AiTestRow[]>([]);
+  const [latestAttempts, setLatestAttempts] = useState<Record<string, { id: string; grading_status?: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window !== "undefined" && window.location.hash.replace("#", "") === "scheduled") return "scheduled";
@@ -91,6 +93,31 @@ function MockTestsList() {
 
   const normalAi = aiTests.filter((t) => (t.test_kind ?? "normal") === "normal");
   const scheduledAi = aiTests.filter((t) => t.test_kind === "scheduled");
+
+  useEffect(() => {
+    if (scheduledAi.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries = await Promise.all(
+        scheduledAi.map(async (t) => {
+          try {
+            const rows = await attemptsFn({ data: { test_id: t.id } });
+            const first = (rows as Array<{ id: string; grading_status?: string | null }>)[0];
+            return first ? ([t.id, { id: first.id, grading_status: first.grading_status }] as const) : null;
+          } catch {
+            return null;
+          }
+        }),
+      );
+      if (cancelled) return;
+      const map: Record<string, { id: string; grading_status?: string | null }> = {};
+      for (const e of entries) if (e) map[e[0]] = e[1];
+      setLatestAttempts(map);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiTests]);
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -237,14 +264,32 @@ function MockTestsList() {
                       </div>
                       <p className="mt-2 text-xs text-muted-foreground">{st.msg}</p>
                       <div className="mt-4 flex items-center justify-between gap-2">
-                        <Link
-                          to="/mock-tests/scheduled/$testId"
-                          params={{ testId: t.id }}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          View details
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          <Link
+                            to="/mock-tests/scheduled/$testId"
+                            params={{ testId: t.id }}
+                            className="text-xs text-primary hover:underline"
+                          >
+                            View details
+                          </Link>
+                          {latestAttempts[t.id] ? (
+                            <Link
+                              to="/mock-tests/ai/$testId/result"
+                              params={{ testId: t.id }}
+                              search={{ attempt: latestAttempts[t.id].id }}
+                              className="inline-flex items-center rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
+                              title={
+                                latestAttempts[t.id].grading_status === "pending_review"
+                                  ? "Awaiting teacher review — you can view the answer key"
+                                  : "View your graded result"
+                              }
+                            >
+                              Result
+                            </Link>
+                          ) : null}
+                        </div>
                         {st.startable ? (
+
                           <Link
                             to="/mock-tests/ai/$testId/warning"
                             params={{ testId: t.id }}
