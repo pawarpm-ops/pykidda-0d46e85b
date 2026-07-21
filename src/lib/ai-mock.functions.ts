@@ -554,6 +554,17 @@ export const submitAiMockAttempt = createServerFn({ method: "POST" })
       // Allow a small grace window on submit (in case fullscreen exit fires right at end)
       if (now < s) throw new Error("Scheduled test has not started yet");
       if (now > e + 60_000) throw new Error("Scheduled test window has ended");
+      // Enforce one attempt per student for scheduled tests.
+      const { data: prior } = await supabaseAdmin
+        .from("ai_mock_attempts")
+        .select("id")
+        .eq("test_id", data.test_id)
+        .eq("user_id", context.userId)
+        .not("submitted_at", "is", null)
+        .limit(1);
+      if (Array.isArray(prior) && prior.length > 0) {
+        throw new Error("You have already submitted this scheduled test. Only one attempt is allowed.");
+      }
     }
     const { data: qs, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
