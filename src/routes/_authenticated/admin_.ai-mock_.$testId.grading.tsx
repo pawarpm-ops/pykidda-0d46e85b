@@ -14,7 +14,7 @@ import {
   saveGrading,
 } from "@/lib/ai-mock-grading.functions";
 
-export const Route = createFileRoute("/_authenticated/admin_/ai-mock/$testId/grading")({
+export const Route = createFileRoute("/_authenticated/admin_/ai-mock_/$testId/grading")({
   head: () => ({
     meta: [
       { title: "Grade scheduled mock · PY Kidda Admin" },
