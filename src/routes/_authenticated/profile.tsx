@@ -370,7 +370,7 @@ function ProfilePage() {
                             aria-checked={selected}
                             disabled={savingStatus}
                             onClick={() => { if (!selected) void updatePresenceStatus(s); }}
-                            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                            className={`inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60 ${
                               selected ? "bg-accent text-accent-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                             }`}
                           >
