@@ -99,15 +99,13 @@ function NotificationsPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="flex items-end justify-between gap-3 flex-wrap">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Inbox</p>
-            <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">Notifications</h1>
-            <p className="mt-1 text-muted-foreground">
-              {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
+        <PageHeader
+          eyebrow="Inbox"
+          title="Notifications"
+          description={unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
+          actions={
+            <div className="flex items-center gap-2 flex-wrap">
+
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
