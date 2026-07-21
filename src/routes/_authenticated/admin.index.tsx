@@ -281,7 +281,7 @@ function ScoreDistributionCard({
 function AdminPage() {
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks" | "audit" | "health" | "badges">("overview");
+  const [tab, setTab] = useState<"overview" | "students" | "activity" | "announce" | "reports" | "reviews" | "homework" | "streaks" | "audit" | "health">("overview");
   const [overviewSubTab, setOverviewSubTab] = useState<"complete" | "mocks">("complete");
   const [mocks, setMocks] = useState<MockRow[]>([]);
   const [practice, setPractice] = useState<PracticeRow[]>([]);
