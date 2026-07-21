@@ -329,7 +329,7 @@ function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAi
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div className="rounded-md border border-border bg-secondary/30 p-3">
             <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Your answer</p>
-            <pre className={`mt-1 whitespace-pre-wrap font-mono text-xs ${a.correct ? "text-[oklch(0.45_0.16_145)]" : "text-destructive"}`}>{userAns || "(blank)"}</pre>
+            <pre className="mt-1 whitespace-pre-wrap font-mono text-xs text-foreground">{userAns || "(blank)"}</pre>
           </div>
           <div className="rounded-md border border-[oklch(0.65_0.16_145)]/40 bg-[oklch(0.65_0.16_145)]/5 p-3">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[oklch(0.55_0.16_145)]">Correct answer</p>
