@@ -156,23 +156,36 @@ export function SiteHeader() {
     const Icon = item.icon;
     const badge = item.badgeKey === "notifications" ? unread : 0;
     const commonClass = cn(
-      "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium border border-transparent transition-all duration-150",
+      "group relative flex items-center gap-3 rounded-lg pl-4 pr-3 min-h-11 text-sm font-medium",
+      "transition-colors duration-150",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       item.disabled
-        ? "cursor-not-allowed opacity-60 text-foreground/60"
+        ? "cursor-not-allowed opacity-60 text-muted-foreground"
         : cn(
-            "hover:border-primary/40 hover:bg-primary/5 hover:translate-x-0.5",
+            "hover:bg-muted",
             active
-              ? "bg-primary/15 text-primary border-primary/30 shadow-[0_0_0_1px_var(--color-primary)]/0"
-              : "text-foreground/75 hover:text-foreground",
+              ? "bg-primary/10 text-primary font-semibold"
+              : "text-foreground/80 hover:text-foreground",
           ),
-      opts?.compact && "px-2 py-2",
+      opts?.compact && "min-h-10 pl-3",
     );
     const inner = (
       <>
-        <span className="relative inline-flex items-center justify-center">
-          <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+        {/* Active indicator bar */}
+        <span
+          aria-hidden
+          className={cn(
+            "absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full transition-colors",
+            active ? "bg-primary" : "bg-transparent",
+          )}
+        />
+        <span className="relative inline-flex items-center justify-center shrink-0">
+          <Icon size={20} strokeWidth={active ? 2.4 : 1.9} aria-hidden />
           {badge > 0 && (
-            <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+            <span
+              className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none"
+              aria-label={`${badge} unread`}
+            >
               {badge > 9 ? "9+" : badge}
             </span>
           )}
@@ -205,12 +218,14 @@ export function SiteHeader() {
         to={item.to}
         data-tour={item.tour}
         aria-label={item.label}
+        aria-current={active ? "page" : undefined}
         className={commonClass}
       >
         {inner}
       </Link>
     );
   }
+
 
   return (
     <>
