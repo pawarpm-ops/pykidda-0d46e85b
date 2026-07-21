@@ -7,7 +7,7 @@ import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 import { useServerFn } from "@tanstack/react-start";
 import { getStudentAiTest, submitAiMockAttempt } from "@/lib/ai-mock.functions";
 import { startPykoAssessment, endPykoAssessment } from "@/lib/pyko/assessment.functions";
-import { loadPyodideOnce, outputsMatch, runPython } from "@/lib/pyodide-runner";
+import { loadPyodideOnce, runPython } from "@/lib/pyodide-runner";
 import { recordStreakActivity } from "@/lib/streaks";
 import { syncMyScore } from "@/lib/leaderboard";
 import {
@@ -148,7 +148,11 @@ function TakeAiMock() {
       setGradeMsg(submission_type === "auto-violation" ? "Auto-submitting & grading…" : "Grading your test…");
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
 
-      const graded: Array<{ question_id: string; response: string; code_passed?: number; code_total?: number }> = [];
+      const graded: Array<{
+        question_id: string;
+        response: string;
+        runs?: Array<{ stdin: string; stdout: string; stderr: string; ok: boolean }>;
+      }> = [];
       const currentAnswers = answersRef.current;
       const qs = questionsRef.current;
       for (let i = 0; i < qs.length; i++) {
@@ -156,14 +160,18 @@ function TakeAiMock() {
         const response = currentAnswers[q.id] ?? "";
         setGradeMsg(`Grading Q${i + 1} of ${qs.length}…`);
         if (q.type === "code") {
-          let passed = 0;
-          const total = q.code_tests.length;
+          const runs: Array<{ stdin: string; stdout: string; stderr: string; ok: boolean }> = [];
           for (const tc of q.code_tests) {
             // eslint-disable-next-line no-await-in-loop
             const r = await runPython(response || q.starter_code, tc.stdin ?? "", { timeoutMs: 5000 });
-            if (r.ok && outputsMatch(r.stdout, tc.expected)) passed++;
+            runs.push({
+              stdin: tc.stdin ?? "",
+              stdout: r.stdout ?? "",
+              stderr: r.stderr ?? "",
+              ok: !!r.ok,
+            });
           }
-          graded.push({ question_id: q.id, response, code_passed: passed, code_total: total });
+          graded.push({ question_id: q.id, response, runs });
         } else {
           graded.push({ question_id: q.id, response });
         }
