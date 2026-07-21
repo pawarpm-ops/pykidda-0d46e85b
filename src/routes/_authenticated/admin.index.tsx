@@ -737,12 +737,6 @@ function AdminPage() {
 
         {tab === "health" && <SystemHealthTab />}
 
-        {tab === "badges" && (
-          <section className="mt-6">
-            <h2 className="mb-4 text-xl font-semibold">Badge overview</h2>
-            <AdminBadgesOverview />
-          </section>
-        )}
 
         {tab === "announce" && authorId && (
           <AnnounceTab authorId={authorId} students={students} />
