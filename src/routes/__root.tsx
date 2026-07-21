@@ -299,7 +299,7 @@ function AuthGate({ children }: { children: ReactNode }) {
           <StreakUnlockModal />
           {isDashboardRoute && <WhatsNewPopups />}
           {!isSecureRoute && <InactivityLogout />}
-          <BadgeToaster />
+          
           <DailyStreakToaster />
           <StreakWarningToaster />
           {!isSecureRoute && <PykoFloatingPanel />}
