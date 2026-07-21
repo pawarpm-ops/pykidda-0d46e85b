@@ -257,13 +257,22 @@ export function SiteHeader() {
             )}
           </div>
           {email ? (
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border border-border bg-background hover:border-destructive/50 hover:text-destructive transition-colors"
-            >
-              <LogOut size={18} />
-              <span>Sign out</span>
-            </button>
+            <>
+              <button
+                onClick={handleSwitchAccount}
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border border-border bg-background hover:border-primary/50 hover:text-primary transition-colors"
+              >
+                <UserCog size={18} />
+                <span>Switch account</span>
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium border border-border bg-background hover:border-destructive/50 hover:text-destructive transition-colors"
+              >
+                <LogOut size={18} />
+                <span>Sign out</span>
+              </button>
+            </>
           ) : (
             <Link
               to="/auth"
