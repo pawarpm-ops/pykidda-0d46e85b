@@ -1611,6 +1611,10 @@ export type Database = {
     }
     Functions: {
       admin_badge_overview: { Args: never; Returns: Json }
+      admin_resend_announcement: {
+        Args: { _id: string; _scheduled_at?: string }
+        Returns: undefined
+      }
       assign_user_role: {
         Args: {
           _action?: string

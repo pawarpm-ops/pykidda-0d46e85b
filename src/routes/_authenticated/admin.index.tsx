@@ -21,6 +21,8 @@ import {
   createAnnouncement,
   deleteAnnouncement,
   listAnnouncements,
+  updateAnnouncement,
+  resendAnnouncement,
   type Announcement,
 } from "@/lib/notifications";
 import { listStudentAuthInfo, type StudentAuthInfo } from "@/lib/admin-users.functions";
@@ -1369,6 +1371,7 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
   const [scheduledDate, setScheduledDate] = useState<string>("");
   const [scheduledTime, setScheduledTime] = useState<string>("");
   const [busy, setBusy] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   async function load() {
     setList(await listAnnouncements());
@@ -1377,61 +1380,154 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
     void load();
   }, []);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim() || !body.trim()) return;
-    let iso: string | null = null;
-    if (scheduleEnabled) {
-      if (!scheduledDate || !scheduledTime) {
-        alert("Please pick both a date and a time to schedule this announcement.");
-        return;
-      }
-      const dt = new Date(`${scheduledDate}T${scheduledTime}`);
-      if (Number.isNaN(dt.getTime())) {
-        alert("Invalid scheduled date or time.");
-        return;
-      }
-      if (dt.getTime() <= Date.now()) {
-        alert("Scheduled time must be in the future.");
-        return;
-      }
-      iso = dt.toISOString();
-    }
-    setBusy(true);
-    try {
-      await createAnnouncement({
-        authorId,
-        title: title.trim(),
-        body: body.trim(),
-        priority,
-        targetUserId: target || null,
-        scheduledAt: iso,
-      });
-      void logAdminActionClient({
-        actionType: iso ? "announcement.scheduled" : "announcement.created",
-        description: iso
-          ? `Scheduled announcement: ${title.trim()}`
-          : `Created announcement: ${title.trim()}`,
-        moduleName: "announcement",
-        targetTitle: title.trim(),
-        relatedStudentId: target || null,
-        newValue: { priority, target_user_id: target || null, scheduled_at: iso },
-      });
-      setTitle("");
-      setBody("");
-      setPriority("normal");
-      setTarget("");
+  function resetForm() {
+    setTitle("");
+    setBody("");
+    setPriority("normal");
+    setTarget("");
+    setScheduleEnabled(false);
+    setScheduledDate("");
+    setScheduledTime("");
+    setEditingId(null);
+  }
+
+  function startEdit(n: Announcement) {
+    setEditingId(n.id);
+    setTitle(n.title);
+    setBody(n.body);
+    setPriority(n.priority);
+    setTarget(n.target_user_id ?? "");
+    if (n.scheduled_at && new Date(n.scheduled_at).getTime() > Date.now()) {
+      const d = new Date(n.scheduled_at);
+      setScheduleEnabled(true);
+      setScheduledDate(d.toISOString().slice(0, 10));
+      setScheduledTime(d.toTimeString().slice(0, 5));
+    } else {
       setScheduleEnabled(false);
       setScheduledDate("");
       setScheduledTime("");
+    }
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function computeScheduledIso(): string | null | undefined {
+    if (!scheduleEnabled) return null;
+    if (!scheduledDate || !scheduledTime) {
+      alert("Please pick both a date and a time to schedule this announcement.");
+      return undefined;
+    }
+    const dt = new Date(`${scheduledDate}T${scheduledTime}`);
+    if (Number.isNaN(dt.getTime())) {
+      alert("Invalid scheduled date or time.");
+      return undefined;
+    }
+    if (dt.getTime() <= Date.now()) {
+      alert("Scheduled time must be in the future.");
+      return undefined;
+    }
+    return dt.toISOString();
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !body.trim()) return;
+    const iso = computeScheduledIso();
+    if (iso === undefined) return;
+    setBusy(true);
+    try {
+      if (editingId) {
+        await updateAnnouncement(editingId, {
+          title: title.trim(),
+          body: body.trim(),
+          priority,
+          targetUserId: target || null,
+          scheduledAt: iso,
+        });
+        void logAdminActionClient({
+          actionType: "announcement.updated",
+          description: `Updated announcement: ${title.trim()}`,
+          moduleName: "announcement",
+          targetId: editingId,
+          targetTitle: title.trim(),
+          newValue: { priority, target_user_id: target || null, scheduled_at: iso },
+        });
+      } else {
+        await createAnnouncement({
+          authorId,
+          title: title.trim(),
+          body: body.trim(),
+          priority,
+          targetUserId: target || null,
+          scheduledAt: iso,
+        });
+        void logAdminActionClient({
+          actionType: iso ? "announcement.scheduled" : "announcement.created",
+          description: iso
+            ? `Scheduled announcement: ${title.trim()}`
+            : `Created announcement: ${title.trim()}`,
+          moduleName: "announcement",
+          targetTitle: title.trim(),
+          relatedStudentId: target || null,
+          newValue: { priority, target_user_id: target || null, scheduled_at: iso },
+        });
+      }
+      resetForm();
       await load();
     } catch (err) {
-      alert("Failed to send: " + (err as Error).message);
+      alert("Failed to save: " + (err as Error).message);
     } finally {
       setBusy(false);
     }
   }
 
+  async function saveAndResend() {
+    if (!editingId) return;
+    if (!title.trim() || !body.trim()) return;
+    const iso = computeScheduledIso();
+    if (iso === undefined) return;
+    if (!confirm("Resend this announcement? Every student will see it as unread again.")) return;
+    setBusy(true);
+    try {
+      await updateAnnouncement(editingId, {
+        title: title.trim(),
+        body: body.trim(),
+        priority,
+        targetUserId: target || null,
+      });
+      await resendAnnouncement(editingId, iso);
+      void logAdminActionClient({
+        actionType: "announcement.resent",
+        description: `Resent announcement: ${title.trim()}`,
+        moduleName: "announcement",
+        targetId: editingId,
+        targetTitle: title.trim(),
+        newValue: { priority, target_user_id: target || null, scheduled_at: iso },
+      });
+      resetForm();
+      await load();
+    } catch (err) {
+      alert("Failed to resend: " + (err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendOnly(n: Announcement) {
+    if (!confirm(`Resend "${n.title}"? Every student will see it as unread again.`)) return;
+    try {
+      await resendAnnouncement(n.id, null);
+      void logAdminActionClient({
+        actionType: "announcement.resent",
+        description: `Resent announcement: ${n.title}`,
+        moduleName: "announcement",
+        targetId: n.id,
+        targetTitle: n.title,
+      });
+      await load();
+    } catch (err) {
+      alert("Failed to resend: " + (err as Error).message);
+    }
+  }
 
   async function remove(id: string) {
     if (!confirm("Delete this announcement?")) return;
@@ -1445,13 +1541,29 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
       targetTitle: removed?.title ?? null,
       oldValue: removed ?? null,
     });
+    if (editingId === id) resetForm();
     await load();
   }
+
+  const isEditing = editingId !== null;
 
   return (
     <section className="mt-6 grid gap-6 lg:grid-cols-2">
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-        <h2 className="text-base font-semibold">Send a new announcement</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold">
+            {isEditing ? "Edit announcement" : "Send a new announcement"}
+          </h2>
+          {isEditing && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="text-xs text-muted-foreground underline"
+            >
+              Cancel edit
+            </button>
+          )}
+        </div>
         <form onSubmit={submit} className="mt-4 space-y-3">
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Title</span>
@@ -1543,14 +1655,32 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
               </div>
             )}
           </div>
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-            style={{ backgroundImage: "var(--gradient-sunrise)" }}
-          >
-            {busy ? "Sending…" : scheduleEnabled ? "Schedule announcement" : "Send announcement"}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              style={{ backgroundImage: "var(--gradient-sunrise)" }}
+            >
+              {busy
+                ? "Saving…"
+                : isEditing
+                  ? "Save changes"
+                  : scheduleEnabled
+                    ? "Schedule announcement"
+                    : "Send announcement"}
+            </button>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={saveAndResend}
+                disabled={busy}
+                className="rounded-md border border-border px-4 py-2 text-sm font-semibold hover:bg-accent/10 disabled:opacity-50"
+              >
+                Save & resend
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -1562,7 +1692,7 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
         ) : (
           <ul className="mt-3 divide-y divide-border max-h-[520px] overflow-auto">
             {list.map((n) => (
-              <li key={n.id} className="py-3">
+              <li key={n.id} className={`py-3 ${editingId === n.id ? "bg-accent/5 -mx-2 px-2 rounded-md" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -1570,6 +1700,11 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
                       {n.scheduled_at && new Date(n.scheduled_at).getTime() > Date.now() && (
                         <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-accent">
                           ⏰ Scheduled
+                        </span>
+                      )}
+                      {editingId === n.id && (
+                        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-primary">
+                          Editing
                         </span>
                       )}
                     </div>
@@ -1583,12 +1718,26 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
                   </div>
 
                   {n.author_id === authorId && (
-                    <button
-                      onClick={() => remove(n.id)}
-                      className="text-xs text-destructive underline shrink-0"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex flex-col items-end gap-1 shrink-0 text-xs">
+                      <button
+                        onClick={() => startEdit(n)}
+                        className="text-primary underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => void resendOnly(n)}
+                        className="text-accent underline"
+                      >
+                        Resend
+                      </button>
+                      <button
+                        onClick={() => remove(n.id)}
+                        className="text-destructive underline"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   )}
                 </div>
                 <p className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap line-clamp-4">{n.body}</p>
@@ -1605,6 +1754,7 @@ function AnnounceTab({ authorId, students }: { authorId: string; students: Stude
     </section>
   );
 }
+
 
 type ReportRow = {
   id: string;

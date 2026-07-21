@@ -102,6 +102,34 @@ export async function createAnnouncement(input: {
 }
 
 
+export async function updateAnnouncement(
+  id: string,
+  patch: {
+    title?: string;
+    body?: string;
+    priority?: "low" | "normal" | "high";
+    targetUserId?: string | null;
+    scheduledAt?: string | null;
+  },
+) {
+  const row: Record<string, unknown> = {};
+  if (patch.title !== undefined) row.title = patch.title;
+  if (patch.body !== undefined) row.body = patch.body;
+  if (patch.priority !== undefined) row.priority = patch.priority;
+  if (patch.targetUserId !== undefined) row.target_user_id = patch.targetUserId;
+  if (patch.scheduledAt !== undefined) row.scheduled_at = patch.scheduledAt;
+  const { error } = await supabase.from("announcements").update(row as never).eq("id", id);
+  if (error) throw error;
+}
+
+export async function resendAnnouncement(id: string, scheduledAt: string | null = null) {
+  const { error } = await supabase.rpc("admin_resend_announcement", {
+    _id: id,
+    _scheduled_at: scheduledAt,
+  } as never);
+  if (error) throw error;
+}
+
 export async function deleteAnnouncement(id: string) {
   const { error } = await supabase.from("announcements").delete().eq("id", id);
   if (error) throw error;
