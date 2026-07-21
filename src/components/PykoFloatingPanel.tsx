@@ -72,8 +72,30 @@ export function PykoFloatingPanel() {
   const [viewport, setViewport] = useState<{ w: number; h: number }>({ w: 1024, h: 768 });
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const launcherRef = useRef<HTMLButtonElement | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const dragRef = useRef<{ dx: number; dy: number; moved: boolean; w: number; h: number; startX: number; startY: number } | null>(null);
+
+  // Escape closes the panel; focus returns to launcher.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Restore focus to launcher when panel closes.
+  const prevOpen = useRef(open);
+  useEffect(() => {
+    if (prevOpen.current && !open) {
+      setTimeout(() => launcherRef.current?.focus(), 40);
+    }
+    prevOpen.current = open;
+  }, [open]);
 
   // Force-close if we entered an active assessment route.
   useEffect(() => {
@@ -257,14 +279,17 @@ export function PykoFloatingPanel() {
     <>
       {!open && (
         <button
+          ref={launcherRef}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          aria-label="Open Pyko AI (draggable)"
+          aria-label="Open Pyko AI assistant (draggable)"
+          aria-haspopup="dialog"
+          aria-expanded={false}
           style={{ left: pos.x, top: pos.y, touchAction: "none" }}
-          className="fixed z-40 flex h-16 w-16 items-center justify-center rounded-full hover:scale-110 transition select-none"
+          className="fixed z-40 flex h-16 w-16 items-center justify-center rounded-full select-none transition hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <img draggable={false} src={pykoMascot.url} alt="Pyko" className="h-full w-full object-contain pointer-events-none animate-[pyko-thinking_1.6s_ease-in-out_infinite]" />
+          <img draggable={false} src={pykoMascot.url} alt="" aria-hidden="true" className="h-full w-full object-contain pointer-events-none animate-[pyko-thinking_1.6s_ease-in-out_infinite] motion-reduce:animate-none" />
         </button>
       )}
 
@@ -407,13 +432,14 @@ export function PykoFloatingPanel() {
                 </div>
               ))}
               {busy && (
-                <div className="mr-auto flex items-center gap-2 max-w-[85%] rounded-lg bg-muted px-2.5 py-1.5 text-xs text-muted-foreground">
+                <div className="mr-auto flex items-center gap-2 max-w-[85%] rounded-lg bg-muted px-2.5 py-1.5 text-xs text-muted-foreground" role="status">
                   <img
                     src={pykoMascot.url}
                     alt=""
-                    className="h-5 w-5 object-contain animate-[pyko-thinking_1.4s_ease-in-out_infinite]"
+                    aria-hidden="true"
+                    className="h-5 w-5 object-contain animate-[pyko-thinking_1.4s_ease-in-out_infinite] motion-reduce:animate-none"
                   />
-                  <span className="animate-pulse">Pyko is thinking…</span>
+                  <span className="animate-pulse motion-reduce:animate-none">Pyko is thinking…</span>
                 </div>
               )}
               {err && (
@@ -448,13 +474,13 @@ export function PykoFloatingPanel() {
                   placeholder="Ask Pyko about PY Kidda…"
                   disabled={busy}
                   aria-label="Message to Pyko"
-                  className="flex-1 rounded-md border border-input bg-background px-2 py-1.5 text-xs outline-none focus:border-primary disabled:opacity-50"
+                  className="flex-1 min-h-11 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 />
                 <button
                   onClick={send}
                   disabled={busy || !input.trim()}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
-                  aria-label="Send message"
+                  className="min-h-11 min-w-11 rounded-md bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+                  aria-label="Send message to Pyko"
                 >
                   Send
                 </button>
