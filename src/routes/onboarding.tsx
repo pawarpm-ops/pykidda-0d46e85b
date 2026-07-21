@@ -411,13 +411,11 @@ function StepControl({
       );
     case 2:
       return (
-        <input
-          ref={(el) => { inputRef.current = el; }}
-          type="date"
+        <DatePicker
           value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKey}
+          onChange={onChange}
           max={today}
+          placeholder="Pick your birth date"
           className={cls}
         />
       );
