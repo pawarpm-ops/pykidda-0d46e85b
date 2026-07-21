@@ -36,7 +36,8 @@ import { StreakDebugTab } from "@/components/StreakDebugTab";
 import { AuditLogsTab } from "@/components/AuditLogsTab";
 import { SystemHealthTab } from "@/components/SystemHealthTab";
 import { logAdminActionClient } from "@/lib/audit-log-client";
-import { BadgesGrid } from "@/components/BadgesGrid";
+
+
 import { DatePicker } from "@/components/ui/date-picker";
 import { AdminBadgesOverview } from "@/components/AdminBadgesOverview";
 import {
