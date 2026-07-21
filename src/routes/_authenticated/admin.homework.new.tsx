@@ -54,8 +54,6 @@ function NewHomeworkPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-6 py-8 pb-28">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <div>
         <PageHeader
           eyebrow="Admin · New homework"
           icon={<Pencil size={20} />}
