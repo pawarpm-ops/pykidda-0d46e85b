@@ -127,20 +127,20 @@ function NotificationsPage() {
 
         <section className="mt-8 space-y-3">
           {loading ? (
-            <p className="text-muted-foreground">Loading…</p>
+            <LoadingState />
           ) : visibleItems.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-              <p className="text-lg font-semibold">No announcements yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                When your teacher posts an announcement, it'll appear here.
-              </p>
-              <Link
-                to="/practice"
-                className="mt-4 inline-block rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold"
-              >
-                Back to practice
-              </Link>
-            </div>
+            <EmptyState
+              title="No announcements yet"
+              description="When your teacher posts an announcement, it'll appear here."
+              action={
+                <Link
+                  to="/practice"
+                  className="inline-block rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold"
+                >
+                  Back to practice
+                </Link>
+              }
+            />
           ) : (
             visibleItems.map((n) => {
               const unread = !readIds.has(n.id);
