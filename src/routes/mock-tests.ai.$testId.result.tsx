@@ -84,7 +84,10 @@ function ResultPage() {
 
   if (!result) return <div className="p-10 text-center">Loading result…</div>;
 
-  if (pendingReview) {
+  const isPending = pendingReview || (result.grading_status && result.grading_status !== "published");
+
+  if (isPending) {
+
     return (
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
