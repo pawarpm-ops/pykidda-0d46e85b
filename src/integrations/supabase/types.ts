@@ -1810,6 +1810,7 @@ export type Database = {
           today_completed: boolean
         }[]
       }
+      reset_teacher_dashboard_data: { Args: never; Returns: Json }
       system_health_summary: {
         Args: never
         Returns: {
