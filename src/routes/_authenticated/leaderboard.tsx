@@ -74,7 +74,7 @@ function NameLink({
       <Link
         to="/u/$publicId"
         params={{ publicId: entry!.public_profile_id! }}
-        className={`hover:text-accent hover:underline underline-offset-4 transition-colors ${className}`}
+        className={`hover:text-accent hover:underline underline-offset-4 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${className}`}
         title="Open student profile"
       >
         {children}
