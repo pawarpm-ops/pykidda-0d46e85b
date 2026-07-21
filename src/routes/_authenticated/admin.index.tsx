@@ -355,12 +355,11 @@ function AdminPage() {
   const normalSubs = totalMocks - violations;
 
   // Student-wise marks bar chart (avg across attempts)
-  const authRollMap = new Map(authInfo.map((a) => [a.user_id, a.roll_number]));
   const studentChart = students.slice(0, 20).map((s) => ({
     name: s.name,
     avg: s.avgPct,
     best: s.bestPct,
-    rollNo: authRollMap.get(s.user_id) ?? null,
+    rollNo: profiles[s.user_id]?.student_unique_id ?? null,
   }));
 
   // Score distribution pie
