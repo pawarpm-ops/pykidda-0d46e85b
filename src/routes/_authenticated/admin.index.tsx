@@ -123,6 +123,7 @@ type ProfileInfo = {
   gender: string | null;
   birth_date: string | null;
   onboarded: boolean | null;
+  student_unique_id: string | null;
 };
 
 
@@ -240,7 +241,7 @@ function AdminPage() {
 
       const [m, pr, sr, ai, st] = await Promise.all([
         supabase.from("mock_results").select("*").order("submitted_at", { ascending: false }).limit(1000),
-        supabase.from("profiles").select("id, display_name, full_name, contact_number, college_name, age, gender, birth_date, onboarded"),
+        supabase.from("profiles").select("id, display_name, full_name, contact_number, college_name, age, gender, birth_date, onboarded, student_unique_id"),
         supabase.from("user_roles").select("user_id").eq("role", "student"),
         fetchAuthInfo().catch((e) => { console.error("auth info", e); return [] as StudentAuthInfo[]; }),
         supabase.from("student_streaks").select("user_id, current_streak, longest_streak, last_activity_date"),
@@ -259,6 +260,7 @@ function AdminPage() {
           gender: row.gender,
           birth_date: row.birth_date,
           onboarded: row.onboarded,
+          student_unique_id: row.student_unique_id,
         };
       }
       setProfiles(pmap);
@@ -353,7 +355,12 @@ function AdminPage() {
   const normalSubs = totalMocks - violations;
 
   // Student-wise marks bar chart (avg across attempts)
-  const studentChart = students.slice(0, 20).map((s) => ({ name: s.name, avg: s.avgPct, best: s.bestPct }));
+  const studentChart = students.slice(0, 20).map((s) => ({
+    name: s.name,
+    avg: s.avgPct,
+    best: s.bestPct,
+    rollNo: profiles[s.user_id]?.student_unique_id ?? null,
+  }));
 
   // Score distribution pie
   const bands = [
