@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   deleteHealthLog,
   getHealthSummary,
@@ -7,6 +8,7 @@ import {
   updateHealthLogStatus,
   type HealthLogRow,
 } from "@/lib/system-health.functions";
+
 
 const CATEGORIES = [
   "ai",
@@ -406,10 +408,10 @@ export function SystemHealthTab() {
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <FilterField label="From">
-            <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0); }} className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm" />
+            <DatePicker value={from} onChange={(v) => { setFrom(v); setPage(0); }} placeholder="From date" />
           </FilterField>
           <FilterField label="To">
-            <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0); }} className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm" />
+            <DatePicker value={to} onChange={(v) => { setTo(v); setPage(0); }} placeholder="To date" />
           </FilterField>
           <FilterField label="Category">
             <select value={category} onChange={(e) => { setCategory(e.target.value); setPage(0); }} className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm">
