@@ -578,9 +578,7 @@ function Editor() {
             <div className="flex items-center justify-between flex-wrap gap-3">
               <h2 className="text-lg font-semibold flex items-center gap-2"><span>📝</span> 4. Review & edit ({questions.length} Qs · {totalMarks} marks)</h2>
               <div className="flex gap-2 flex-wrap">
-                {(Object.keys(TYPE_LABEL) as QType[]).map((t) => (
-                  <button key={t} onClick={() => addBlankQ(t)} className="text-xs rounded border border-border px-2 py-1 hover:bg-secondary">+ {TYPE_LABEL[t]}</button>
-                ))}
+                <button onClick={() => addBlankQ("code")} className="text-xs rounded border border-border px-2 py-1 hover:bg-secondary">+ {TYPE_LABEL.code}</button>
               </div>
             </div>
             <div className="mt-5 space-y-4">
