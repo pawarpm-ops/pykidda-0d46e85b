@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const Route = createFileRoute("/help")({
   head: () => ({
@@ -231,16 +232,12 @@ function HelpPage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex items-center gap-3 mb-2">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary border border-primary/30">
-            <HelpCircle className="h-5 w-5" />
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Help &amp; FAQ</h1>
-        </div>
-        <p className="text-muted-foreground max-w-2xl">
-          Quick answers about homework, mock tests, streaks, results and coding.
-          Search below or pick a category.
-        </p>
+        <PageHeader
+          eyebrow="Support"
+          title="Help & FAQ"
+          description="Quick answers about homework, mock tests, streaks, results and coding. Search below or pick a category."
+          icon={<HelpCircle className="h-5 w-5" />}
+        />
       </div>
 
       {/* Search */}

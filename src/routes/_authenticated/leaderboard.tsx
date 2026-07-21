@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState, EmptyState, ErrorState } from "@/components/ui/state";
 import { fetchLeaderboard, syncMyScore, type LeaderboardRow } from "@/lib/leaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchStreakLeaderboard, getCurrentRank, type StreakLeaderRow } from "@/lib/streaks";
@@ -168,10 +170,11 @@ function LeaderboardPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-6 py-10">
-        <header className="mb-6 text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-accent">PY Kidda Hall of Fame</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">Leaderboard</h1>
-        </header>
+        <PageHeader
+          eyebrow="PY Kidda Hall of Fame"
+          title="Leaderboard"
+          description="Ranked by best percentage per scheduled mock test."
+        />
 
         {/* Tabs */}
         <div className="mb-6 flex justify-center">
@@ -227,20 +230,15 @@ function LeaderboardPage() {
           />
         ) : (
           <>
-            {error && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+            {error && <ErrorState description={error} />}
 
-            {!rows && !error && (
-              <div className="py-16 text-center text-muted-foreground">Loading the rankings…</div>
-            )}
+            {!rows && !error && <LoadingState label="Loading the rankings…" />}
 
             {rows && rows.length === 0 && (
-              <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
-                No scores yet — solve your first practice question to claim rank #1!
-              </div>
+              <EmptyState
+                title="No scores yet"
+                description="Solve your first practice question to claim rank #1!"
+              />
             )}
 
             {searching && filteredRows && filteredRows.length === 0 && (
@@ -334,13 +332,14 @@ function StreakLeaderboard({
   directory: Directory;
   searching: boolean;
 }) {
-  if (!rows) return <div className="py-16 text-center text-muted-foreground">Loading streak leaders…</div>;
+  if (!rows) return <LoadingState label="Loading streak leaders…" />;
   if (rows.length === 0) {
     if (searching) return <EmptySearch />;
     return (
-      <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
-        No streaks yet — solve a question today to start yours!
-      </div>
+      <EmptyState
+        title="No streaks yet"
+        description="Solve a question today to start yours!"
+      />
     );
   }
 

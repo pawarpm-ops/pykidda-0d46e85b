@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MOCK_TESTS } from "@/lib/questions";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState, EmptyState } from "@/components/ui/state";
 
 export const Route = createFileRoute("/_authenticated/teacher-comments")({
   head: () => ({
@@ -103,23 +105,22 @@ function TeacherCommentsPage() {
         >
           <ArrowLeft size={16} /> Back
         </button>
-        <h1 className="text-3xl font-bold">💬 Teacher Comments</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Feedback from your teachers on your mock test attempts.
-        </p>
+        <PageHeader
+          eyebrow="Feedback"
+          title="Teacher Comments"
+          description="Feedback from your teachers on your mock test attempts."
+        />
       </header>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <LoadingState />
       ) : !userId ? (
         <p className="text-sm text-muted-foreground">Please sign in.</p>
       ) : comments.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            No teacher comments yet. Once a teacher adds a comment on one of your mock
-            test attempts, it will show up here.
-          </p>
-        </div>
+        <EmptyState
+          title="No comments yet"
+          description="Once a teacher adds a comment on one of your mock test attempts, it will show up here."
+        />
       ) : (
         <ul className="space-y-4">
           {comments.map((c) => (

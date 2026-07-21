@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageHeader } from "@/components/ui/page-header";
+import { LoadingState, EmptyState } from "@/components/ui/state";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listAnnouncements,
@@ -97,50 +99,48 @@ function NotificationsPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <div className="flex items-end justify-between gap-3 flex-wrap">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-accent font-semibold">Inbox</p>
-            <h1 className="mt-1 text-3xl md:text-4xl font-bold tracking-tight">Notifications</h1>
-            <p className="mt-1 text-muted-foreground">
-              {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition"
-              >
-                Mark all as read
-              </button>
-            )}
-            {visibleItems.length > 0 && (
-              <button
-                onClick={handleDeleteAll}
-                className="rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-1.5 text-sm hover:bg-destructive/20 transition"
-              >
-                Delete all
-              </button>
-            )}
-          </div>
-        </div>
+        <PageHeader
+          eyebrow="Inbox"
+          title="Notifications"
+          description={unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
+          actions={
+            <>
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-accent transition"
+                >
+                  Mark all as read
+                </button>
+              )}
+              {visibleItems.length > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  className="rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-1.5 text-sm hover:bg-destructive/20 transition"
+                >
+                  Delete all
+                </button>
+              )}
+            </>
+          }
+        />
 
         <section className="mt-8 space-y-3">
           {loading ? (
-            <p className="text-muted-foreground">Loading…</p>
+            <LoadingState />
           ) : visibleItems.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-              <p className="text-lg font-semibold">No announcements yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                When your teacher posts an announcement, it'll appear here.
-              </p>
-              <Link
-                to="/practice"
-                className="mt-4 inline-block rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold"
-              >
-                Back to practice
-              </Link>
-            </div>
+            <EmptyState
+              title="No announcements yet"
+              description="When your teacher posts an announcement, it'll appear here."
+              action={
+                <Link
+                  to="/practice"
+                  className="inline-block rounded-md bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold"
+                >
+                  Back to practice
+                </Link>
+              }
+            />
           ) : (
             visibleItems.map((n) => {
               const unread = !readIds.has(n.id);
