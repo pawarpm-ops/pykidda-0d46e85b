@@ -83,12 +83,10 @@ export function TopStudentsChart({ students }: { students: Student[] }) {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40">
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-        <div>
-          <h2 className="text-base font-semibold">Top Students Performance</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Average score compared with best score</p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
+      <div className="mb-4">
+        <h2 className="text-base font-semibold">Top Students Performance</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Average score compared with best score</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {ranked.length > 5 && (
             <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
               {([5, 10] as const).map((n) => (
@@ -125,6 +123,7 @@ export function TopStudentsChart({ students }: { students: Student[] }) {
           </div>
         </div>
       </div>
+
 
       {ranked.length === 0 ? (
         <p className="text-sm text-muted-foreground">No mock test data yet.</p>
