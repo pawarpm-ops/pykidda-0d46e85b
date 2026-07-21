@@ -116,7 +116,7 @@ function ResultPage() {
             ) : (
               <ol className="space-y-4">
                 {result.answers.map((a, i) => (
-                  <AnswerCard key={a.question_id} answer={a} question={questions[a.question_id]} index={i} tab="key" />
+                  <AnswerCard key={a.question_id} answer={a} question={questions[a.question_id]} index={i} tab="key" testTitle={testTitle} showAiExplain />
                 ))}
               </ol>
             )}
