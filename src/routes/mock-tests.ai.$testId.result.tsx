@@ -58,6 +58,7 @@ function ResultPage() {
   const { attempt } = Route.useSearch();
   const [result, setResult] = useState<Result | null>(null);
   const [testTitle, setTestTitle] = useState("");
+  const [testKind, setTestKind] = useState<string>("");
   const [questions, setQuestions] = useState<Record<string, QuestionRow>>({});
   const [pendingReview, setPendingReview] = useState(false);
 
@@ -72,7 +73,10 @@ function ResultPage() {
         const res = await getAiMockAttemptResult({ data: { attempt_id: attempt } });
         setResult(res.attempt as unknown as Result);
         setPendingReview(!!(res as { pending_review?: boolean }).pending_review);
-        if (res.test) setTestTitle((res.test as { title: string }).title);
+        if (res.test) {
+          setTestTitle((res.test as { title: string }).title);
+          setTestKind((res.test as { test_kind?: string }).test_kind ?? "");
+        }
         const map: Record<string, QuestionRow> = {};
         for (const q of res.questions as unknown as QuestionRow[]) map[q.id] = q;
         setQuestions(map);
@@ -81,6 +85,7 @@ function ResultPage() {
       }
     })();
   }, [attempt, testId]);
+
 
   if (!result) return <div className="p-10 text-center">Loading result…</div>;
 
@@ -156,7 +161,7 @@ function ResultPage() {
           </div>
         )}
 
-        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} />
+        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} answerKeyOnly={testKind === "scheduled"} />
 
         <div className="mt-8 flex gap-3">
           <Link to="/mock-tests" className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground">Back to tests</Link>
@@ -170,14 +175,17 @@ function ResultPage() {
 
 type TabKey = "correct" | "incorrect" | "key";
 
-function AnswerTabs({ correct, incorrect, all, questions }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow> }) {
-  const [tab, setTab] = useState<TabKey>("correct");
+function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean }) {
+  const [tab, setTab] = useState<TabKey>(answerKeyOnly ? "key" : "correct");
 
-  const tabs: { key: TabKey; label: string; count: number }[] = [
-    { key: "correct", label: "Correct Questions", count: correct.length },
-    { key: "incorrect", label: "Incorrect Questions", count: incorrect.length },
-    { key: "key", label: "Answer Key", count: all.length },
-  ];
+  const tabs: { key: TabKey; label: string; count: number }[] = answerKeyOnly
+    ? [{ key: "key", label: "Answer Key", count: all.length }]
+    : [
+        { key: "correct", label: "Correct Questions", count: correct.length },
+        { key: "incorrect", label: "Incorrect Questions", count: incorrect.length },
+        { key: "key", label: "Answer Key", count: all.length },
+      ];
+
 
   const list = tab === "correct" ? correct : tab === "incorrect" ? incorrect : all;
 
