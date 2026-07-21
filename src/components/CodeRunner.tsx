@@ -450,15 +450,16 @@ export function CodeRunner({
 
 
       {showHint && (
-        <div className="rounded-md border border-accent/30 bg-accent/5 p-3 text-sm">
+        <div id="cr-hint-panel" className="rounded-md border border-accent/30 bg-accent/5 p-3 text-sm">
           <strong>Hint:</strong> {question.hint}
         </div>
       )}
       {showSolution && (
-        <pre className="overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
+        <pre id="cr-solution-panel" className="overflow-auto rounded-md border border-border bg-[oklch(0.18_0.02_250)] p-3 text-xs text-[oklch(0.97_0.005_85)]">
 {question.solution}
         </pre>
       )}
+
 
       {pyError && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
