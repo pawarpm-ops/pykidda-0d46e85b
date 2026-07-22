@@ -95,11 +95,11 @@ function MockTestsList() {
   const scheduledAi = aiTests.filter((t) => t.test_kind === "scheduled");
 
   useEffect(() => {
-    if (scheduledAi.length === 0) return;
+    if (aiTests.length === 0) return;
     let cancelled = false;
     (async () => {
       const entries = await Promise.all(
-        scheduledAi.map(async (t) => {
+        aiTests.map(async (t) => {
           try {
             const rows = await attemptsFn({ data: { test_id: t.id } });
             const first = (rows as Array<{ id: string; grading_status?: string | null }>)[0];
@@ -117,6 +117,7 @@ function MockTestsList() {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiTests]);
+
 
 
   return (
@@ -180,15 +181,36 @@ function MockTestsList() {
                         {t.question_count} Qs · {Math.round(t.duration_sec / 60)} min · {t.total_marks} marks
                       </span>
                       <div className="flex items-center gap-2">
-                        <Link
-                          to="/mock-tests/ai/$testId/warning"
-                          params={{ testId: t.id }}
-                          className="inline-flex min-h-11 items-center rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          style={{ backgroundImage: "var(--gradient-sunrise)" }}
-                        >
-                          Start
-                        </Link>
+                        {latestAttempts[t.id] ? (
+                          <>
+                            <Link
+                              to="/mock-tests/ai/$testId/result"
+                              params={{ testId: t.id }}
+                              search={{ attempt: latestAttempts[t.id].id }}
+                              className="inline-flex items-center rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
+                              title="View your result"
+                            >
+                              Result
+                            </Link>
+                            <span
+                              className="inline-flex min-h-11 items-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-semibold text-muted-foreground"
+                              title="You've already submitted this test — only one attempt is allowed."
+                            >
+                              Submitted
+                            </span>
+                          </>
+                        ) : (
+                          <Link
+                            to="/mock-tests/ai/$testId/warning"
+                            params={{ testId: t.id }}
+                            className="inline-flex min-h-11 items-center rounded-md px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            style={{ backgroundImage: "var(--gradient-sunrise)" }}
+                          >
+                            Start
+                          </Link>
+                        )}
                       </div>
+
                     </div>
                     <AiHistory testId={t.id} />
                   </div>
