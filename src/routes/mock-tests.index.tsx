@@ -273,19 +273,30 @@ function MockTestsList() {
                             View details
                           </Link>
                           {latestAttempts[t.id] ? (
-                            <Link
-                              to="/mock-tests/ai/$testId/result"
-                              params={{ testId: t.id }}
-                              search={{ attempt: latestAttempts[t.id].id }}
-                              className="inline-flex items-center rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
-                              title={
-                                latestAttempts[t.id].grading_status === "pending_review"
-                                  ? "Awaiting teacher review — you can view the answer key"
-                                  : "View your graded result"
-                              }
-                            >
-                              Result
-                            </Link>
+                            <>
+                              <Link
+                                to="/mock-tests/ai/$testId/result"
+                                params={{ testId: t.id }}
+                                search={{ attempt: latestAttempts[t.id].id }}
+                                className="inline-flex items-center rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
+                                title={
+                                  latestAttempts[t.id].grading_status === "pending_review"
+                                    ? "Awaiting teacher review — you can view the answer key"
+                                    : "View your graded result"
+                                }
+                              >
+                                Result
+                              </Link>
+                              <Link
+                                to="/mock-tests/ai/$testId/result"
+                                params={{ testId: t.id }}
+                                search={{ attempt: latestAttempts[t.id].id, view: "analyse" }}
+                                className="inline-flex items-center rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
+                                title="Review answer key with AI explanations"
+                              >
+                                Analyse
+                              </Link>
+                            </>
                           ) : null}
                         </div>
                         {latestAttempts[t.id] ? (

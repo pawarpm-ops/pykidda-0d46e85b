@@ -8,7 +8,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { MockAiCorrector } from "@/components/MockAiCorrector";
 import { getAiMockAttemptResult } from "@/lib/ai-mock.functions";
 
-const SearchSchema = z.object({ attempt: z.string().optional() });
+const SearchSchema = z.object({ attempt: z.string().optional(), view: z.enum(["analyse"]).optional() });
 
 export const Route = createFileRoute("/mock-tests/ai/$testId/result")({
   validateSearch: (s) => SearchSchema.parse(s),
@@ -56,7 +56,7 @@ type QuestionRow = {
 
 function ResultPage() {
   const { testId } = Route.useParams();
-  const { attempt } = Route.useSearch();
+  const { attempt, view } = Route.useSearch();
   const [result, setResult] = useState<Result | null>(null);
   const [testTitle, setTestTitle] = useState("");
   const [testKind, setTestKind] = useState<string>("");
@@ -90,7 +90,7 @@ function ResultPage() {
 
   if (!result) return <div className="p-10 text-center">Loading result…</div>;
 
-  const isPending = pendingReview || (result.grading_status && result.grading_status !== "published");
+  const isPending = view === "analyse" || pendingReview || (result.grading_status && result.grading_status !== "published");
 
   if (isPending) {
 
