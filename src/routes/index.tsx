@@ -7,7 +7,7 @@ import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
 import meenakshiPhoto from "@/assets/meenakshi.png.asset.json";
 import prashantPhoto from "@/assets/prashant.png.asset.json";
 import vaishnaviPhoto from "@/assets/vaishnavi.jpg.asset.json";
-import { StreakCard } from "@/components/StreakCard";
+
 import { EmptyState } from "@/components/ui/state";
 import {
   Dialog,
@@ -184,13 +184,6 @@ function Index() {
           </div>
         </section>
 
-        {/* Streak card */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-8" aria-labelledby="streak-heading">
-          <h2 id="streak-heading" className="sr-only">Your daily streak</h2>
-          <div className="min-w-0">
-            <StreakCard />
-          </div>
-        </section>
 
         {/* Mock tests */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16" aria-labelledby="mock-tests-heading">
