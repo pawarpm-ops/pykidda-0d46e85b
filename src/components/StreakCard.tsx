@@ -57,12 +57,6 @@ export function StreakCard() {
         @keyframes pk-shine2 { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
       `}</style>
 
-      {/* glow bg */}
-      <div
-        className="absolute -inset-0.5 -z-10 rounded-3xl opacity-40 blur-2xl"
-        style={{ background: rank.color }}
-        aria-hidden
-      />
       {/* sparkles */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         {[...Array(8)].map((_, i) => (
