@@ -152,6 +152,7 @@ function AuthPage() {
             <div className="flex flex-wrap gap-2 pt-1">
               <Badge>⏱ Timed mock tests</Badge>
               <Badge>📊 Smart analytics</Badge>
+              <Badge>🐍 Python-first</Badge>
             </div>
           </div>
 
