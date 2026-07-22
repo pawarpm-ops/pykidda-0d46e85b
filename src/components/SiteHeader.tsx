@@ -21,6 +21,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCachedSession } from "@/lib/auth-cache";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { StreakCard } from "@/components/StreakCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Flame } from "lucide-react";
 import { useIsAdmin } from "@/lib/role";
 import { cn } from "@/lib/utils";
 import {
@@ -251,6 +261,31 @@ export function SiteHeader() {
           </Link>
 
           <div className="flex items-center gap-2 ml-auto">
+            {email && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-orange-400/40 bg-gradient-to-r from-orange-500/90 to-amber-500/90 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-orange-500/30 transition hover:scale-105"
+                    aria-label="View daily streak"
+                  >
+                    <Flame size={14} />
+                    <span className="hidden sm:inline">View Streak</span>
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl border-white/15 bg-[#0b0720] p-0 text-white sm:rounded-3xl">
+                  <DialogHeader className="px-6 pt-6">
+                    <DialogTitle className="text-2xl font-black">🔥 Your Daily Streak</DialogTitle>
+                    <DialogDescription className="text-white/70">
+                      Track your rank, progress, and keep the fire alive every day.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="p-4">
+                    <StreakCard />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
             <ThemeToggle />
             {!email && (
               <Link
