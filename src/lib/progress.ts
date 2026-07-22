@@ -6,7 +6,10 @@
 import type { AttemptResult } from "./test-session";
 import { QUESTIONS } from "./questions";
 import { supabase } from "@/integrations/supabase/client";
-import { submitMockResult } from "./mock-results.functions";
+// Note: `submitMockResult` was removed. Secure grading now happens via
+// `submitGradedMockAttempt` in `mock-secure.functions.ts`, called directly
+// from the mock-test runner route.
+
 import { submitPracticeAttempt } from "./practice-attempts.functions";
 
 export type PracticeAttempt = {
