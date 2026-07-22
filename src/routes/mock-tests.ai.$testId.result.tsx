@@ -2,9 +2,11 @@
 // the attempt from server if the user navigates back later.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 
 import { SiteHeader } from "@/components/SiteHeader";
+import { Button } from "@/components/ui/button";
 import { MockAiCorrector } from "@/components/MockAiCorrector";
 import { getAiMockAttemptResult } from "@/lib/ai-mock.functions";
 
