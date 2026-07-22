@@ -1,14 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ChevronDown, Rocket, Flame, ShieldCheck, Clock, ListChecks } from "lucide-react";
+import { Rocket, ShieldCheck } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
-import { MOCK_TESTS, QUESTIONS } from "@/lib/questions";
 import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
 import meenakshiPhoto from "@/assets/meenakshi.png.asset.json";
 import prashantPhoto from "@/assets/prashant.png.asset.json";
 import vaishnaviPhoto from "@/assets/vaishnavi.jpg.asset.json";
 
-import { EmptyState } from "@/components/ui/state";
 import {
   Dialog,
   DialogContent,
