@@ -164,14 +164,6 @@ function Index() {
                   </Link>
                 </div>
 
-                {/* Quick meta */}
-                <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground dark:text-white/60">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-                    <dt className="sr-only">Mock tests</dt>
-                    <dd><span className="font-semibold text-foreground dark:text-white">{MOCK_TESTS.length}</span> mock tests</dd>
-                  </div>
-                </dl>
               </div>
 
               {/* Creator card moved to bottom of page */}
