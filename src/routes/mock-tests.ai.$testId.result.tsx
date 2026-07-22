@@ -143,17 +143,27 @@ function ResultPage() {
   const correctAnswers = result.answers.filter((a) => a.correct);
   const incorrectAnswers = result.answers.filter((a) => !a.correct);
 
+  const isScheduled = testKind === "scheduled";
+  const isAnalyse = view === "analyse";
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-4xl px-6 py-10">
         <BackToTests />
-        <p className="text-xs uppercase tracking-widest text-accent font-semibold">Result</p>
+        <p className="text-xs uppercase tracking-widest text-accent font-semibold">
+          {isScheduled ? (isAnalyse ? "Answer Key · AI Analysis" : "Teacher Graded Result") : "Result"}
+        </p>
         <h1 className="mt-1 text-3xl font-bold">{testTitle || "AI Mock Test"}</h1>
 
         <div className="mt-6 rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
           <p className={`text-6xl font-bold ${gradeColor}`}>{result.percentage}%</p>
           <p className="mt-2 text-lg">Grade <b>{result.grade}</b> · {result.marks_obtained} / {result.total_marks} marks</p>
+          {isScheduled && !isAnalyse && (
+            <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+              💬 Graded by your teacher
+            </p>
+          )}
           {result.reviewed_at && (
             <p className="mt-2 text-xs text-muted-foreground">Reviewed by your teacher on {new Date(result.reviewed_at).toLocaleString()}</p>
           )}
@@ -166,7 +176,16 @@ function ResultPage() {
           </div>
         )}
 
-        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} answerKeyOnly={testKind === "scheduled"} testTitle={testTitle} showAiExplain={testKind === "scheduled"} graded={testKind === "scheduled"} />
+        <AnswerTabs
+          correct={correctAnswers}
+          incorrect={incorrectAnswers}
+          all={result.answers}
+          questions={questions}
+          answerKeyOnly={isScheduled}
+          testTitle={testTitle}
+          showAiExplain={isScheduled && isAnalyse}
+          graded={isScheduled && !isAnalyse}
+        />
 
         <div className="mt-8 flex gap-3">
           <Link to="/mock-tests" className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground">Back to tests</Link>
@@ -176,6 +195,7 @@ function ResultPage() {
     </div>
   );
 }
+
 
 
 function BackToTests() {
