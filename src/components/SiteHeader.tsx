@@ -110,6 +110,7 @@ export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [streakCount, setStreakCount] = useState<number>(0);
   const navigate = useNavigate();
   const router = useRouter();
   const isAdmin = useIsAdmin();
@@ -131,6 +132,30 @@ export function SiteHeader() {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  // Keep header streak count in sync with the streak card / daily events.
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      const s = await fetchMyStreak();
+      if (!alive) return;
+      setStreakCount(s?.current_streak ?? 0);
+    }
+    if (userId) load();
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && typeof detail.current_streak === "number") {
+        setStreakCount(detail.current_streak);
+      }
+    };
+    window.addEventListener("pk:streak-updated", handler);
+    window.addEventListener("pk:daily-streak-counted", handler);
+    return () => {
+      alive = false;
+      window.removeEventListener("pk:streak-updated", handler);
+      window.removeEventListener("pk:daily-streak-counted", handler);
+    };
+  }, [userId]);
 
   // Lock body scroll while the drawer is open.
   useEffect(() => {
