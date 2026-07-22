@@ -38,6 +38,7 @@ import {
   listDismissedIds,
   listReadIds,
 } from "@/lib/notifications";
+import { fetchMyStreak } from "@/lib/streaks";
 
 type NavItem = {
   to: string;
