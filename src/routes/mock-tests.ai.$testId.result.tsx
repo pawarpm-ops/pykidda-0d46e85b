@@ -178,6 +178,14 @@ function ResultPage() {
 }
 
 
+function BackToTests() {
+  return (
+    <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 gap-2">
+      <Link to="/mock-tests"><ArrowLeft className="h-4 w-4" /> Back to tests</Link>
+    </Button>
+  );
+}
+
 type TabKey = "correct" | "incorrect" | "key";
 
 function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false, testTitle = "", showAiExplain = false, graded = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean; testTitle?: string; showAiExplain?: boolean; graded?: boolean }) {
