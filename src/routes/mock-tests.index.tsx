@@ -95,11 +95,11 @@ function MockTestsList() {
   const scheduledAi = aiTests.filter((t) => t.test_kind === "scheduled");
 
   useEffect(() => {
-    if (scheduledAi.length === 0) return;
+    if (aiTests.length === 0) return;
     let cancelled = false;
     (async () => {
       const entries = await Promise.all(
-        scheduledAi.map(async (t) => {
+        aiTests.map(async (t) => {
           try {
             const rows = await attemptsFn({ data: { test_id: t.id } });
             const first = (rows as Array<{ id: string; grading_status?: string | null }>)[0];
@@ -117,6 +117,7 @@ function MockTestsList() {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiTests]);
+
 
 
   return (
