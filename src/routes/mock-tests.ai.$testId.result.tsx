@@ -56,7 +56,7 @@ type QuestionRow = {
 
 function ResultPage() {
   const { testId } = Route.useParams();
-  const { attempt } = Route.useSearch();
+  const { attempt, view } = Route.useSearch();
   const [result, setResult] = useState<Result | null>(null);
   const [testTitle, setTestTitle] = useState("");
   const [testKind, setTestKind] = useState<string>("");
