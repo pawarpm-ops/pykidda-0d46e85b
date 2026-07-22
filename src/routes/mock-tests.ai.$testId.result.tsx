@@ -8,7 +8,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { MockAiCorrector } from "@/components/MockAiCorrector";
 import { getAiMockAttemptResult } from "@/lib/ai-mock.functions";
 
-const SearchSchema = z.object({ attempt: z.string().optional() });
+const SearchSchema = z.object({ attempt: z.string().optional(), view: z.enum(["analyse"]).optional() });
 
 export const Route = createFileRoute("/mock-tests/ai/$testId/result")({
   validateSearch: (s) => SearchSchema.parse(s),
