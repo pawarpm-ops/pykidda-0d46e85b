@@ -6,7 +6,10 @@
 import type { AttemptResult } from "./test-session";
 import { QUESTIONS } from "./questions";
 import { supabase } from "@/integrations/supabase/client";
-import { submitMockResult } from "./mock-results.functions";
+// Note: `submitMockResult` was removed. Secure grading now happens via
+// `submitGradedMockAttempt` in `mock-secure.functions.ts`, called directly
+// from the mock-test runner route.
+
 import { submitPracticeAttempt } from "./practice-attempts.functions";
 
 export type PracticeAttempt = {
@@ -109,27 +112,11 @@ export function recordMockResult(userId: string | null, r: AttemptResult) {
   });
   s.mocks = s.mocks.slice(0, 200);
   write(userId, s);
-
-  if (userId) {
-    void submitMockResult({
-      data: {
-        testId: r.testId,
-        testName: r.testName,
-        studentName: r.studentName,
-        marksObtained: r.marksObtained,
-        totalMarks: r.totalMarks,
-        percentage: r.percentage,
-        grade: r.grade,
-        totalQuestions: r.totalQuestions,
-        timeTakenSec: r.timeTakenSec,
-        submissionType: r.submissionType,
-        violationReason: r.violationReason ?? null,
-        submittedAt: r.submittedAt,
-        details: { attempts: r.attempts },
-      },
-    }).catch((e) => console.error("submitMockResult failed", e));
-  }
+  // Server-side persistence happens through `submitGradedMockAttempt` in the
+  // mock-test runner. We intentionally do NOT mirror client-supplied marks to
+  // the database here — that path was the source of the forgeable-score bug.
 }
+
 
 export function getProgress(userId: string | null): Store {
   return read(userId);
