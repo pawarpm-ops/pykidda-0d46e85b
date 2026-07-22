@@ -36,10 +36,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [showAllMocks, setShowAllMocks] = useState(false);
-  const visibleMocks = showAllMocks ? MOCK_TESTS : MOCK_TESTS.slice(0, 4);
-  const totalQ = QUESTIONS.length;
-
   return (
     <div className="min-h-dvh relative overflow-hidden bg-background text-foreground dark:bg-[#0b0720] dark:text-white">
       {/* Dark-only animated gradient backdrop (hidden in light theme) */}
