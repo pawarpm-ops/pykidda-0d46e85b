@@ -101,11 +101,6 @@ function Index() {
             <div className="grid gap-6 items-start">
               {/* Left: heading + CTAs */}
               <div className="min-w-0">
-                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 dark:border-white/20 dark:bg-white/10 px-3 py-1 text-xs font-semibold text-foreground/80 dark:text-white/90 backdrop-blur">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 motion-safe:animate-pulse" aria-hidden />
-                  Python practice &amp; mock test portal
-                </div>
-
                 <h1
                   className="pk-display mt-4 bg-clip-text text-transparent pk-shine-anim"
                   style={{
