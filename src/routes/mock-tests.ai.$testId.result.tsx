@@ -263,11 +263,19 @@ function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAi
         <p className="font-semibold text-sm">
           Q{index + 1}
           {q?.type ? <span className="ml-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">{q.type}</span> : null}
-          {!showAiExplain && tab !== "key" && (
+          {graded && a.marks_total > 0 && (
+            <span className="ml-2 text-muted-foreground font-normal">· {a.marks_awarded}/{a.marks_total} marks</span>
+          )}
+          {!graded && !showAiExplain && tab !== "key" && (
             <span className="ml-2 text-muted-foreground font-normal">· {a.marks_awarded}/{a.marks_total} marks</span>
           )}
         </p>
-        {!showAiExplain && tab !== "key" && (
+        {graded && a.marks_total > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+            💬 Teacher graded
+          </span>
+        )}
+        {!graded && !showAiExplain && tab !== "key" && (
           <span
             className={`text-xs font-bold ${
               a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"
