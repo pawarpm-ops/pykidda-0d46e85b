@@ -475,7 +475,9 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
       if (!t.scheduled_start_at || !t.scheduled_end_at) throw new Error("Scheduled test is misconfigured");
       if (now < new Date(t.scheduled_start_at).getTime()) throw new Error("Scheduled test has not started yet");
       if (now > new Date(t.scheduled_end_at).getTime()) throw new Error("Scheduled test window has ended");
-      // One attempt per scheduled test — block reopening the take screen.
+    }
+    // One attempt per mock test (any kind) — block reopening the take screen.
+    {
       const { data: prior } = await supabaseAdmin
         .from("ai_mock_attempts")
         .select("id")
@@ -484,9 +486,10 @@ export const getStudentAiTest = createServerFn({ method: "POST" })
         .not("submitted_at", "is", null)
         .limit(1);
       if (Array.isArray(prior) && prior.length > 0) {
-        throw new Error("You have already submitted this scheduled test. Only one attempt is allowed.");
+        throw new Error("You have already submitted this mock test. Only one attempt is allowed.");
       }
     }
+
 
     const { data: qs, error: qErr } = await supabaseAdmin
       .from("ai_mock_questions")
