@@ -105,7 +105,7 @@ function Index() {
         {/* Hero — compact, learning-first */}
         <section className="relative">
           <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-8 sm:pt-10 pb-8 sm:pb-12">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-8 items-start">
+            <div className="grid gap-6 items-start">
               {/* Left: heading + CTAs */}
               <div className="min-w-0">
                 <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 dark:border-white/20 dark:bg-white/10 px-3 py-1 text-xs font-semibold text-foreground/80 dark:text-white/90 backdrop-blur">
