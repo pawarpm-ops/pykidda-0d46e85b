@@ -226,6 +226,7 @@ function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false,
                 tab={tab}
                 testTitle={testTitle}
                 showAiExplain={showAiExplain}
+                graded={graded}
               />
             );
           })}
