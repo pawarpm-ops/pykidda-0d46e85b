@@ -176,7 +176,7 @@ function ResultPage() {
 
 type TabKey = "correct" | "incorrect" | "key";
 
-function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false, testTitle = "", showAiExplain = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean; testTitle?: string; showAiExplain?: boolean }) {
+function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false, testTitle = "", showAiExplain = false, graded = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean; testTitle?: string; showAiExplain?: boolean; graded?: boolean }) {
   const [tab, setTab] = useState<TabKey>(answerKeyOnly ? "key" : "correct");
 
   const tabs: { key: TabKey; label: string; count: number }[] = answerKeyOnly
