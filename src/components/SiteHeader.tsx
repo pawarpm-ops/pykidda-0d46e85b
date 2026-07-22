@@ -121,16 +121,17 @@ export function SiteHeader() {
     setMenuOpen(false);
   }, [pathname]);
 
-  const isAdminRoute = pathname.startsWith("/admin");
-
+  // Lock body scroll while the drawer is open.
   useEffect(() => {
-    if (isAdminRoute) {
-      document.body.classList.remove("has-sidebar");
-      return;
-    }
-    document.body.classList.add("has-sidebar");
-    return () => document.body.classList.remove("has-sidebar");
-  }, [isAdminRoute]);
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
+  const isAdminRoute = pathname.startsWith("/admin");
 
   const items = NAV_ITEMS.filter((i) => !i.authOnly || email);
 
@@ -151,7 +152,7 @@ export function SiteHeader() {
     navigate({ to: "/auth" });
   }
 
-  function renderNavLink(item: NavItem, opts?: { compact?: boolean }) {
+  function renderNavLink(item: NavItem) {
     const active = isActive(item.to);
     const Icon = item.icon;
     const badge = item.badgeKey === "notifications" ? unread : 0;
@@ -167,11 +168,9 @@ export function SiteHeader() {
               ? "bg-primary/10 text-primary font-semibold"
               : "text-foreground/80 hover:text-foreground",
           ),
-      opts?.compact && "min-h-10 pl-3",
     );
     const inner = (
       <>
-        {/* Active indicator bar */}
         <span
           aria-hidden
           className={cn(
@@ -226,22 +225,82 @@ export function SiteHeader() {
     );
   }
 
-
   return (
     <>
-      {/* Desktop sidebar */}
+      {/* Top bar with hamburger — visible on all viewports */}
+      <header className="border-b border-border/60 backdrop-blur sticky top-0 z-30 bg-background/85">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="site-drawer"
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:bg-muted transition-colors"
+          >
+            {menuOpen ? <X size={18} /> : <Menu size={18} />}
+            {!menuOpen && email && unread > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </button>
+
+          <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="PY Kidda — Home">
+            <BrandLogo size={32} />
+          </Link>
+
+          <div className="flex items-center gap-2 ml-auto">
+            <ThemeToggle />
+            {!email && (
+              <Link
+                to="/auth"
+                className="rounded-md px-3 py-1.5 text-sm font-semibold text-primary-foreground whitespace-nowrap"
+                style={{ backgroundImage: "var(--gradient-sunrise)" }}
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Drawer overlay */}
+      {menuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          aria-hidden
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
+      {/* Slide-out drawer */}
       <aside
-        className="hidden lg:flex fixed inset-y-0 left-0 w-60 z-40 flex-col border-r border-border bg-card"
+        id="site-drawer"
         aria-label="Primary navigation"
+        aria-hidden={!menuOpen}
+        className={cn(
+          "fixed inset-y-0 left-0 w-72 max-w-[85vw] z-50 flex flex-col border-r border-border bg-card shadow-2xl",
+          "transition-transform duration-200 ease-out",
+          menuOpen ? "translate-x-0" : "-translate-x-full",
+        )}
       >
-        <div className="px-4 pt-5 pb-4 border-b border-border">
+        <div className="px-4 pt-5 pb-4 border-b border-border flex items-center justify-between">
           <Link
             to="/"
             aria-label="PY Kidda — Home"
-            className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <BrandLogo size={36} />
           </Link>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background hover:bg-muted"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <nav
@@ -258,7 +317,6 @@ export function SiteHeader() {
                 "relative flex items-center gap-3 rounded-lg pl-4 pr-3 min-h-11 mt-2 text-sm font-semibold",
                 "border border-primary/40 bg-primary text-primary-foreground",
                 "hover:bg-primary/90 transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               )}
             >
               <Shield size={20} strokeWidth={2.2} aria-hidden />
@@ -268,24 +326,21 @@ export function SiteHeader() {
         </nav>
 
         <div className="px-3 py-3 border-t border-border flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2 px-1">
-            <ThemeToggle />
-            {email && (
-              <span
-                className="min-w-0 max-w-[130px] truncate rounded-full border border-border bg-muted px-2 py-1 text-[11px] text-muted-foreground"
-                title={email}
-              >
-                {email}
-              </span>
-            )}
-          </div>
+          {email && (
+            <span
+              className="min-w-0 truncate rounded-full border border-border bg-muted px-2 py-1 text-[11px] text-muted-foreground"
+              title={email}
+            >
+              {email}
+            </span>
+          )}
           {email ? (
             <>
               <button
                 type="button"
                 onClick={handleSwitchAccount}
                 aria-label="Switch account"
-                className="flex items-center gap-2 rounded-lg px-3 min-h-10 text-sm font-medium border border-border bg-background hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="flex items-center gap-2 rounded-lg px-3 min-h-10 text-sm font-medium border border-border bg-background hover:bg-muted transition-colors"
               >
                 <UserCog size={18} aria-hidden />
                 <span>Switch account</span>
@@ -294,7 +349,7 @@ export function SiteHeader() {
                 type="button"
                 onClick={handleSignOut}
                 aria-label="Sign out"
-                className="flex items-center gap-2 rounded-lg px-3 min-h-10 text-sm font-medium border border-destructive/30 bg-background text-destructive hover:bg-destructive/10 hover:border-destructive/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="flex items-center gap-2 rounded-lg px-3 min-h-10 text-sm font-medium border border-destructive/30 bg-background text-destructive hover:bg-destructive/10 hover:border-destructive/50 transition-colors"
               >
                 <LogOut size={18} aria-hidden />
                 <span>Sign out</span>
@@ -303,7 +358,7 @@ export function SiteHeader() {
           ) : (
             <Link
               to="/auth"
-              className="flex items-center justify-center gap-2 rounded-lg px-3 min-h-10 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-warm)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="flex items-center justify-center gap-2 rounded-lg px-3 min-h-10 text-sm font-semibold text-primary-foreground"
               style={{ backgroundImage: "var(--gradient-sunrise)" }}
             >
               Sign in
@@ -311,83 +366,6 @@ export function SiteHeader() {
           )}
         </div>
       </aside>
-
-
-      {/* Mobile top bar */}
-      <header className="lg:hidden border-b border-border/60 backdrop-blur sticky top-0 z-30 bg-background/85">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <BrandLogo size={32} />
-          </Link>
-
-          <div className="flex items-center gap-2 ml-auto">
-            <ThemeToggle />
-            {!email && (
-              <Link
-                to="/auth"
-                className="rounded-md px-3 py-1.5 text-sm font-semibold text-primary-foreground whitespace-nowrap"
-                style={{ backgroundImage: "var(--gradient-sunrise)" }}
-              >
-                Sign in
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={menuOpen}
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background"
-            >
-              {menuOpen ? <X size={18} /> : <Menu size={18} />}
-              {!menuOpen && email && unread > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center leading-none">
-                  {unread > 9 ? "9+" : unread}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {menuOpen && (
-          <div className="border-t border-border/60 bg-background/95 backdrop-blur">
-            <nav className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex flex-col gap-1">
-              {items.map((item) => renderNavLink(item, { compact: true }))}
-              {email && isAdmin && (
-                <Link
-                  to="/admin"
-                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold bg-primary text-primary-foreground"
-                >
-                  <Shield size={18} />
-                  Admin
-                </Link>
-              )}
-              {email && (
-                <div className="mt-2 pt-2 border-t border-border/60 flex flex-col gap-2">
-                  <span className="truncate text-xs text-muted-foreground" title={email}>
-                    {email}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleSwitchAccount}
-                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-primary/50 hover:text-primary transition-colors"
-                    >
-                      <UserCog size={14} />
-                      Switch account
-                    </button>
-                    <button
-                      onClick={handleSignOut}
-                      className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:border-destructive/50 hover:text-destructive transition-colors"
-                    >
-                      <LogOut size={14} />
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </nav>
-          </div>
-        )}
-      </header>
     </>
   );
 }
