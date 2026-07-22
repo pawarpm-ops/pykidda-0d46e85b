@@ -100,6 +100,7 @@ function ResultPage() {
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
         <main className="mx-auto max-w-4xl px-6 py-10">
+          <BackToTests />
           <p className="text-xs uppercase tracking-widest text-accent font-semibold">Answer Key</p>
           <h1 className="mt-1 text-3xl font-bold">{testTitle || "Scheduled Mock Test"}</h1>
 
