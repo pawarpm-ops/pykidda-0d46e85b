@@ -255,6 +255,9 @@ function Index() {
         </section>
 
 
+        <footer className="border-t border-border dark:border-white/10 py-8 pb-28 lg:pb-8 text-center text-xs text-muted-foreground dark:text-white/50">
+          PY Kidda · Be a PY Kidda with us · © Siddharth Prashant Pawar
+        </footer>
       </div>
     </div>
   );
