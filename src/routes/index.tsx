@@ -187,40 +187,8 @@ function Index() {
         {/* Streak card */}
         <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-8" aria-labelledby="streak-heading">
           <h2 id="streak-heading" className="sr-only">Your daily streak</h2>
-          <div className="flex flex-col md:flex-row items-stretch gap-4">
-            <Dialog>
-              <DialogTrigger asChild>
-                <button
-                  type="button"
-                  className="group relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-orange-500 via-amber-500 to-pink-500 px-5 py-4 md:w-48 md:shrink-0 text-left shadow-2xl shadow-orange-500/30 transition hover:scale-[1.02] hover:shadow-orange-500/50"
-                >
-                  <div className="flex md:flex-col items-center md:items-start gap-3">
-                    <span className="text-4xl drop-shadow-lg" aria-hidden>🔥</span>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-white/90">Tap to view</p>
-                      <p className="text-lg font-black leading-tight text-white">Daily Streak</p>
-                      <p className="mt-1 hidden md:block text-xs font-semibold text-white/90">
-                        See your rank, progress & tips
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl border-white/15 bg-[#0b0720] p-0 text-white sm:rounded-3xl">
-                <DialogHeader className="px-6 pt-6">
-                  <DialogTitle className="text-2xl font-black">🔥 Your Daily Streak</DialogTitle>
-                  <DialogDescription className="text-white/70">
-                    Track your rank, progress, and keep the fire alive every day.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="p-4">
-                  <StreakCard />
-                </div>
-              </DialogContent>
-            </Dialog>
-            <div className="min-w-0 flex-1">
-              <StreakCard />
-            </div>
+          <div className="min-w-0">
+            <StreakCard />
           </div>
         </section>
 
