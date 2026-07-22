@@ -2,9 +2,11 @@
 // the attempt from server if the user navigates back later.
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 
 import { SiteHeader } from "@/components/SiteHeader";
+import { Button } from "@/components/ui/button";
 import { MockAiCorrector } from "@/components/MockAiCorrector";
 import { getAiMockAttemptResult } from "@/lib/ai-mock.functions";
 
@@ -98,6 +100,7 @@ function ResultPage() {
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
         <main className="mx-auto max-w-4xl px-6 py-10">
+          <BackToTests />
           <p className="text-xs uppercase tracking-widest text-accent font-semibold">Answer Key</p>
           <h1 className="mt-1 text-3xl font-bold">{testTitle || "Scheduled Mock Test"}</h1>
 
@@ -144,6 +147,7 @@ function ResultPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <main className="mx-auto max-w-4xl px-6 py-10">
+        <BackToTests />
         <p className="text-xs uppercase tracking-widest text-accent font-semibold">Result</p>
         <h1 className="mt-1 text-3xl font-bold">{testTitle || "AI Mock Test"}</h1>
 
@@ -173,6 +177,14 @@ function ResultPage() {
   );
 }
 
+
+function BackToTests() {
+  return (
+    <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 gap-2">
+      <Link to="/mock-tests"><ArrowLeft className="h-4 w-4" /> Back to tests</Link>
+    </Button>
+  );
+}
 
 type TabKey = "correct" | "incorrect" | "key";
 
