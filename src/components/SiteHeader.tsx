@@ -293,10 +293,11 @@ export function SiteHeader() {
                   <button
                     type="button"
                     className="inline-flex items-center gap-1.5 rounded-full border border-orange-400/40 bg-gradient-to-r from-orange-500/90 to-amber-500/90 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-orange-500/30 transition hover:scale-105"
-                    aria-label="View daily streak"
+                    aria-label={`Daily streak: ${streakCount} day${streakCount === 1 ? "" : "s"}`}
                   >
                     <Flame size={14} />
-                    <span className="hidden sm:inline">View Streak</span>
+                    <span className="tabular-nums">{streakCount}</span>
+                    <span className="hidden sm:inline">days</span>
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl border-white/15 bg-[#0b0720] p-0 text-white sm:rounded-3xl">
