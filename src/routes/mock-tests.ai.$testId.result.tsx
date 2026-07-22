@@ -162,7 +162,7 @@ function ResultPage() {
           </div>
         )}
 
-        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} answerKeyOnly={testKind === "scheduled"} testTitle={testTitle} showAiExplain={testKind === "scheduled"} />
+        <AnswerTabs correct={correctAnswers} incorrect={incorrectAnswers} all={result.answers} questions={questions} answerKeyOnly={testKind === "scheduled"} testTitle={testTitle} showAiExplain={testKind === "scheduled"} graded={testKind === "scheduled"} />
 
         <div className="mt-8 flex gap-3">
           <Link to="/mock-tests" className="rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground">Back to tests</Link>
@@ -176,7 +176,7 @@ function ResultPage() {
 
 type TabKey = "correct" | "incorrect" | "key";
 
-function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false, testTitle = "", showAiExplain = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean; testTitle?: string; showAiExplain?: boolean }) {
+function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false, testTitle = "", showAiExplain = false, graded = false }: { correct: GradedAnswer[]; incorrect: GradedAnswer[]; all: GradedAnswer[]; questions: Record<string, QuestionRow>; answerKeyOnly?: boolean; testTitle?: string; showAiExplain?: boolean; graded?: boolean }) {
   const [tab, setTab] = useState<TabKey>(answerKeyOnly ? "key" : "correct");
 
   const tabs: { key: TabKey; label: string; count: number }[] = answerKeyOnly
@@ -226,6 +226,7 @@ function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false,
                 tab={tab}
                 testTitle={testTitle}
                 showAiExplain={showAiExplain}
+                graded={graded}
               />
             );
           })}
@@ -235,7 +236,7 @@ function AnswerTabs({ correct, incorrect, all, questions, answerKeyOnly = false,
   );
 }
 
-function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAiExplain = false }: { answer: GradedAnswer; question: QuestionRow | undefined; index: number; tab: TabKey; testTitle?: string; showAiExplain?: boolean }) {
+function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAiExplain = false, graded = false }: { answer: GradedAnswer; question: QuestionRow | undefined; index: number; tab: TabKey; testTitle?: string; showAiExplain?: boolean; graded?: boolean }) {
   const isMcq = (q?.type ?? "").toLowerCase() === "mcq";
   const options = useMemo(() => {
     if (!q) return [] as string[];
@@ -262,11 +263,19 @@ function AnswerCard({ answer: a, question: q, index, tab, testTitle = "", showAi
         <p className="font-semibold text-sm">
           Q{index + 1}
           {q?.type ? <span className="ml-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">{q.type}</span> : null}
-          {!showAiExplain && tab !== "key" && (
+          {graded && a.marks_total > 0 && (
+            <span className="ml-2 text-muted-foreground font-normal">· {a.marks_awarded}/{a.marks_total} marks</span>
+          )}
+          {!graded && !showAiExplain && tab !== "key" && (
             <span className="ml-2 text-muted-foreground font-normal">· {a.marks_awarded}/{a.marks_total} marks</span>
           )}
         </p>
-        {!showAiExplain && tab !== "key" && (
+        {graded && a.marks_total > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary">
+            💬 Teacher graded
+          </span>
+        )}
+        {!graded && !showAiExplain && tab !== "key" && (
           <span
             className={`text-xs font-bold ${
               a.correct ? "text-[oklch(0.55_0.16_145)]" : "text-destructive"
