@@ -1,14 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { ChevronDown, Rocket, Flame, ShieldCheck, Clock, ListChecks } from "lucide-react";
+import { Rocket, ShieldCheck } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
-import { MOCK_TESTS, QUESTIONS } from "@/lib/questions";
 import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
 import meenakshiPhoto from "@/assets/meenakshi.png.asset.json";
 import prashantPhoto from "@/assets/prashant.png.asset.json";
 import vaishnaviPhoto from "@/assets/vaishnavi.jpg.asset.json";
 
-import { EmptyState } from "@/components/ui/state";
 import {
   Dialog,
   DialogContent,
@@ -39,10 +36,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [showAllMocks, setShowAllMocks] = useState(false);
-  const visibleMocks = showAllMocks ? MOCK_TESTS : MOCK_TESTS.slice(0, 4);
-  const totalQ = QUESTIONS.length;
-
   return (
     <div className="min-h-dvh relative overflow-hidden bg-background text-foreground dark:bg-[#0b0720] dark:text-white">
       {/* Dark-only animated gradient backdrop (hidden in light theme) */}
@@ -168,82 +161,6 @@ function Index() {
 
               {/* Creator card moved to bottom of page */}
             </div>
-          </div>
-        </section>
-
-
-        {/* Mock tests */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16" aria-labelledby="mock-tests-heading">
-          <div className="relative rounded-3xl border border-border bg-card p-6 md:p-8 shadow-sm dark:border-white/15 dark:bg-white/[0.06] dark:backdrop-blur-xl dark:shadow-2xl">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 id="mock-tests-heading" className="pk-h2 text-foreground dark:text-white">
-                  Available mock tests
-                </h2>
-                <p className="pk-meta mt-1 text-muted-foreground dark:text-white/65">
-                  Each test opens in secure full-screen mode with anti-cheating monitoring.
-                  Code is graded in your browser against hidden test cases.
-                </p>
-              </div>
-            </div>
-
-            {MOCK_TESTS.length === 0 ? (
-              <div className="mt-6">
-                <EmptyState
-                  title="No mock tests yet"
-                  description="Once tests are published they will appear here."
-                />
-              </div>
-            ) : (
-              <ul className="mt-5 divide-y divide-border dark:divide-white/10" role="list">
-                {visibleMocks.map((t) => (
-                  <li
-                    key={t.id}
-                    className="py-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate text-foreground dark:text-white">{t.name}</p>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground dark:text-white/60">
-                        <span className="inline-flex items-center gap-1">
-                          <ListChecks className="h-3.5 w-3.5" aria-hidden />
-                          {t.questionIds.length} coding {t.questionIds.length === 1 ? "question" : "questions"}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" aria-hidden />
-                          {Math.round(t.durationSec / 60)} min
-                        </span>
-                      </p>
-                    </div>
-                    <Link
-                      to="/mock-tests/$testId/warning"
-                      params={{ testId: t.id }}
-                      aria-label={`Start mock test ${t.name}`}
-                      className="pk-touch inline-flex min-h-10 shrink-0 items-center rounded-lg border border-border bg-muted px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent hover:text-accent-foreground transition dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:border-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                    >
-                      Start →
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {MOCK_TESTS.length > 4 && (
-              <div className="mt-6 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setShowAllMocks((v) => !v)}
-                  aria-expanded={showAllMocks}
-                  aria-controls="mock-tests-heading"
-                  className="pk-touch inline-flex min-h-10 items-center gap-2 rounded-lg border border-border bg-muted px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-accent hover:text-accent-foreground transition dark:border-white/25 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:border-amber-400"
-                >
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform ${showAllMocks ? "rotate-180" : ""}`}
-                    aria-hidden
-                  />
-                  {showAllMocks ? "Show less" : `See more (${MOCK_TESTS.length - 4} more)`}
-                </button>
-              </div>
-            )}
           </div>
         </section>
 
