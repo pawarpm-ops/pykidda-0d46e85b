@@ -38,6 +38,7 @@ import {
   listDismissedIds,
   listReadIds,
 } from "@/lib/notifications";
+import { fetchMyStreak } from "@/lib/streaks";
 
 type NavItem = {
   to: string;
@@ -109,6 +110,7 @@ export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [streakCount, setStreakCount] = useState<number>(0);
   const navigate = useNavigate();
   const router = useRouter();
   const isAdmin = useIsAdmin();
@@ -130,6 +132,30 @@ export function SiteHeader() {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  // Keep header streak count in sync with the streak card / daily events.
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      const s = await fetchMyStreak();
+      if (!alive) return;
+      setStreakCount(s?.current_streak ?? 0);
+    }
+    if (userId) load();
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && typeof detail.current_streak === "number") {
+        setStreakCount(detail.current_streak);
+      }
+    };
+    window.addEventListener("pk:streak-updated", handler);
+    window.addEventListener("pk:daily-streak-counted", handler);
+    return () => {
+      alive = false;
+      window.removeEventListener("pk:streak-updated", handler);
+      window.removeEventListener("pk:daily-streak-counted", handler);
+    };
+  }, [userId]);
 
   // Lock body scroll while the drawer is open.
   useEffect(() => {
@@ -267,10 +293,11 @@ export function SiteHeader() {
                   <button
                     type="button"
                     className="inline-flex items-center gap-1.5 rounded-full border border-orange-400/40 bg-gradient-to-r from-orange-500/90 to-amber-500/90 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-orange-500/30 transition hover:scale-105"
-                    aria-label="View daily streak"
+                    aria-label={`Daily streak: ${streakCount} day${streakCount === 1 ? "" : "s"}`}
                   >
                     <Flame size={14} />
-                    <span className="hidden sm:inline">View Streak</span>
+                    <span className="tabular-nums">{streakCount}</span>
+                    <span className="hidden sm:inline">days</span>
                   </button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl border-white/15 bg-[#0b0720] p-0 text-white sm:rounded-3xl">
