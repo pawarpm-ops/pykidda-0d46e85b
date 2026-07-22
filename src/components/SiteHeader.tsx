@@ -21,6 +21,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { getCachedSession } from "@/lib/auth-cache";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { StreakCard } from "@/components/StreakCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Flame } from "lucide-react";
 import { useIsAdmin } from "@/lib/role";
 import { cn } from "@/lib/utils";
 import {
