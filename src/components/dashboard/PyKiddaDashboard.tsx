@@ -1,41 +1,141 @@
-import { learningCards } from "./dashboardData";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
+import "./PyKiddaDashboard.css";
+import {
+  contactCards,
+  learningCards,
+  whyPyKiddaCards,
+} from "./dashboardData";
+import type { DashboardCardItem } from "./dashboardTypes";
 
-export default function PyKiddaDashboard() {
+const COLOR_MAP: Record<string, string> = {
+  orange: "var(--pk-orange)",
+  blue: "var(--pk-blue)",
+  green: "var(--pk-green)",
+  purple: "var(--pk-purple)",
+  pink: "var(--pk-pink)",
+  cyan: "var(--pk-cyan)",
+  red: "var(--pk-red)",
+  yellow: "var(--pk-yellow)",
+};
+
+function Card({ item, index }: { item: DashboardCardItem; index: number }) {
+  const style = { ["--pk-accent" as string]: COLOR_MAP[item.color] ?? "var(--pk-orange)" } as React.CSSProperties;
+  const num = String(index + 1).padStart(2, "0");
+  const meta = item.details?.[0];
+  const metaRight = item.details?.[1];
+  const isInternal = item.href?.startsWith("/");
+  const CTA: React.ElementType = isInternal ? Link : "a";
+  const ctaProps = isInternal
+    ? { to: item.href! }
+    : { href: item.href ?? "#", target: item.href?.startsWith("http") ? "_blank" : undefined, rel: "noreferrer" };
 
   return (
-
-    <main className="py-kidda-dashboard">
-
-      <section className="py-kidda-temporary-check">
-
-        <div>
-
-          <p>PY Kidda</p>
-
-          <h1>Dashboard foundation is connected</h1>
-
-          <p>
-
-            The complete hero and animated sections will be added in the
-
-            following implementation parts.
-
-          </p>
-
-          <p>
-
-            Learning cards prepared:{" "}
-
-            <strong>{learningCards.length}</strong>
-
-          </p>
-
+    <article className="pk-card" style={style}>
+      <div className="pk-card__num">{num}</div>
+      <div className="pk-card__icon">{item.icon}</div>
+      <div className="pk-card__eyebrow">PY Kidda Hub</div>
+      <h3 className="pk-card__title">{item.title}</h3>
+      <div className="pk-card__sub">{item.eyebrow}</div>
+      <p className="pk-card__desc">{item.description}</p>
+      {(meta || metaRight) && (
+        <div className="pk-card__meta">
+          <span className="pk-card__meta-left">{meta}</span>
+          {metaRight && <span className="pk-card__meta-right">{metaRight}</span>}
         </div>
+      )}
+      <CTA className="pk-card__cta" {...ctaProps}>
+        <span>{item.actionLabel}</span>
+        <span aria-hidden="true"><ArrowRight size={18} /></span>
+      </CTA>
+    </article>
+  );
+}
 
+function Carousel({ items }: { items: DashboardCardItem[] }) {
+  const [offset, setOffset] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const paused = useRef(false);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (paused.current) return;
+      setOffset((o) => (o + 1) % items.length);
+    }, 3500);
+    return () => window.clearInterval(id);
+  }, [items.length]);
+
+  // Duplicate list for seamless loop
+  const doubled = [...items, ...items];
+
+  return (
+    <div
+      className="pk-carousel"
+      onMouseEnter={() => (paused.current = true)}
+      onMouseLeave={() => (paused.current = false)}
+    >
+      <div
+        ref={trackRef}
+        className="pk-carousel__track"
+        style={{ transform: `translateX(calc(-${offset} * (100% / 4 + 0px) - ${offset} * 0px))` }}
+      >
+        {doubled.map((item, i) => (
+          <Card key={`${item.id}-${i}`} item={item} index={i % items.length} />
+        ))}
+      </div>
+      <div className="pk-carousel__hint">← Four learning paths rotate automatically →</div>
+    </div>
+  );
+}
+
+export default function PyKiddaDashboard() {
+  return (
+    <main className="pk-dash">
+      <section className="pk-dash__section">
+        <div className="pk-dash__head">
+          <div>
+            <div className="pk-dash__eyebrow">Explore your workspace</div>
+            <h2 className="pk-dash__title">
+              Everything you need to <em>grow</em>
+            </h2>
+          </div>
+          <p className="pk-dash__sub">
+            Choose a feature and take the next small step in your Python journey.
+          </p>
+        </div>
+        <Carousel items={learningCards} />
       </section>
 
+      <section className="pk-dash__section">
+        <div className="pk-dash__head">
+          <div>
+            <div className="pk-dash__eyebrow">Stay connected</div>
+            <h2 className="pk-dash__title">
+              Let's keep in <em>touch</em>
+            </h2>
+          </div>
+          <p className="pk-dash__sub">
+            Follow the community or reach our team whenever you need help on your Python journey.
+          </p>
+        </div>
+        <Carousel items={contactCards} />
+      </section>
+
+      <section className="pk-dash__section">
+        <div className="pk-dash__head">
+          <div>
+            <div className="pk-dash__eyebrow">Built with care</div>
+            <h2 className="pk-dash__title">
+              Why use <em>PY Kidda</em>?
+            </h2>
+          </div>
+          <p className="pk-dash__sub">
+            A safe, thoughtful learning space designed around real students and real teachers.
+          </p>
+        </div>
+        <Carousel items={whyPyKiddaCards} />
+      </section>
     </main>
-
   );
-
 }
