@@ -1,233 +1,528 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Heart, Rocket, ShieldCheck } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  BookOpen,
+  Code2,
+  ClipboardList,
+  GraduationCap,
+  MessageCircle,
+  Send,
+  Instagram,
+  Mail,
+  ShieldCheck,
+  Lock,
+  UserCheck,
+  HelpCircle,
+  Rocket,
+  Phone,
+} from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  InfiniteCardCarousel,
+  type CarouselCard,
+} from "@/components/dashboard/InfiniteCardCarousel";
+import { COMMUNITY } from "@/config/community";
 import meenakshiAsset from "@/assets/meenakshi.png.asset.json";
 import prashantAsset from "@/assets/prashant.png.asset.json";
 import vaishnaviAsset from "@/assets/vaishnavi.jpg.asset.json";
+import siddharthAsset from "@/assets/siddharth.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PY Kidda — Be a PY Kidda with us" },
+      { title: "PY Kidda — Be a PY Kidda with Us" },
       {
         name: "description",
         content:
-          "PY Kidda is a Python practice & mock test portal. Practice syllabus questions and take secure full-screen coding mock tests.",
+          "Learn Python. Solve challenges. Build real skills. Practice Python questions, take secure mock tests, and grow with PY Kidda.",
       },
-      { property: "og:title", content: "PY Kidda — Be a PY Kidda with us" },
+      { property: "og:title", content: "PY Kidda — Be a PY Kidda with Us" },
       {
         property: "og:description",
         content:
-          "Practice Python syllabus questions and take secure coding mock tests. Powered by in-browser Python.",
+          "Learn Python. Solve challenges. Build real skills. Practice, mock tests, homework and more.",
       },
     ],
   }),
-  component: Index,
+  component: Dashboard,
 });
 
-function Index() {
+function Dashboard() {
+  const navigate = useNavigate();
+
+  const learnCards: CarouselCard[] = [
+    {
+      id: "learn",
+      header: (
+        <IconTile from="#F97316" to="#FBBF24">
+          <BookOpen className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Python Learning",
+      description:
+        "Guided lessons and Pyko AI teacher help you learn Python from the ground up, at your own pace.",
+      status: "Self-paced • Beginner to advanced",
+      cta: { label: "Start Learning", onClick: () => navigate({ to: "/help" }) },
+    },
+    {
+      id: "mock",
+      header: (
+        <IconTile from="#FB923C" to="#F97316">
+          <ShieldCheck className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Mock Tests",
+      description:
+        "Full-screen, secure coding mock tests that mirror real exam conditions with auto-submit safeguards.",
+      status: "Timed • Anti-cheat",
+      cta: { label: "Take a Mock Test", onClick: () => navigate({ to: "/mock-tests" }) },
+    },
+    {
+      id: "practice",
+      header: (
+        <IconTile from="#FBBF24" to="#FB923C">
+          <Code2 className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Practice Questions",
+      description:
+        "Solve syllabus questions in the browser with instant execution and AI-powered mistake analysis.",
+      status: "In-browser Python",
+      cta: { label: "Practice Now", onClick: () => navigate({ to: "/practice" }) },
+    },
+    {
+      id: "homework",
+      header: (
+        <IconTile from="#F97316" to="#FB923C">
+          <ClipboardList className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Homework",
+      description:
+        "Teacher-assigned coding tasks with due dates and clear feedback so you never fall behind.",
+      status: "Assigned by your teacher",
+      cta: { label: "Open Homework", onClick: () => navigate({ to: "/homework" }) },
+    },
+  ];
+
+  const communityCards: CarouselCard[] = [
+    {
+      id: "whatsapp",
+      header: (
+        <IconTile from="#22c55e" to="#16a34a">
+          <MessageCircle className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "WhatsApp",
+      description: "Join the WhatsApp group for quick help, updates and announcements.",
+      cta: COMMUNITY.whatsapp
+        ? { label: "Join WhatsApp", href: COMMUNITY.whatsapp }
+        : { label: "Coming Soon", disabled: true },
+    },
+    {
+      id: "telegram",
+      header: (
+        <IconTile from="#38bdf8" to="#0ea5e9">
+          <Send className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Telegram",
+      description: "Follow the Telegram channel for resources, notes and study drops.",
+      cta: COMMUNITY.telegram
+        ? { label: "Open Telegram", href: COMMUNITY.telegram }
+        : { label: "Coming Soon", disabled: true },
+    },
+    {
+      id: "instagram",
+      header: (
+        <IconTile from="#f472b6" to="#a855f7">
+          <Instagram className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Instagram",
+      description: "See behind-the-scenes, student wins and daily Python tips.",
+      cta: COMMUNITY.instagram
+        ? { label: "Follow Us", href: COMMUNITY.instagram }
+        : { label: "Coming Soon", disabled: true },
+    },
+    {
+      id: "contact",
+      header: (
+        <IconTile from="#FBBF24" to="#F97316">
+          <Mail className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Contact Us",
+      description: "Have a question or a suggestion? Reach us directly by email.",
+      cta: { label: "Email PY Kidda", href: `mailto:${COMMUNITY.contactEmail}` },
+    },
+  ];
+
+  const whyCards: CarouselCard[] = [
+    {
+      id: "safe",
+      header: (
+        <IconTile from="#F97316" to="#FBBF24">
+          <ShieldCheck className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Safe Mock Tests",
+      description:
+        "Full-screen enforcement, tab-switch detection and auto-submit keep every attempt fair.",
+      cta: { label: "See Mock Tests", onClick: () => navigate({ to: "/mock-tests" }) },
+    },
+    {
+      id: "data",
+      header: (
+        <IconTile from="#FB923C" to="#F97316">
+          <Lock className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Data Safety",
+      description:
+        "Your submissions and progress are stored securely. Only you and your teacher can see them.",
+      cta: { label: "View Profile", onClick: () => navigate({ to: "/profile" }) },
+    },
+    {
+      id: "teacher",
+      header: (
+        <IconTile from="#FBBF24" to="#FB923C">
+          <UserCheck className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Teacher Manual Grading",
+      description:
+        "Scheduled mock tests are reviewed by your teacher, with feedback you can actually learn from.",
+      cta: { label: "See Your Results", onClick: () => navigate({ to: "/mock-tests" }) },
+    },
+    {
+      id: "doubts",
+      header: (
+        <IconTile from="#F97316" to="#FB923C">
+          <HelpCircle className="h-6 w-6 text-slate-900" />
+        </IconTile>
+      ),
+      title: "Doubt Solving",
+      description:
+        "Pyko AI explains your mistakes and answers questions the moment you get stuck.",
+      cta: { label: "Ask Pyko", onClick: () => navigate({ to: "/help" }) },
+    },
+  ];
+
   return (
-    <div className="min-h-dvh relative overflow-hidden bg-background text-foreground dark:bg-[#0b0720] dark:text-white">
-      {/* Dark-only animated gradient backdrop (hidden in light theme) */}
-      <div
-        className="fixed inset-0 -z-20 hidden dark:block"
-        style={{
-          background:
-            "radial-gradient(1200px 700px at 10% 10%, #5b21b6 0%, transparent 60%), radial-gradient(900px 600px at 90% 80%, #7c3aed 0%, transparent 55%), radial-gradient(700px 500px at 50% 50%, #4338ca 0%, transparent 60%), linear-gradient(135deg, #1e0a3c 0%, #0b0720 100%)",
-        }}
-        aria-hidden
-      />
-      {/* Light-theme soft warm backdrop */}
-      <div
-        className="fixed inset-0 -z-20 block dark:hidden"
-        style={{
-          background:
-            "radial-gradient(900px 500px at 10% 0%, oklch(0.95 0.08 55 / 0.55) 0%, transparent 60%), radial-gradient(700px 500px at 100% 100%, oklch(0.94 0.06 30 / 0.45) 0%, transparent 55%)",
-        }}
-        aria-hidden
-      />
-      {/* Subtle grid overlay — dark only */}
-      <div
-        className="fixed inset-0 -z-10 hidden dark:block opacity-[0.08] pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
-          maskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
-        }}
-        aria-hidden
-      />
+    <div
+      className="min-h-dvh text-[#F8FAFC]"
+      style={{ background: "#040619" }}
+    >
+      <SiteHeader />
 
-      {/* Floating orbs — desktop dark only, restrained count */}
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden hidden md:dark:block"
-        aria-hidden
-      >
-        <div className="absolute top-[10%] left-[10%] h-24 w-24 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 shadow-2xl shadow-amber-500/30 animate-[float_8s_ease-in-out_infinite] opacity-50" />
-        <div className="absolute top-[30%] right-[8%] h-20 w-20 rounded-full bg-gradient-to-br from-fuchsia-400 to-violet-600 shadow-2xl shadow-fuchsia-500/30 animate-[float_10s_ease-in-out_infinite_reverse] opacity-50" />
-        <div className="absolute bottom-[15%] left-[8%] h-20 w-20 rounded-full bg-gradient-to-br from-cyan-300 to-blue-600 shadow-2xl shadow-cyan-500/30 animate-[float_9s_ease-in-out_infinite] opacity-50" />
-      </div>
+      <main className="pk-dashboard mx-auto w-full" style={{ maxWidth: 1240 }}>
+        <style>{`
+          .pk-dashboard { padding-left: 16px; padding-right: 16px; }
+          @media (min-width: 768px) { .pk-dashboard { padding-left: 24px; padding-right: 24px; } }
+          @media (min-width: 1024px) { .pk-dashboard { padding-left: 32px; padding-right: 32px; } }
+          @keyframes pk-orbit { from { transform: rotate(0deg) translateX(0); } to { transform: rotate(360deg) translateX(0); } }
+          @keyframes pk-glow-pulse { 0%,100% { opacity: .55; } 50% { opacity: .9; } }
+        `}</style>
 
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) translateX(0px); }
-          50% { transform: translateY(-18px) translateX(8px); }
-        }
-        @keyframes shine {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .pk-shine-anim { animation: none !important; background-position: 0 0 !important; }
-        }
-      `}</style>
-
-      <div className="relative z-10">
-        <SiteHeader />
-
-        {/* Hero — compact, learning-first */}
-        <section className="relative">
-          <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-8 sm:pt-10 pb-8 sm:pb-12">
-            <div className="grid gap-6 items-start">
-              {/* Left: heading + CTAs */}
-              <div className="min-w-0">
-                <h1
-                  className="pk-display mt-4 bg-clip-text text-transparent pk-shine-anim"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(90deg, oklch(0.35 0.05 260) 0%, oklch(0.55 0.18 45) 50%, oklch(0.45 0.14 290) 100%)",
-                    backgroundSize: "200% auto",
-                    animation: "shine 6s linear infinite",
-                  }}
-                >
-                  <span className="dark:hidden">Be a PY Kidda with us.</span>
-                  <span
-                    className="hidden dark:inline bg-clip-text text-transparent"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(90deg, #ffffff 0%, #fcd34d 50%, #c4b5fd 100%)",
-                      backgroundSize: "200% auto",
-                    }}
-                  >
-                    Be a PY Kidda with us.
-                  </span>
-                </h1>
-
-                <p className="mt-4 pk-body max-w-2xl text-muted-foreground dark:text-white/75">
-                  Write real Python in your browser. Work through the full syllabus question set,
-                  then prove yourself in a secure, full-screen mock test that auto-submits if you wander off.
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link
-                    to="/practice"
-                    aria-label="Start practicing Python questions"
-                    className="btn-glow pk-touch group relative inline-flex min-h-11 overflow-hidden items-center justify-center rounded-xl px-5 py-3 text-sm font-bold text-slate-900 shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, #fde047 0%, #f59e0b 50%, #fb923c 100%)",
-                      boxShadow: "0 10px 30px -14px rgba(245,158,11,0.55)",
-                    }}
-                  >
-                    <Rocket className="mr-2 h-4 w-4" aria-hidden />
-                    <span className="relative z-10">Start practicing</span>
-                  </Link>
-                  <Link
-                    to="/mock-tests"
-                    aria-label="Browse and take a mock test"
-                    className="pk-touch inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground hover:bg-muted transition dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 dark:hover:border-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                  >
-                    <ShieldCheck className="h-4 w-4" aria-hidden />
-                    Take a mock test
-                  </Link>
-                </div>
-
-              </div>
-
-              {/* Creator card moved to bottom of page */}
+        {/* HERO */}
+        <section className="relative overflow-hidden rounded-[20px]" aria-labelledby="pk-hero-title">
+          <div
+            className="absolute inset-0 -z-10"
+            aria-hidden
+            style={{
+              background:
+                "radial-gradient(900px 500px at 20% 0%, rgba(249,115,22,0.18) 0%, transparent 60%), radial-gradient(700px 500px at 100% 100%, rgba(251,191,36,0.14) 0%, transparent 55%), linear-gradient(135deg, #0B0720 0%, #040619 100%)",
+            }}
+          />
+          <div className="relative flex flex-col items-center px-4 py-16 sm:py-20 text-center">
+            <h1
+              id="pk-hero-title"
+              className="mx-auto max-w-4xl text-4xl font-black leading-tight tracking-tight sm:text-5xl md:text-6xl"
+            >
+              Be a{" "}
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(90deg, #FBBF24 0%, #F97316 50%, #FB923C 100%)",
+                }}
+              >
+                PY Kidda
+              </span>{" "}
+              with Us
+            </h1>
+            <p className="mt-5 max-w-2xl text-base sm:text-lg text-[#94A3B8]">
+              Learn Python. Solve challenges. Build real skills.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                to="/practice"
+                className="pk-touch inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#040619]"
+                style={{
+                  background:
+                    "linear-gradient(90deg, #FBBF24 0%, #F97316 50%, #FB923C 100%)",
+                  boxShadow: "0 10px 30px -14px rgba(249,115,22,0.6)",
+                }}
+              >
+                <Rocket className="h-4 w-4" aria-hidden />
+                Start Learning
+              </Link>
+              <Link
+                to="/mock-tests"
+                className="pk-touch inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 hover:border-orange-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#040619]"
+              >
+                <ShieldCheck className="h-4 w-4" aria-hidden />
+                Take a Mock Test
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* Thanks to — contributors */}
-        <section className="relative mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-          <div className="flex flex-col items-center gap-6">
-            <Dialog>
-              <DialogTrigger asChild>
-                <button
-                  type="button"
-                  className="pk-touch inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted transition dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        {/* Everything You Need */}
+        <SectionHeader
+          eyebrow="Grow with PY Kidda"
+          title="Everything You Need to Grow"
+          subtitle="Learn, practise, test and get feedback — all in one place."
+        />
+        <InfiniteCardCarousel cards={learnCards} ariaLabel="Everything You Need to Grow" />
+
+        {/* Community */}
+        <SectionHeader
+          eyebrow="Community"
+          title="Stay Connected"
+          subtitle="Join the PY Kidda community and stay up to date."
+        />
+        <InfiniteCardCarousel cards={communityCards} ariaLabel="Community and contact" />
+
+        {/* Why Use PY Kidda */}
+        <SectionHeader
+          eyebrow="Why PY Kidda"
+          title="Why Use PY Kidda?"
+          subtitle="Built for real learning, not gimmicks."
+        />
+        <InfiniteCardCarousel cards={whyCards} ariaLabel="Why use PY Kidda" />
+
+        {/* People Behind PY Kidda */}
+        <SectionHeader
+          eyebrow="Our Team"
+          title="People Behind PY Kidda"
+          subtitle="The people who made this platform possible."
+        />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <PersonCard
+            src={meenakshiAsset.url}
+            name="Dr. Meenakshi Mukund Pawar"
+            role="Vice Principal, SVERI College"
+            help="Testing & Funding"
+            objectPosition="center top"
+          />
+          <PersonCard
+            src={prashantAsset.url}
+            name="Dr. Prashant Maruti Pawar"
+            role="Professor, SVERI College"
+            help="Testing & Funding"
+            objectPosition="center top"
+          />
+          <PersonCard
+            src={vaishnaviAsset.url}
+            name="Vaishnavi Jadhav"
+            role="Lab Assistant"
+            help="Testing & Developing"
+            objectPosition="center top"
+          />
+        </div>
+
+        {/* Creator Spotlight */}
+        <section className="relative my-20 overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-br from-[#11172C] to-[#0B1022] p-6 sm:p-10">
+          <div
+            className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full"
+            aria-hidden
+            style={{
+              background:
+                "radial-gradient(circle, rgba(249,115,22,0.35) 0%, transparent 65%)",
+              animation: "pk-glow-pulse 6s ease-in-out infinite",
+            }}
+          />
+          <div
+            className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full"
+            aria-hidden
+            style={{
+              background:
+                "radial-gradient(circle, rgba(251,191,36,0.25) 0%, transparent 65%)",
+              animation: "pk-glow-pulse 8s ease-in-out infinite",
+            }}
+          />
+          <div className="relative grid items-center gap-8 md:grid-cols-[auto_1fr]">
+            <div className="relative mx-auto md:mx-0">
+              <div
+                className="absolute inset-0 -m-2 rounded-full"
+                aria-hidden
+                style={{
+                  background:
+                    "conic-gradient(from 0deg, #F97316, #FBBF24, #FB923C, #F97316)",
+                  filter: "blur(12px)",
+                  opacity: 0.55,
+                }}
+              />
+              <img
+                src={siddharthAsset.url}
+                alt="Siddharth Pawar, creator of PY Kidda"
+                loading="lazy"
+                className="relative h-40 w-40 rounded-full object-cover ring-4 ring-[#0B1022] sm:h-48 sm:w-48"
+                style={{ objectPosition: "center top" }}
+              />
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-xs font-semibold uppercase tracking-wider text-orange-300">
+                Creator
+              </p>
+              <h3 className="mt-2 text-2xl font-black sm:text-3xl">Siddharth Pawar</h3>
+              <p className="mt-3 max-w-2xl text-[#94A3B8]">
+                “I am Siddharth Pawar, and I created this platform for students who want to
+                learn, code, and then grow.”
+              </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 md:justify-start">
+                <StepPill icon={<GraduationCap className="h-4 w-4" />} label="Learn" />
+                <ArrowChev />
+                <StepPill icon={<Code2 className="h-4 w-4" />} label="Code" />
+                <ArrowChev />
+                <StepPill icon={<Rocket className="h-4 w-4" />} label="Grow" />
+              </div>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3 md:justify-start">
+                <a
+                  href={`tel:${COMMUNITY.contactPhone}`}
+                  className="pk-touch inline-flex min-h-11 items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-slate-900 shadow-lg transition hover:brightness-110"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #FBBF24 0%, #F97316 50%, #FB923C 100%)",
+                    boxShadow: "0 10px 24px -14px rgba(249,115,22,0.6)",
+                  }}
                 >
-                  <Heart className="h-4 w-4 text-rose-500 fill-rose-500" aria-hidden />
-                  Thanks to
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-center text-xl sm:text-2xl">
-                    Thanks to
-                  </DialogTitle>
-                </DialogHeader>
-                <p className="text-center text-sm text-muted-foreground">
-                  The people who helped bring PY Kidda to life.
-                </p>
-                <div className="mt-2 grid gap-4 sm:grid-cols-3">
-                  <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-4 text-center dark:border-white/10 dark:bg-white/5">
-                    <img
-                      src={meenakshiAsset.url}
-                      alt="Dr. Meenakshi Mukund Pawar"
-                      className="h-24 w-24 rounded-full object-cover ring-2 ring-border dark:ring-white/20"
-                      loading="lazy"
-                    />
-                    <h3 className="mt-3 text-sm font-bold">Dr. Meenakshi Mukund Pawar</h3>
-                    <p className="text-xs text-muted-foreground">Vice Principal, SVERI College</p>
-                    <span className="mt-2 inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                      Testing & Funding
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-4 text-center dark:border-white/10 dark:bg-white/5">
-                    <img
-                      src={prashantAsset.url}
-                      alt="Dr. Prashant Maruti Pawar"
-                      className="h-24 w-24 rounded-full object-cover ring-2 ring-border dark:ring-white/20"
-                      loading="lazy"
-                    />
-                    <h3 className="mt-3 text-sm font-bold">Dr. Prashant Maruti Pawar</h3>
-                    <p className="text-xs text-muted-foreground">Professor, SVERI College</p>
-                    <span className="mt-2 inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                      Testing & Funding
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-4 text-center dark:border-white/10 dark:bg-white/5">
-                    <img
-                      src={vaishnaviAsset.url}
-                      alt="Vaishnavi Jadhav"
-                      className="h-24 w-24 rounded-full object-cover ring-2 ring-border dark:ring-white/20"
-                      loading="lazy"
-                    />
-                    <h3 className="mt-3 text-sm font-bold">Vaishnavi Jadhav</h3>
-                    <p className="text-xs text-muted-foreground">Lab Assistant</p>
-                    <span className="mt-2 inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
-                      Testing & Developing
-                    </span>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                  <Phone className="h-4 w-4" aria-hidden />
+                  Call {COMMUNITY.contactPhone}
+                </a>
+                <a
+                  href={`mailto:${COMMUNITY.contactEmail}`}
+                  className="pk-touch inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 hover:border-orange-400/60"
+                >
+                  <Mail className="h-4 w-4" aria-hidden />
+                  {COMMUNITY.contactEmail}
+                </a>
+              </div>
+            </div>
           </div>
         </section>
 
-        <footer className="border-t border-border dark:border-white/10 py-8 pb-28 lg:pb-8 text-center text-xs text-muted-foreground dark:text-white/50">
-          PY Kidda · Be a PY Kidda with us · © Siddharth Prashant Pawar
+        <footer className="border-t border-white/10 py-8 pb-28 lg:pb-8 text-center text-xs text-[#94A3B8]">
+          PY Kidda · Be a PY Kidda with Us · © Siddharth Prashant Pawar
         </footer>
-      </div>
+      </main>
     </div>
+  );
+}
+
+function SectionHeader({
+  eyebrow,
+  title,
+  subtitle,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <div className="mt-16 mb-6 sm:mt-20 sm:mb-8">
+      <p className="text-xs font-semibold uppercase tracking-widest text-orange-300">
+        {eyebrow}
+      </p>
+      <h2 className="mt-2 text-2xl font-black sm:text-3xl text-[#F8FAFC]">{title}</h2>
+      {subtitle && <p className="mt-2 max-w-2xl text-sm text-[#94A3B8]">{subtitle}</p>}
+    </div>
+  );
+}
+
+function IconTile({
+  from,
+  to,
+  children,
+}: {
+  from: string;
+  to: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="grid h-12 w-12 place-items-center rounded-2xl"
+      style={{
+        background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)`,
+        boxShadow: "0 10px 24px -14px rgba(249,115,22,0.5)",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PersonCard({
+  src,
+  name,
+  role,
+  help,
+  objectPosition,
+}: {
+  src: string;
+  name: string;
+  role: string;
+  help: string;
+  objectPosition?: string;
+}) {
+  return (
+    <article className="group flex flex-col items-center rounded-[20px] border border-white/10 bg-[#11172C] p-6 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-orange-400/60">
+      <div className="relative">
+        <div
+          className="absolute inset-0 -m-1 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          aria-hidden
+          style={{
+            background:
+              "conic-gradient(from 0deg, #F97316, #FBBF24, #FB923C, #F97316)",
+            filter: "blur(10px)",
+          }}
+        />
+        <img
+          src={src}
+          alt={name}
+          loading="lazy"
+          className="relative h-32 w-32 rounded-full object-cover ring-2 ring-white/15"
+          style={{ objectPosition: objectPosition ?? "center" }}
+        />
+      </div>
+      <h3 className="mt-5 text-lg font-bold text-[#F8FAFC]">{name}</h3>
+      <p className="mt-1 text-sm text-[#94A3B8]">{role}</p>
+      <span
+        className="mt-4 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-slate-900"
+        style={{
+          background: "linear-gradient(90deg, #FBBF24 0%, #F97316 100%)",
+        }}
+      >
+        {help}
+      </span>
+    </article>
+  );
+}
+
+function StepPill({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-semibold text-white">
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+function ArrowChev() {
+  return (
+    <span aria-hidden className="text-orange-300">
+      →
+    </span>
   );
 }
