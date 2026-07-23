@@ -1,6 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Rocket, ShieldCheck } from "lucide-react";
+import { Heart, Rocket, ShieldCheck } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import meenakshiAsset from "@/assets/meenakshi.png.asset.json";
+import prashantAsset from "@/assets/prashant.png.asset.json";
+import vaishnaviAsset from "@/assets/vaishnavi.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
