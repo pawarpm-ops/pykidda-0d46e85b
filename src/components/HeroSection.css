@@ -62,7 +62,7 @@
   will-change: transform;
 }
 
-/* Darkens the animation behind text without hiding it */
+/* Darkens/fades the animation so left-side text stays readable */
 .py-kidda-hero__overlay {
   position: absolute;
   z-index: 1;
@@ -71,14 +71,15 @@
   background:
     linear-gradient(
       90deg,
-      rgba(4, 6, 25, 0.38),
-      rgba(4, 6, 25, 0.16) 50%,
-      rgba(4, 6, 25, 0.38)
+      rgba(4, 6, 25, 0.92) 0%,
+      rgba(4, 6, 25, 0.7) 30%,
+      rgba(4, 6, 25, 0.25) 60%,
+      rgba(4, 6, 25, 0.15) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(4, 6, 25, 0.12),
-      rgba(4, 6, 25, 0.38)
+      rgba(4, 6, 25, 0.2),
+      rgba(4, 6, 25, 0.35)
     );
 }
 
