@@ -92,26 +92,44 @@ function ResultPage() {
 
   if (!result) return <div className="p-10 text-center">Loading result…</div>;
 
-  const isPending = pendingReview || (result.grading_status && result.grading_status !== "published");
+  const isAnalyseView = view === "analyse";
+  const isPending = !isAnalyseView && (pendingReview || (result.grading_status && result.grading_status !== "published"));
 
-  if (isPending) {
+  if (isPending || isAnalyseView) {
+    const showWaiting = isPending;
 
     return (
       <div className="min-h-screen bg-background text-foreground">
         <SiteHeader />
         <main className="mx-auto max-w-4xl px-6 py-10">
           <BackToTests />
-          <p className="text-xs uppercase tracking-widest text-accent font-semibold">Answer Key</p>
+          <p className="text-xs uppercase tracking-widest text-accent font-semibold">
+            {isAnalyseView ? "Answer Key · AI Analysis" : "Answer Key"}
+          </p>
           <h1 className="mt-1 text-3xl font-bold">{testTitle || "Scheduled Mock Test"}</h1>
 
-          <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-6">
-            <p className="text-lg font-semibold">📝 Your test has been submitted</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Scheduled mock tests are graded manually by your teacher. Marks, grade,
-              and per-question feedback will appear here after the teacher publishes results.
-              In the meantime, review the correct answer for every question below.
-            </p>
-          </div>
+          {showWaiting && (
+            <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-6">
+              <p className="text-lg font-semibold">📝 Your test has been submitted</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Scheduled mock tests are graded manually by your teacher. Marks, grade,
+                and per-question feedback will appear here after the teacher publishes results.
+                In the meantime, review the correct answer for every question below.
+              </p>
+            </div>
+          )}
+          {isAnalyseView && !showWaiting && (
+            <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-6">
+              <p className="text-lg font-semibold">🧠 Review your answers with AI</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Compare your response with the correct answer for every question and tap
+                <span className="font-semibold"> Explain with AI </span>
+                to understand your mistakes. To see your teacher's marks and feedback, use the
+                <span className="font-semibold"> Result </span>
+                button instead.
+              </p>
+            </div>
+          )}
 
           <section className="mt-8 space-y-4">
             {result.answers.length === 0 ? (
