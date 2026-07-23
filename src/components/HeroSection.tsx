@@ -19,28 +19,22 @@ export default function HeroSection() {
       try {
         await video.play();
       } catch {
-        // Autoplay will be attempted again when the page becomes active.
+        /* retried on visibility change */
       }
     };
-
     startVideo();
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && video.paused) {
-        startVideo();
-      }
+      if (!document.hidden && video.paused) startVideo();
     };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
+    return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
   }, []);
 
   return (
-    <section className="py-kidda-hero">
-      {/* Background colour effects */}
+    <section className="py-kidda-hero" aria-labelledby="pk-hero-title">
+      {/* Ambient color glows */}
       <div
         className="py-kidda-hero__glow py-kidda-hero__glow--left"
         aria-hidden="true"
@@ -50,7 +44,7 @@ export default function HeroSection() {
         aria-hidden="true"
       />
 
-      {/* Transparent Python animation */}
+      {/* Right-side transparent Python animation */}
       <div className="py-kidda-hero__video-layer" aria-hidden="true">
         <video
           ref={videoRef}
@@ -70,27 +64,27 @@ export default function HeroSection() {
         >
           <source src={PYTHON_VIDEO} type="video/webm" />
         </video>
+        {/* Soft fade so the animation blends into the background on the left */}
+        <div className="py-kidda-hero__video-fade" aria-hidden="true" />
       </div>
 
-      {/* Readability overlay */}
-      <div className="py-kidda-hero__overlay" aria-hidden="true" />
-
-      {/* Hero content */}
+      {/* Hero content (left-aligned) */}
       <div className="py-kidda-hero__content">
         <div className="py-kidda-hero__label">
           <span className="py-kidda-hero__label-dot" />
-          Learn • Practise • Code
+          Your Python Journey Starts Here
         </div>
 
-        <h1 className="py-kidda-hero__title">
-          Be a{" "}
-          <span className="py-kidda-hero__title-highlight">PY Kidda</span>{" "}
-          with Us
+        <h1 id="pk-hero-title" className="py-kidda-hero__title">
+          <span className="py-kidda-hero__title-line">Be a</span>
+          <span className="py-kidda-hero__title-line py-kidda-hero__title-highlight">
+            PY Kidda
+          </span>
+          <span className="py-kidda-hero__title-line">with Us</span>
         </h1>
 
         <p className="py-kidda-hero__description">
-          Learn Python, solve challenges and build real coding skills
-          through one student-friendly platform.
+          Learn Python. Solve challenges. Build real skills.
         </p>
 
         <div className="py-kidda-hero__actions">
@@ -98,11 +92,11 @@ export default function HeroSection() {
             to="/practice"
             className="py-kidda-hero__button py-kidda-hero__button--primary"
           >
-            <Rocket size={19} aria-hidden="true" />
+            <Rocket size={18} aria-hidden="true" />
             <span>Start Learning</span>
             <ArrowRight
               className="py-kidda-hero__button-arrow"
-              size={18}
+              size={17}
               aria-hidden="true"
             />
           </Link>
@@ -110,12 +104,15 @@ export default function HeroSection() {
             to="/mock-tests"
             className="py-kidda-hero__button py-kidda-hero__button--secondary"
           >
-            <ClipboardCheck size={19} aria-hidden="true" />
+            <ClipboardCheck size={18} aria-hidden="true" />
             <span>Take a Mock Test</span>
           </Link>
         </div>
+      </div>
 
-        <p className="py-kidda-hero__motto">{"{ Learn • Practise • Code }"}</p>
+      <div className="py-kidda-hero__preview-tag" aria-hidden="true">
+        <span>MOTION PREVIEW</span>
+        <span className="py-kidda-hero__preview-line" />
       </div>
     </section>
   );
