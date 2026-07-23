@@ -77,7 +77,9 @@ export default function HeroSection() {
         </div>
 
         <h1 id="pk-hero-title" className="py-kidda-hero__title">
-          Be a <span className="py-kidda-hero__title-highlight">PY Kidda</span> with Us
+          <span className="block">Be a</span>
+          <span className="block py-kidda-hero__title-highlight">PY Kidda</span>
+          <span className="block">with Us</span>
         </h1>
 
         <p className="py-kidda-hero__description">

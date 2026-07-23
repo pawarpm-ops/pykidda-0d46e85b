@@ -47,23 +47,22 @@
  */
 .py-kidda-hero__video {
   display: block;
-  width: min(88vw, 920px);
-  height: min(100%, 540px);
-  max-width: 920px;
-  max-height: 540px;
-  object-fit: contain;
-  object-position: center;
-  opacity: 0.48;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center right;
+  opacity: 0.85;
+  transform: scale(1.15) translateX(4%);
+  transform-origin: center right;
   filter:
-    saturate(1.05)
-    contrast(1.04)
+    saturate(1.1)
+    contrast(1.06)
     drop-shadow(0 20px 50px rgba(0, 0, 0, 0.32));
-  transform: translateZ(0);
   backface-visibility: hidden;
   will-change: transform;
 }
 
-/* Darkens the animation behind text without hiding it */
+/* Darkens/fades the animation so left-side text stays readable */
 .py-kidda-hero__overlay {
   position: absolute;
   z-index: 1;
@@ -72,14 +71,15 @@
   background:
     linear-gradient(
       90deg,
-      rgba(4, 6, 25, 0.38),
-      rgba(4, 6, 25, 0.16) 50%,
-      rgba(4, 6, 25, 0.38)
+      rgba(4, 6, 25, 0.92) 0%,
+      rgba(4, 6, 25, 0.7) 30%,
+      rgba(4, 6, 25, 0.25) 60%,
+      rgba(4, 6, 25, 0.15) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(4, 6, 25, 0.12),
-      rgba(4, 6, 25, 0.38)
+      rgba(4, 6, 25, 0.2),
+      rgba(4, 6, 25, 0.35)
     );
 }
 
@@ -110,11 +110,11 @@
   position: relative;
   z-index: 2;
   display: flex;
-  width: min(100%, 960px);
+  width: min(100%, 1180px);
   margin-inline: auto;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .py-kidda-hero__label {
