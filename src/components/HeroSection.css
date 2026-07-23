@@ -52,7 +52,7 @@
   object-fit: cover;
   object-position: center right;
   opacity: 0.85;
-  transform: scale(1.15) translateX(4%);
+  transform: scale(1.28) translateX(6%);
   transform-origin: center right;
   filter:
     saturate(1.1)
