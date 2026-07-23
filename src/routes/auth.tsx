@@ -272,10 +272,6 @@ function AuthPage() {
                   <span aria-hidden className="mt-0.5">🎯</span>
                   Auto-submit kicks in if you exit full-screen during a mock test.
                 </li>
-                <li className="flex items-start gap-2">
-                  <span aria-hidden className="mt-0.5">✨</span>
-                  Your progress syncs across all your devices.
-                </li>
               </ul>
             </div>
           </div>
