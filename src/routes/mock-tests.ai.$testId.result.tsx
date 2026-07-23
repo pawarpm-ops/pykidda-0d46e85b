@@ -92,7 +92,7 @@ function ResultPage() {
 
   if (!result) return <div className="p-10 text-center">Loading result…</div>;
 
-  const isPending = view === "analyse" || pendingReview || (result.grading_status && result.grading_status !== "published");
+  const isPending = pendingReview || (result.grading_status && result.grading_status !== "published");
 
   if (isPending) {
 
