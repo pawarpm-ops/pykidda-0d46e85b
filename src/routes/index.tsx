@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import HeroSection from "@/components/HeroSection";
 import {
   BookOpen,
   Code2,
@@ -49,16 +49,7 @@ export const Route = createFileRoute("/")({
 
 function Dashboard() {
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = true;
-    video.play().catch(() => {
-      // Browser will retry when the page becomes active.
-    });
-  }, []);
 
 
   const learnCards: CarouselCard[] = [
@@ -237,80 +228,8 @@ function Dashboard() {
         `}</style>
 
         {/* HERO */}
-        <section className="relative isolate overflow-hidden rounded-[20px]" aria-labelledby="pk-hero-title">
-          <div
-            className="absolute inset-0 -z-10"
-            aria-hidden
-            style={{
-              background:
-                "radial-gradient(900px 500px at 20% 0%, rgba(249,115,22,0.18) 0%, transparent 60%), radial-gradient(700px 500px at 100% 100%, rgba(251,191,36,0.14) 0%, transparent 55%), linear-gradient(135deg, #0B0720 0%, #040619 100%)",
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
-          >
-            <video
-              ref={videoRef}
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              disablePictureInPicture
-              className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 object-contain opacity-50"
-            >
-              <source
-                src="/PY_Kidda_first_1_second_smooth_loop.webm"
-                type="video/webm"
-              />
-            </video>
-          </div>
-          <div className="pointer-events-none absolute inset-0 z-10 bg-[#040619]/35" />
-          <div className="relative z-20 flex flex-col items-center px-4 py-16 sm:py-20 text-center">
+        <HeroSection />
 
-            <h1
-              id="pk-hero-title"
-              className="mx-auto max-w-4xl text-4xl font-black leading-tight tracking-tight sm:text-5xl md:text-6xl"
-            >
-              Be a{" "}
-              <span
-                className="bg-clip-text text-transparent"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(90deg, #FBBF24 0%, #F97316 50%, #FB923C 100%)",
-                }}
-              >
-                PY Kidda
-              </span>{" "}
-              with Us
-            </h1>
-            <p className="mt-5 max-w-2xl text-base sm:text-lg text-[#94A3B8]">
-              Learn Python. Solve challenges. Build real skills.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                to="/practice"
-                className="pk-touch inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-slate-900 shadow-lg transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#040619]"
-                style={{
-                  background:
-                    "linear-gradient(90deg, #FBBF24 0%, #F97316 50%, #FB923C 100%)",
-                  boxShadow: "0 10px 30px -14px rgba(249,115,22,0.6)",
-                }}
-              >
-                <Rocket className="h-4 w-4" aria-hidden />
-                Start Learning
-              </Link>
-              <Link
-                to="/mock-tests"
-                className="pk-touch inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 hover:border-orange-400/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#040619]"
-              >
-                <ShieldCheck className="h-4 w-4" aria-hidden />
-                Take a Mock Test
-              </Link>
-            </div>
-          </div>
-        </section>
 
         {/* Everything You Need */}
         <SectionHeader
