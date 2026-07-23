@@ -156,6 +156,74 @@ function Index() {
           </div>
         </section>
 
+        {/* Thanks to — contributors */}
+        <section className="relative mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+          <div className="flex flex-col items-center gap-6">
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="pk-touch inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted transition dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <Heart className="h-4 w-4 text-rose-500 fill-rose-500" aria-hidden />
+                  Thanks to
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-center text-xl sm:text-2xl">
+                    Thanks to
+                  </DialogTitle>
+                </DialogHeader>
+                <p className="text-center text-sm text-muted-foreground">
+                  The people who helped bring PY Kidda to life.
+                </p>
+                <div className="mt-2 grid gap-4 sm:grid-cols-3">
+                  <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-4 text-center dark:border-white/10 dark:bg-white/5">
+                    <img
+                      src={meenakshiAsset.url}
+                      alt="Dr. Meenakshi Mukund Pawar"
+                      className="h-24 w-24 rounded-full object-cover ring-2 ring-border dark:ring-white/20"
+                      loading="lazy"
+                    />
+                    <h3 className="mt-3 text-sm font-bold">Dr. Meenakshi Mukund Pawar</h3>
+                    <p className="text-xs text-muted-foreground">Vice Principal, SVERI College</p>
+                    <span className="mt-2 inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                      Testing & Funding
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-4 text-center dark:border-white/10 dark:bg-white/5">
+                    <img
+                      src={prashantAsset.url}
+                      alt="Dr. Prashant Maruti Pawar"
+                      className="h-24 w-24 rounded-full object-cover ring-2 ring-border dark:ring-white/20"
+                      loading="lazy"
+                    />
+                    <h3 className="mt-3 text-sm font-bold">Dr. Prashant Maruti Pawar</h3>
+                    <p className="text-xs text-muted-foreground">Professor, SVERI College</p>
+                    <span className="mt-2 inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                      Testing & Funding
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-4 text-center dark:border-white/10 dark:bg-white/5">
+                    <img
+                      src={vaishnaviAsset.url}
+                      alt="Vaishnavi Jadhav"
+                      className="h-24 w-24 rounded-full object-cover ring-2 ring-border dark:ring-white/20"
+                      loading="lazy"
+                    />
+                    <h3 className="mt-3 text-sm font-bold">Vaishnavi Jadhav</h3>
+                    <p className="text-xs text-muted-foreground">Lab Assistant</p>
+                    <span className="mt-2 inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                      Testing & Developing
+                    </span>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </section>
+
         <footer className="border-t border-border dark:border-white/10 py-8 pb-28 lg:pb-8 text-center text-xs text-muted-foreground dark:text-white/50">
           PY Kidda · Be a PY Kidda with us · © Siddharth Prashant Pawar
         </footer>
