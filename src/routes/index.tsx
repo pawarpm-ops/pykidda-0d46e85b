@@ -49,6 +49,17 @@ export const Route = createFileRoute("/")({
 
 function Dashboard() {
   const navigate = useNavigate();
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.play().catch(() => {
+      // Browser will retry when the page becomes active.
+    });
+  }, []);
+
 
   const learnCards: CarouselCard[] = [
     {
