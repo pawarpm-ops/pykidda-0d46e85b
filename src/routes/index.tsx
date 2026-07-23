@@ -22,6 +22,7 @@ import {
   type CarouselCard,
 } from "@/components/dashboard/InfiniteCardCarousel";
 import { COMMUNITY } from "@/config/community";
+import PyKiddaDashboard from "@/components/dashboard/PyKiddaDashboard";
 import meenakshiAsset from "@/assets/meenakshi.png.asset.json";
 import prashantAsset from "@/assets/prashant.png.asset.json";
 import vaishnaviAsset from "@/assets/vaishnavi.jpg.asset.json";
