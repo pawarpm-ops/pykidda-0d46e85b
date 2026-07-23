@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   BookOpen,
@@ -48,6 +49,17 @@ export const Route = createFileRoute("/")({
 
 function Dashboard() {
   const navigate = useNavigate();
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.play().catch(() => {
+      // Browser will retry when the page becomes active.
+    });
+  }, []);
+
 
   const learnCards: CarouselCard[] = [
     {
@@ -225,7 +237,7 @@ function Dashboard() {
         `}</style>
 
         {/* HERO */}
-        <section className="relative overflow-hidden rounded-[20px]" aria-labelledby="pk-hero-title">
+        <section className="relative isolate overflow-hidden rounded-[20px]" aria-labelledby="pk-hero-title">
           <div
             className="absolute inset-0 -z-10"
             aria-hidden
@@ -234,7 +246,29 @@ function Dashboard() {
                 "radial-gradient(900px 500px at 20% 0%, rgba(249,115,22,0.18) 0%, transparent 60%), radial-gradient(700px 500px at 100% 100%, rgba(251,191,36,0.14) 0%, transparent 55%), linear-gradient(135deg, #0B0720 0%, #040619 100%)",
             }}
           />
-          <div className="relative flex flex-col items-center px-4 py-16 sm:py-20 text-center">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              disablePictureInPicture
+              className="absolute left-1/2 top-1/2 h-full w-full -translate-x-1/2 -translate-y-1/2 object-contain opacity-50"
+            >
+              <source
+                src="/PY_Kidda_first_1_second_smooth_loop.webm"
+                type="video/webm"
+              />
+            </video>
+          </div>
+          <div className="pointer-events-none absolute inset-0 z-10 bg-[#040619]/35" />
+          <div className="relative z-20 flex flex-col items-center px-4 py-16 sm:py-20 text-center">
+
             <h1
               id="pk-hero-title"
               className="mx-auto max-w-4xl text-4xl font-black leading-tight tracking-tight sm:text-5xl md:text-6xl"
