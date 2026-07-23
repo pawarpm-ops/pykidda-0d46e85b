@@ -78,7 +78,7 @@ function Carousel({ items }: { items: DashboardCardItem[] }) {
       <div
         ref={trackRef}
         className="pk-carousel__track"
-        style={{ transform: `translateX(calc(${-offset} * (100% + 1.5rem) / 4))` }}
+        style={{ transform: `translateX(calc(${-offset} * (100% + 1.5rem) / var(--pk-visible, 4)))` }}
       >
         {doubled.map((item, i) => (
           <Card key={`${item.id}-${i}`} item={item} index={i % items.length} />
