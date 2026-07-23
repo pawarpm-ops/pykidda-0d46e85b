@@ -1,19 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Rocket, ShieldCheck } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
-import siddharthPhoto from "@/assets/siddharth.jpg.asset.json";
-import meenakshiPhoto from "@/assets/meenakshi.png.asset.json";
-import prashantPhoto from "@/assets/prashant.png.asset.json";
-import vaishnaviPhoto from "@/assets/vaishnavi.jpg.asset.json";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -158,97 +145,6 @@ function Index() {
             </div>
           </div>
         </section>
-
-        {/* Creator card — bottom of page */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-12">
-          <aside className="mx-auto w-full max-w-md">
-            <div className="pk-blur-lite relative rounded-2xl border border-border bg-card p-4 shadow-sm dark:border-white/15 dark:bg-white/[0.07] dark:backdrop-blur-xl">
-              <div className="flex items-center gap-3">
-                <img
-                  src={siddharthPhoto.url}
-                  alt="Siddharth Prashant Pawar — creator of PY Kidda"
-                  width={56}
-                  height={56}
-                  className="h-14 w-14 rounded-full object-cover border-2 border-amber-400 shrink-0"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-yellow-300">
-                    Crafted by
-                  </p>
-                  <p className="font-bold leading-tight truncate">Siddharth Prashant Pawar</p>
-                  <p className="text-[11px] text-muted-foreground dark:text-white/60">Creator of PY Kidda Hub</p>
-                </div>
-              </div>
-              <Dialog>
-                <DialogTrigger className="mt-3 inline-flex w-full min-h-10 items-center justify-center rounded-md border border-border bg-muted px-3 py-2 text-xs font-semibold text-foreground hover:bg-accent hover:text-accent-foreground transition dark:border-white/20 dark:bg-white/10 dark:text-yellow-300 dark:hover:border-amber-400 dark:hover:bg-white/15">
-                  Know more
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className="text-yellow-500 dark:text-yellow-300">
-                      About the creator
-                    </DialogTitle>
-                    <DialogDescription className="pt-2 text-base text-foreground">
-                      Hello everyone, I have developed this website for college students to help them
-                      practise coding languages and attempt highly secure mock tests with strong
-                      anti-cheating features.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="mt-2 rounded-lg border border-border bg-muted/40 p-3 text-sm">
-                    <p className="font-semibold text-foreground">Siddharth Prashant Pawar</p>
-                    <p className="text-muted-foreground">
-                      Contact:{" "}
-                      <a
-                        href="tel:9172504205"
-                        className="font-bold text-yellow-600 dark:text-yellow-300 hover:underline"
-                      >
-                        9172504205
-                      </a>
-                    </p>
-                  </div>
-                  <Dialog>
-                    <DialogTrigger className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-border bg-muted/40 px-3 py-2 text-xs font-semibold text-yellow-600 dark:text-yellow-300 hover:bg-muted transition">
-                      Thanks to
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle className="text-yellow-500 dark:text-yellow-300">Thanks to</DialogTitle>
-                        <DialogDescription>People whose support made PY Kidda possible.</DialogDescription>
-                      </DialogHeader>
-                      <div className="mt-2 space-y-3">
-                        {[
-                          { name: "Dr. Meenakshi Mukund Pawar", post: "Vice Principal, SVERI College", help: "Testing and funding", img: meenakshiPhoto.url },
-                          { name: "Dr. Prashant Maruti Pawar", post: "Professor, SVERI College", help: "Testing and funding", img: prashantPhoto.url },
-                          { name: "Vaishnavi Jadhav", post: "Lab Assistant", help: "Testing and Developing", img: vaishnaviPhoto.url },
-                        ].map((p) => (
-                          <div key={p.name} className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
-                            <img
-                              src={p.img}
-                              alt={p.name}
-                              width={56}
-                              height={56}
-                              className="h-14 w-14 rounded-full object-cover border-2 border-amber-400 shrink-0"
-                              loading="lazy"
-                              decoding="async"
-                            />
-                            <div className="min-w-0">
-                              <p className="font-semibold text-foreground truncate">{p.name}</p>
-                              <p className="text-xs text-muted-foreground">{p.post}</p>
-                              <p className="text-xs text-yellow-600 dark:text-yellow-300">Help: {p.help}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </aside>
-        </section>
-
 
         <footer className="border-t border-border dark:border-white/10 py-8 pb-28 lg:pb-8 text-center text-xs text-muted-foreground dark:text-white/50">
           PY Kidda · Be a PY Kidda with us · © Siddharth Prashant Pawar
