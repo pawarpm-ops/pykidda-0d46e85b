@@ -64,11 +64,12 @@ export default function HeroSection() {
         >
           <source src={PYTHON_VIDEO} type="video/webm" />
         </video>
-        {/* Soft fade so the animation blends into the background on the left */}
-        <div className="py-kidda-hero__video-fade" aria-hidden="true" />
       </div>
 
-      {/* Hero content (left-aligned) */}
+      {/* Darken overlay to keep text readable */}
+      <div className="py-kidda-hero__overlay" aria-hidden="true" />
+
+      {/* Hero content (centered) */}
       <div className="py-kidda-hero__content">
         <div className="py-kidda-hero__label">
           <span className="py-kidda-hero__label-dot" />
@@ -76,11 +77,7 @@ export default function HeroSection() {
         </div>
 
         <h1 id="pk-hero-title" className="py-kidda-hero__title">
-          <span className="py-kidda-hero__title-line">Be a</span>
-          <span className="py-kidda-hero__title-line py-kidda-hero__title-highlight">
-            PY Kidda
-          </span>
-          <span className="py-kidda-hero__title-line">with Us</span>
+          Be a <span className="py-kidda-hero__title-highlight">PY Kidda</span> with Us
         </h1>
 
         <p className="py-kidda-hero__description">
@@ -108,11 +105,8 @@ export default function HeroSection() {
             <span>Take a Mock Test</span>
           </Link>
         </div>
-      </div>
 
-      <div className="py-kidda-hero__preview-tag" aria-hidden="true">
-        <span>MOTION PREVIEW</span>
-        <span className="py-kidda-hero__preview-line" />
+        <p className="py-kidda-hero__motto">Learn · Code · Grow</p>
       </div>
     </section>
   );
