@@ -29,7 +29,7 @@ import { recordStreakActivity } from "@/lib/streaks";
 import { isAdminEmail } from "@/lib/admin-emails";
 import { installGlobalErrorLogger, installSlowPageTracker } from "@/lib/system-health-client";
 import { PykoFloatingPanel } from "@/components/PykoFloatingPanel";
-import { MobileBottomNav } from "@/components/MobileBottomNav";
+
 
 function NotFoundComponent() {
   return (
@@ -289,9 +289,6 @@ function AuthGate({ children }: { children: ReactNode }) {
   return (
     <>
       {children}
-      {authed && onboardChecked && onboarded && !isAuthRoute && !isOnboardingRoute && !isSecureRoute && (
-        <MobileBottomNav />
-      )}
       {showGlobals && (
         <>
           <OnboardingTutorial />
