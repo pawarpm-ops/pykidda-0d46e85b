@@ -109,11 +109,12 @@ export default function HeroSection() {
 
         <div className="py-kidda-hero__motto-roll" aria-label="Learn Code Grow">
           <div className="py-kidda-hero__motto-track">
-            {["Learn", "Code", "Grow", "Learn", "Code", "Grow"].map((w, i) => (
+            {["Grow", "Learn", "Code", "Grow", "Learn", "Code"].map((w, i) => (
               <span key={i} className="py-kidda-hero__motto-word">{w}</span>
             ))}
           </div>
         </div>
+
       </div>
     </section>
   );
