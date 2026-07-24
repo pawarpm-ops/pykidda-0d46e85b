@@ -100,6 +100,18 @@
   filter: blur(20px);
   pointer-events: none;
 }
+.pk-card__bg {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 78%;
+  opacity: 0.16;
+  filter: saturate(1.1);
+  pointer-events: none;
+  z-index: 0;
+}
+.pk-card > *:not(.pk-card__bg) { position: relative; z-index: 1; }
 .pk-card:hover {
   border-color: color-mix(in srgb, var(--pk-accent) 40%, transparent);
   transform: translateY(-4px);
