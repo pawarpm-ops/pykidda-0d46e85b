@@ -26,22 +26,23 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   const metaRight = item.details?.[1];
   const isInternal = item.href?.startsWith("/");
   const isHttp = !!item.href && /^https?:/.test(item.href);
+  const shouldEscapePreviewFrame = item.href?.includes("instagram.com") ?? false;
   const CTA: React.ElementType = isInternal ? Link : "a";
   const ctaProps: Record<string, unknown> = isInternal
     ? { to: item.href! }
     : {
         href: item.href ?? "#",
-        target: isHttp ? "_blank" : undefined,
-        rel: isHttp ? "noopener noreferrer" : undefined,
+        target: isHttp ? (shouldEscapePreviewFrame ? "_top" : "_blank") : undefined,
+        rel: isHttp && !shouldEscapePreviewFrame ? "noopener noreferrer" : undefined,
         onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
-          if (!isHttp) return;
-          e.preventDefault();
-          // Force a real top-level navigation so it escapes the preview iframe
-          // instead of being blocked by the target site's X-Frame-Options.
+          if (!isHttp || !shouldEscapePreviewFrame) return;
+
+          // Instagram refuses to render inside the Lovable preview iframe.
+          // Navigate the top-level page instead of opening a sandboxed iframe tab.
           try {
-            (window.top ?? window).open(item.href!, "_blank", "noopener,noreferrer");
+            window.top?.location.assign(item.href!);
           } catch {
-            window.open(item.href!, "_blank", "noopener,noreferrer");
+            window.location.assign(item.href!);
           }
         },
       };
