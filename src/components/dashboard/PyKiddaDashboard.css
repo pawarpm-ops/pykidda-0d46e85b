@@ -75,7 +75,8 @@
   .pk-carousel__track { animation: none; }
 }
 .pk-card {
-  flex: 0 0 calc((100% - 4.5rem) / 4);
+  flex: 0 0 320px;
+  width: 320px;
   min-height: 420px;
   border-radius: 20px;
   padding: 1.75rem;
@@ -196,16 +197,14 @@
 .pk-carousel { --pk-visible: 4; }
 @media (max-width: 1100px) {
   .pk-carousel { --pk-visible: 3; }
-  .pk-card { flex: 0 0 calc((100% - 3rem) / 3); }
 }
 @media (max-width: 820px) {
   .pk-carousel { --pk-visible: 2; }
-  .pk-card { flex: 0 0 calc((100% - 1.5rem) / 2); }
   .pk-dash__head { grid-template-columns: 1fr; }
   .pk-dash__sub { text-align: left; }
 }
 @media (max-width: 560px) {
   .pk-carousel { --pk-visible: 1; }
-  .pk-card { flex: 0 0 100%; min-height: 380px; }
+  .pk-card { flex: 0 0 280px; width: 280px; min-height: 380px; }
 }
 
