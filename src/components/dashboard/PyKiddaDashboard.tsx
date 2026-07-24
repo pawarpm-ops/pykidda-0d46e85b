@@ -55,49 +55,77 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   }, [qrOpen]);
 
   return (
-    <article className="pk-card" style={style}>
-      {item.backgroundImage && (
-        <button
-          type="button"
-          className="pk-card__qr-btn"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setQrOpen(true);
-          }}
-          aria-label="Enlarge QR code"
+    <>
+      <article className="pk-card" style={style}>
+        {item.backgroundImage && (
+          <button
+            type="button"
+            className="pk-card__qr-btn"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setQrOpen(true);
+            }}
+            aria-label="Enlarge QR code"
+          >
+            <img
+              src={item.backgroundImage}
+              alt="Scan QR"
+              className="pk-card__qr"
+              loading="lazy"
+              decoding="async"
+            />
+          </button>
+        )}
+
+        <div className="pk-card__num">{num}</div>
+        <div className="pk-card__icon">{item.icon}</div>
+        <div className="pk-card__eyebrow">PY Kidda Hub</div>
+        <h3 className="pk-card__title">{item.title}</h3>
+        <div className="pk-card__sub">{item.eyebrow}</div>
+        <p className="pk-card__desc">{item.description}</p>
+        {(meta || metaRight) && (
+          <div className="pk-card__meta">
+            <span className="pk-card__meta-left">{meta}</span>
+            {metaRight && <span className="pk-card__meta-right">{metaRight}</span>}
+          </div>
+        )}
+        <CTA className="pk-card__cta" {...ctaProps}>
+          <span>{item.actionLabel}</span>
+          <span aria-hidden="true"><ArrowRight size={18} /></span>
+        </CTA>
+      </article>
+
+      {qrOpen && item.backgroundImage && (
+        <div
+          className="pk-qr-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="QR code"
+          onClick={() => setQrOpen(false)}
         >
-          <img
-            src={item.backgroundImage}
-            alt="Scan QR"
-            className="pk-card__qr"
-            loading="lazy"
-            decoding="async"
-          />
-        </button>
-      )}
-
-
-
-      <div className="pk-card__num">{num}</div>
-      <div className="pk-card__icon">{item.icon}</div>
-      <div className="pk-card__eyebrow">PY Kidda Hub</div>
-      <h3 className="pk-card__title">{item.title}</h3>
-      <div className="pk-card__sub">{item.eyebrow}</div>
-      <p className="pk-card__desc">{item.description}</p>
-      {(meta || metaRight) && (
-        <div className="pk-card__meta">
-          <span className="pk-card__meta-left">{meta}</span>
-          {metaRight && <span className="pk-card__meta-right">{metaRight}</span>}
+          <div className="pk-qr-modal__inner" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="pk-qr-modal__close"
+              onClick={() => setQrOpen(false)}
+              aria-label="Close"
+            >
+              <X size={22} />
+            </button>
+            <img
+              src={item.backgroundImage}
+              alt="Scan QR code"
+              className="pk-qr-modal__img"
+            />
+            <p className="pk-qr-modal__caption">Scan with your camera to open</p>
+          </div>
         </div>
       )}
-      <CTA className="pk-card__cta" {...ctaProps}>
-        <span>{item.actionLabel}</span>
-        <span aria-hidden="true"><ArrowRight size={18} /></span>
-      </CTA>
-    </article>
+    </>
   );
 }
+
 
 function Carousel({ items }: { items: DashboardCardItem[] }) {
   // Duplicate list for a seamless left-to-right marquee loop
