@@ -110,6 +110,7 @@ function Carousel({
   const offsetRef = useRef(0); // negative = shifted left
   const halfWidthRef = useRef(0);
   const draggingRef = useRef(false);
+  const hoveringRef = useRef(false);
   const lastXRef = useRef(0);
   const lastTsRef = useRef<number | null>(null);
   const SPEED = 40; // px per second, left-to-right drift
