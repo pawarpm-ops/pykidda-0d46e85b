@@ -71,34 +71,64 @@ function Dashboard() {
 
 
         {/* People Behind PY Kidda */}
-        <SectionHeader
-          eyebrow="Our Team"
-          title="People Behind PY Kidda"
-          subtitle="The people who made this platform possible."
-        />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <PersonCard
-            src={meenakshiAsset.url}
-            name="Dr. Meenakshi Mukund Pawar"
-            role="Vice Principal, SVERI College"
-            help="Testing & Funding"
-            objectPosition="center top"
-          />
-          <PersonCard
-            src={prashantAsset.url}
-            name="Dr. Prashant Maruti Pawar"
-            role="Professor, SVERI College"
-            help="Testing & Funding"
-            objectPosition="center top"
-          />
-          <PersonCard
-            src={vaishnaviAsset.url}
-            name="Vaishnavi Jadhav"
-            role="Lab Assistant"
-            help="Testing & Developing"
-            objectPosition="center top"
-          />
-        </div>
+        <section className="mt-20 mb-4">
+          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end mb-8">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-400">
+                With Gratitude
+              </p>
+              <h2 className="mt-3 text-4xl font-black leading-tight text-white sm:text-5xl">
+                People behind{" "}
+                <span
+                  className="bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(90deg, #FBBF24 0%, #F97316 100%)",
+                  }}
+                >
+                  PY Kidda
+                </span>
+              </h2>
+            </div>
+            <p className="max-w-xs text-sm text-[#94A3B8] md:text-right">
+              Meet the wonderful people whose guidance, testing and support
+              helped PY Kidda Hub to life.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <PersonCard
+              index="01"
+              src={meenakshiAsset.url}
+              name="Dr. Meenakshi Mukund Pawar"
+              honorific="MAM"
+              post="Vice Principal, SVERI College"
+              help="Testing & Funding"
+              accent="amber"
+              objectPosition="center top"
+            />
+            <PersonCard
+              index="02"
+              src={prashantAsset.url}
+              name="Dr. Prashant Maruti Pawar"
+              honorific="SIR"
+              post="Professor, SVERI College"
+              help="Testing & Funding"
+              accent="teal"
+              objectPosition="center top"
+            />
+            <PersonCard
+              index="03"
+              src={vaishnaviAsset.url}
+              name="Vaishnavi Jadhav"
+              honorific="MAM"
+              post="Lab Assistant"
+              help="Testing & Developing"
+              accent="violet"
+              objectPosition="center top"
+            />
+          </div>
+        </section>
+
 
         {/* Creator Spotlight */}
         <section className="relative my-20 overflow-hidden rounded-[24px] border border-white/10 bg-gradient-to-br from-[#0B1022] via-[#0A0E20] to-[#070A18]">
@@ -281,51 +311,146 @@ function IconTile({
 }
 
 function PersonCard({
+  index,
   src,
   name,
-  role,
+  honorific,
+  post,
   help,
+  accent,
   objectPosition,
 }: {
+  index: string;
   src: string;
   name: string;
-  role: string;
+  honorific: string;
+  post: string;
   help: string;
+  accent: "amber" | "teal" | "violet";
   objectPosition?: string;
 }) {
+  const palette = {
+    amber: {
+      ring: "#F5B341",
+      border: "rgba(245,179,65,0.35)",
+      glow: "0 0 30px -6px rgba(245,179,65,0.45)",
+      chipBg: "rgba(245,179,65,0.12)",
+      chipText: "#F5B341",
+      chipBorder: "rgba(245,179,65,0.4)",
+      supporter: "#F5B341",
+    },
+    teal: {
+      ring: "#2DD4BF",
+      border: "rgba(45,212,191,0.35)",
+      glow: "0 0 30px -6px rgba(45,212,191,0.45)",
+      chipBg: "rgba(45,212,191,0.12)",
+      chipText: "#2DD4BF",
+      chipBorder: "rgba(45,212,191,0.4)",
+      supporter: "#2DD4BF",
+    },
+    violet: {
+      ring: "#A78BFA",
+      border: "rgba(167,139,250,0.35)",
+      glow: "0 0 30px -6px rgba(167,139,250,0.45)",
+      chipBg: "rgba(167,139,250,0.12)",
+      chipText: "#A78BFA",
+      chipBorder: "rgba(167,139,250,0.4)",
+      supporter: "#A78BFA",
+    },
+  }[accent];
+
   return (
-    <article className="group flex flex-col items-center rounded-[20px] border border-white/10 bg-[#11172C] p-6 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-orange-400/60">
-      <div className="relative">
-        <div
-          className="absolute inset-0 -m-1 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-          aria-hidden
-          style={{
-            background:
-              "conic-gradient(from 0deg, #F97316, #FBBF24, #FB923C, #F97316)",
-            filter: "blur(10px)",
-          }}
-        />
-        <img
-          src={src}
-          alt={name}
-          loading="lazy"
-          className="relative h-32 w-32 rounded-full object-cover ring-2 ring-white/15"
-          style={{ objectPosition: objectPosition ?? "center" }}
-        />
-      </div>
-      <h3 className="mt-5 text-lg font-bold text-[#F8FAFC]">{name}</h3>
-      <p className="mt-1 text-sm text-[#94A3B8]">{role}</p>
+    <article
+      className="relative overflow-hidden rounded-[22px] border bg-[#0A0E20] p-6 transition-transform duration-300 hover:-translate-y-1.5"
+      style={{ borderColor: palette.border }}
+    >
+      {/* Ghost number */}
       <span
-        className="mt-4 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-slate-900"
-        style={{
-          background: "linear-gradient(90deg, #FBBF24 0%, #F97316 100%)",
-        }}
+        aria-hidden
+        className="pointer-events-none absolute left-5 top-3 select-none text-6xl font-black leading-none text-white/[0.06] sm:text-7xl"
       >
-        {help}
+        {index}
       </span>
+
+      {/* Grid dot texture */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+        }}
+      />
+
+      {/* Avatar */}
+      <div className="relative z-10 flex flex-col items-center pt-4 pb-5">
+        <div
+          className="rounded-full p-[3px]"
+          style={{
+            background: `linear-gradient(135deg, ${palette.ring} 0%, ${palette.ring}88 100%)`,
+            boxShadow: palette.glow,
+          }}
+        >
+          <div className="rounded-full bg-[#0A0E20] p-1">
+            <img
+              src={src}
+              alt={name}
+              loading="lazy"
+              className="h-28 w-28 rounded-full object-cover sm:h-32 sm:w-32"
+              style={{ objectPosition: objectPosition ?? "center" }}
+            />
+          </div>
+        </div>
+        <p
+          className="mt-3 text-[10px] font-bold uppercase tracking-[0.22em]"
+          style={{ color: palette.supporter }}
+        >
+          ✦ PY Kidda Supporter
+        </p>
+      </div>
+
+      {/* Name + honorific */}
+      <div className="relative z-10 flex items-center justify-between gap-3">
+        <h3 className="text-lg font-bold text-white">{name}</h3>
+        <span
+          className="shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-bold tracking-wider"
+          style={{
+            background: palette.chipBg,
+            color: palette.chipText,
+            borderColor: palette.chipBorder,
+          }}
+        >
+          {honorific}
+        </span>
+      </div>
+
+      {/* Info rows */}
+      <div className="relative z-10 mt-4 space-y-2">
+        <InfoRow label="POST" value={post} />
+        <InfoRow label="HELP" value={help} />
+      </div>
+
+      {/* Footer */}
+      <p className="relative z-10 mt-5 flex items-center gap-1.5 text-xs text-[#94A3B8]">
+        <span style={{ color: palette.supporter }}>✦</span>
+        Thank you for helping us learn, improve and grow.
+      </p>
     </article>
   );
 }
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2">
+      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#94A3B8]">
+        {label}
+      </span>
+      <span className="text-sm font-semibold text-white">{value}</span>
+    </div>
+  );
+}
+
 
 function StepPill({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
