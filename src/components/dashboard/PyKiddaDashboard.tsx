@@ -42,8 +42,8 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   const [qrOpen, setQrOpen] = useState(false);
   const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
   const qrButtonRef = useRef<HTMLButtonElement | null>(null);
-  const qrPressPendingRef = useRef(false);
   const qrOpenTimerRef = useRef<number | null>(null);
+  const qrOpenedAtRef = useRef(0);
 
   useEffect(() => {
     setPortalHost(document.body);
@@ -58,6 +58,7 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
       }
       qrOpenTimerRef.current = window.setTimeout(() => {
         qrOpenTimerRef.current = null;
+        qrOpenedAtRef.current = Date.now();
         setQrOpen(true);
       }, 80);
     };
@@ -82,25 +83,22 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
       event.preventDefault();
       event.stopPropagation();
       if (event.type === "pointerdown") {
-        qrPressPendingRef.current = true;
+        scheduleQrOpen();
         return;
       }
 
-      if (qrPressPendingRef.current || event.type === "click") {
-        qrPressPendingRef.current = false;
+      if (event.type === "click") {
         scheduleQrOpen();
       }
     };
 
     document.addEventListener("pointerdown", handleQrPointer, true);
-    document.addEventListener("pointerup", handleQrPointer, true);
     document.addEventListener("click", handleQrPointer, true);
     return () => {
       if (qrOpenTimerRef.current !== null) {
         window.clearTimeout(qrOpenTimerRef.current);
       }
       document.removeEventListener("pointerdown", handleQrPointer, true);
-      document.removeEventListener("pointerup", handleQrPointer, true);
       document.removeEventListener("click", handleQrPointer, true);
     };
   }, [item.backgroundImage]);
@@ -172,7 +170,10 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
           role="dialog"
           aria-modal="true"
           aria-label="QR code"
-          onClick={() => setQrOpen(false)}
+          onClick={() => {
+            if (Date.now() - qrOpenedAtRef.current < 300) return;
+            setQrOpen(false);
+          }}
         >
           <div className="pk-qr-modal__inner" onClick={(e) => e.stopPropagation()}>
             <button
