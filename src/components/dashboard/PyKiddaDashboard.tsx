@@ -48,10 +48,13 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    document.body.classList.add("pk-qr-open");
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      document.body.classList.remove("pk-qr-open");
     };
+
   }, [qrOpen]);
 
   return (
