@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import HeroSection from "@/components/HeroSection";
 import {
   BookOpen,
@@ -6,18 +6,10 @@ import {
   ClipboardList,
   GraduationCap,
   Mail,
-  ShieldCheck,
-  Lock,
-  UserCheck,
-  HelpCircle,
   Rocket,
   Phone,
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
-import {
-  InfiniteCardCarousel,
-  type CarouselCard,
-} from "@/components/dashboard/InfiniteCardCarousel";
 import { COMMUNITY } from "@/config/community";
 import PyKiddaDashboard from "@/components/dashboard/PyKiddaDashboard";
 import meenakshiAsset from "@/assets/meenakshi.png.asset.json";
