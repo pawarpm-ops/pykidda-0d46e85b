@@ -165,53 +165,64 @@
   background: linear-gradient(
     100deg,
     #f8fafc 0%,
-    #f8fafc 38%,
-    #ffffff 48%,
-    #fff7d1 50%,
-    #ffffff 52%,
-    #f8fafc 62%,
+    #f8fafc 35%,
+    #ffffff 44%,
+    #fffbe6 48%,
+    #ffffff 50%,
+    #fffbe6 52%,
+    #ffffff 56%,
+    #f8fafc 65%,
     #f8fafc 100%
   );
-  background-size: 220% 100%;
-  background-position: 100% 0;
+  background-size: 260% 100%;
+  background-position: 150% 0;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  animation: pk-title-shine 4.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.35))
+          drop-shadow(0 4px 22px rgba(255, 247, 209, 0.25));
+  animation: pk-title-shine 5.5s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  will-change: background-position, filter;
 }
 
-.py-kidda-hero__title > span:nth-of-type(2) { animation-delay: 0.35s; }
-.py-kidda-hero__title > span:nth-of-type(3) { animation-delay: 0.7s; }
+.py-kidda-hero__title > span:nth-of-type(2) { animation-delay: 0.5s; }
+.py-kidda-hero__title > span:nth-of-type(3) { animation-delay: 1s; }
 
 .py-kidda-hero__title-highlight,
 .py-kidda-hero__title > span.py-kidda-hero__title-highlight {
   background: linear-gradient(
     100deg,
     #fbbf24 0%,
-    #f97316 30%,
-    #fff2b8 48%,
+    #f97316 28%,
+    #ffe27a 44%,
+    #fffbe6 48%,
     #ffffff 50%,
-    #fff2b8 52%,
-    #f97316 70%,
+    #fffbe6 52%,
+    #ffe27a 56%,
+    #f97316 72%,
     #fb923c 100%
   );
-  background-size: 220% 100%;
-  background-position: 100% 0;
+  background-size: 260% 100%;
+  background-position: 150% 0;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  filter: drop-shadow(0 4px 18px rgba(249, 115, 22, 0.35));
-  animation: pk-title-shine 4.5s ease-in-out infinite;
-  animation-delay: 0.35s;
+  filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.55))
+          drop-shadow(0 6px 26px rgba(249, 115, 22, 0.45));
+  animation: pk-title-shine 5.5s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  animation-delay: 0.5s;
+  will-change: background-position, filter;
 }
 
 @keyframes pk-title-shine {
-  0%   { background-position: 100% 0; }
-  55%  { background-position: -20% 0; }
-  100% { background-position: -20% 0; }
+  0%   { background-position: 150% 0; filter: drop-shadow(0 0 10px rgba(255,255,255,0.25)); }
+  45%  { background-position: 50% 0;  filter: drop-shadow(0 0 26px rgba(255, 247, 209, 0.75)) drop-shadow(0 6px 28px rgba(251, 191, 36, 0.4)); }
+  70%  { background-position: -40% 0; filter: drop-shadow(0 0 14px rgba(255,255,255,0.3)); }
+  100% { background-position: -40% 0; filter: drop-shadow(0 0 10px rgba(255,255,255,0.25)); }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   .py-kidda-hero__title > span,
