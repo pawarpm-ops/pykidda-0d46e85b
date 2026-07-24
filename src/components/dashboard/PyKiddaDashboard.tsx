@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./PyKiddaDashboard.css";
 
 import {
@@ -133,15 +133,83 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
 function Carousel({ items }: { items: DashboardCardItem[] }) {
   // Duplicate list for a seamless left-to-right marquee loop
   const doubled = [...items, ...items];
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const offsetRef = useRef(0); // negative = shifted left
+  const halfWidthRef = useRef(0);
+  const draggingRef = useRef(false);
+  const lastXRef = useRef(0);
+  const lastTsRef = useRef<number | null>(null);
+  const SPEED = 40; // px per second, left-to-right drift
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const measure = () => {
+      halfWidthRef.current = track.scrollWidth / 2;
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(track);
+
+    let raf = 0;
+    const tick = (ts: number) => {
+      const last = lastTsRef.current ?? ts;
+      const dt = (ts - last) / 1000;
+      lastTsRef.current = ts;
+      if (!draggingRef.current && halfWidthRef.current > 0) {
+        // Auto drift: content moves left-to-right visually => translateX increases toward 0 from -half
+        offsetRef.current += SPEED * dt;
+      }
+      const half = halfWidthRef.current || 1;
+      // Wrap into (-half, 0]
+      let o = offsetRef.current % half;
+      if (o > 0) o -= half;
+      offsetRef.current = o;
+      track.style.transform = `translate3d(${o}px, 0, 0)`;
+      raf = requestAnimationFrame(tick);
+    };
+    // seed offset at -half so we have room to drift right
+    offsetRef.current = -(track.scrollWidth / 2);
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [items]);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    draggingRef.current = true;
+    lastXRef.current = e.clientX;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return;
+    const dx = e.clientX - lastXRef.current;
+    lastXRef.current = e.clientX;
+    offsetRef.current += dx;
+  };
+  const endDrag = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* noop */ }
+  };
 
   return (
     <div className="pk-carousel">
-      <div className="pk-carousel__track">
+      <div
+        ref={trackRef}
+        className="pk-carousel__track pk-carousel__track--js"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onPointerLeave={endDrag}
+      >
         {doubled.map((item, i) => (
           <Card key={`${item.id}-${i}`} item={item} index={i % items.length} />
         ))}
       </div>
-      
     </div>
   );
 }
