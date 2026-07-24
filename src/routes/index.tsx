@@ -71,34 +71,64 @@ function Dashboard() {
 
 
         {/* People Behind PY Kidda */}
-        <SectionHeader
-          eyebrow="Our Team"
-          title="People Behind PY Kidda"
-          subtitle="The people who made this platform possible."
-        />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <PersonCard
-            src={meenakshiAsset.url}
-            name="Dr. Meenakshi Mukund Pawar"
-            role="Vice Principal, SVERI College"
-            help="Testing & Funding"
-            objectPosition="center top"
-          />
-          <PersonCard
-            src={prashantAsset.url}
-            name="Dr. Prashant Maruti Pawar"
-            role="Professor, SVERI College"
-            help="Testing & Funding"
-            objectPosition="center top"
-          />
-          <PersonCard
-            src={vaishnaviAsset.url}
-            name="Vaishnavi Jadhav"
-            role="Lab Assistant"
-            help="Testing & Developing"
-            objectPosition="center top"
-          />
-        </div>
+        <section className="mt-20 mb-4">
+          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end mb-8">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-400">
+                With Gratitude
+              </p>
+              <h2 className="mt-3 text-4xl font-black leading-tight text-white sm:text-5xl">
+                People behind{" "}
+                <span
+                  className="bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(90deg, #FBBF24 0%, #F97316 100%)",
+                  }}
+                >
+                  PY Kidda
+                </span>
+              </h2>
+            </div>
+            <p className="max-w-xs text-sm text-[#94A3B8] md:text-right">
+              Meet the wonderful people whose guidance, testing and support
+              helped PY Kidda Hub to life.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <PersonCard
+              index="01"
+              src={meenakshiAsset.url}
+              name="Dr. Meenakshi Mukund Pawar"
+              honorific="MAM"
+              post="Vice Principal, SVERI College"
+              help="Testing & Funding"
+              accent="amber"
+              objectPosition="center top"
+            />
+            <PersonCard
+              index="02"
+              src={prashantAsset.url}
+              name="Dr. Prashant Maruti Pawar"
+              honorific="SIR"
+              post="Professor, SVERI College"
+              help="Testing & Funding"
+              accent="teal"
+              objectPosition="center top"
+            />
+            <PersonCard
+              index="03"
+              src={vaishnaviAsset.url}
+              name="Vaishnavi Jadhav"
+              honorific="MAM"
+              post="Lab Assistant"
+              help="Testing & Developing"
+              accent="violet"
+              objectPosition="center top"
+            />
+          </div>
+        </section>
+
 
         {/* Creator Spotlight */}
         <section className="relative my-20 overflow-hidden rounded-[24px] border border-white/10 bg-gradient-to-br from-[#0B1022] via-[#0A0E20] to-[#070A18]">
