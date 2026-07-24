@@ -42,6 +42,8 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   const [qrOpen, setQrOpen] = useState(false);
   const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
   const qrButtonRef = useRef<HTMLButtonElement | null>(null);
+  const qrPressPendingRef = useRef(false);
+  const qrOpenTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     setPortalHost(document.body);
@@ -50,7 +52,17 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   useEffect(() => {
     if (!item.backgroundImage) return;
 
-    const openFromQrPress = (event: PointerEvent | MouseEvent) => {
+    const scheduleQrOpen = () => {
+      if (qrOpenTimerRef.current !== null) {
+        window.clearTimeout(qrOpenTimerRef.current);
+      }
+      qrOpenTimerRef.current = window.setTimeout(() => {
+        qrOpenTimerRef.current = null;
+        setQrOpen(true);
+      }, 80);
+    };
+
+    const handleQrPointer = (event: PointerEvent | MouseEvent) => {
       const button = qrButtonRef.current;
       if (!button) return;
 
@@ -63,20 +75,33 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
 
       const target = event.target;
       const isButtonTarget =
-        target instanceof Element && Boolean(target.closest(".pk-card__qr-btn"));
+        target instanceof Node && button.contains(target);
 
       if (!isInsideButton && !isButtonTarget) return;
 
       event.preventDefault();
       event.stopPropagation();
-      setQrOpen(true);
+      if (event.type === "pointerdown") {
+        qrPressPendingRef.current = true;
+        return;
+      }
+
+      if (qrPressPendingRef.current || event.type === "click") {
+        qrPressPendingRef.current = false;
+        scheduleQrOpen();
+      }
     };
 
-    document.addEventListener("pointerdown", openFromQrPress, true);
-    document.addEventListener("click", openFromQrPress, true);
+    document.addEventListener("pointerdown", handleQrPointer, true);
+    document.addEventListener("pointerup", handleQrPointer, true);
+    document.addEventListener("click", handleQrPointer, true);
     return () => {
-      document.removeEventListener("pointerdown", openFromQrPress, true);
-      document.removeEventListener("click", openFromQrPress, true);
+      if (qrOpenTimerRef.current !== null) {
+        window.clearTimeout(qrOpenTimerRef.current);
+      }
+      document.removeEventListener("pointerdown", handleQrPointer, true);
+      document.removeEventListener("pointerup", handleQrPointer, true);
+      document.removeEventListener("click", handleQrPointer, true);
     };
   }, [item.backgroundImage]);
 
@@ -106,7 +131,6 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
             onPointerDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setQrOpen(true);
             }}
             onClick={(e) => {
               e.preventDefault();
