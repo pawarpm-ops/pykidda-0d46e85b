@@ -127,13 +127,6 @@ function Dashboard() {
         <PyKiddaDashboard />
 
 
-        {/* Why Use PY Kidda */}
-        <SectionHeader
-          eyebrow="Why PY Kidda"
-          title="Why Use PY Kidda?"
-          subtitle="Built for real learning, not gimmicks."
-        />
-        <InfiniteCardCarousel cards={whyCards} ariaLabel="Why use PY Kidda" />
 
         {/* People Behind PY Kidda */}
         <SectionHeader
