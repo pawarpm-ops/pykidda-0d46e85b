@@ -38,6 +38,7 @@ function Card({
   const isInternal = item.href?.startsWith("/");
   const isHttp = !!item.href && /^https?:/.test(item.href);
   const shouldEscapePreviewFrame = item.href?.includes("instagram.com") ?? false;
+  const qrImage = item.backgroundImage;
   const CTA: React.ElementType = isInternal ? Link : "a";
   const ctaProps: Record<string, unknown> = isInternal
     ? { to: item.href! }
@@ -48,24 +49,24 @@ function Card({
       };
   return (
     <article className="pk-card" style={style}>
-        {item.backgroundImage && (
+        {qrImage && (
           <button
             type="button"
             className="pk-card__qr-btn"
             onPointerDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onQrOpen(item.backgroundImage);
+              onQrOpen(qrImage);
             }}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              onQrOpen(item.backgroundImage);
+              onQrOpen(qrImage);
             }}
             aria-label="Enlarge QR code"
           >
             <img
-              src={item.backgroundImage}
+              src={qrImage}
               alt="Scan QR"
               className="pk-card__qr"
               loading="lazy"
