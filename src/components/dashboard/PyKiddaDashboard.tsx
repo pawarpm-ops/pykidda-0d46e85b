@@ -53,6 +53,7 @@ function Card({
           <button
             type="button"
             className="pk-card__qr-btn"
+            data-qr-image={qrImage}
             onPointerDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -215,6 +216,23 @@ export default function PyKiddaDashboard() {
   };
 
   const closeQr = () => setActiveQrImage(null);
+
+  useEffect(() => {
+    const openFromPointer = (event: PointerEvent) => {
+      const hit = document.elementFromPoint(event.clientX, event.clientY);
+      const button = hit?.closest?.(".pk-card__qr-btn");
+      if (!(button instanceof HTMLElement)) return;
+      const image = button.dataset.qrImage;
+      if (!image) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      openQr(image);
+    };
+
+    document.addEventListener("pointerdown", openFromPointer, true);
+    return () => document.removeEventListener("pointerdown", openFromPointer, true);
+  }, []);
 
   return (
     <>
