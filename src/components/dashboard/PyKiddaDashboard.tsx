@@ -38,17 +38,46 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
         rel: isHttp && !shouldEscapePreviewFrame ? "noopener noreferrer" : undefined,
       };
 
+  const [qrOpen, setQrOpen] = useState(false);
+
+  useEffect(() => {
+    if (!qrOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setQrOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [qrOpen]);
+
   return (
     <article className="pk-card" style={style}>
       {item.backgroundImage && (
-        <img
-          src={item.backgroundImage}
-          alt="Scan QR"
-          className="pk-card__qr"
-          loading="lazy"
-          decoding="async"
-        />
+        <button
+          type="button"
+          className="pk-card__qr-btn"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setQrOpen(true);
+          }}
+          aria-label="Enlarge QR code"
+        >
+          <img
+            src={item.backgroundImage}
+            alt="Scan QR"
+            className="pk-card__qr"
+            loading="lazy"
+            decoding="async"
+          />
+        </button>
       )}
+
+
 
       <div className="pk-card__num">{num}</div>
       <div className="pk-card__icon">{item.icon}</div>
