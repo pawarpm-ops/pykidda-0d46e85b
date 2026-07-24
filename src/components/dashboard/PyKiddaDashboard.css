@@ -125,7 +125,7 @@
   z-index: 2;
   pointer-events: none;
 }
-.pk-card > *:not(.pk-card__qr) { position: relative; z-index: 1; }
+.pk-card > *:not(.pk-card__qr):not(.pk-card__qr-btn) { position: relative; z-index: 1; }
 
 .pk-card:hover {
   border-color: color-mix(in srgb, var(--pk-accent) 40%, transparent);
