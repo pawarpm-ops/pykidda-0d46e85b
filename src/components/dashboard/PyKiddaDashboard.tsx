@@ -157,7 +157,7 @@ function Carousel({ items }: { items: DashboardCardItem[] }) {
       const last = lastTsRef.current ?? ts;
       const dt = (ts - last) / 1000;
       lastTsRef.current = ts;
-      if (!draggingRef.current && halfWidthRef.current > 0) {
+      if (!draggingRef.current && halfWidthRef.current > 0 && !document.body.classList.contains("pk-qr-open")) {
         // Auto drift: content moves left-to-right visually => translateX increases toward 0 from -half
         offsetRef.current += SPEED * dt;
       }
