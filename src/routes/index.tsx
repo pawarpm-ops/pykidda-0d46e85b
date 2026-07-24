@@ -336,10 +336,55 @@ function StepPill({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
+function BlockPill({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center rounded-lg border border-white/10 bg-[#111730] px-4 py-2 text-sm font-bold tracking-wider text-white">
+      {label}
+    </span>
+  );
+}
+
 function ArrowChev() {
   return (
-    <span aria-hidden className="text-orange-300">
+    <span aria-hidden className="text-lg text-[#94A3B8]">
       →
     </span>
+  );
+}
+
+function ContactCard({
+  href,
+  eyebrow,
+  value,
+  icon,
+}: {
+  href: string;
+  eyebrow: string;
+  value: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-[#0F142A] p-3.5 transition hover:border-amber-400/40 hover:bg-[#141A34]"
+    >
+      <span
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg"
+        style={{
+          background: "linear-gradient(135deg, #FBBF24 0%, #F97316 100%)",
+          boxShadow: "0 8px 20px -10px rgba(249,115,22,0.6)",
+        }}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[10px] font-bold uppercase tracking-[0.18em] text-[#94A3B8]">
+          {eyebrow}
+        </span>
+        <span className="mt-0.5 block truncate text-sm font-semibold text-white">
+          {value}
+        </span>
+      </span>
+    </a>
   );
 }
