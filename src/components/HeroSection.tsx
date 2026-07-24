@@ -82,9 +82,8 @@ export default function HeroSection() {
           <span className="block">with Us</span>
         </h1>
 
-        <p className="py-kidda-hero__description">
-          Learn Python. Solve challenges. Build real skills.
-        </p>
+
+
 
         <div className="py-kidda-hero__actions">
           <Link
