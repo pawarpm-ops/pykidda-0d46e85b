@@ -75,7 +75,8 @@
   .pk-carousel__track { animation: none; }
 }
 .pk-card {
-  flex: 0 0 calc((100% - 4.5rem) / 4);
+  flex: 0 0 320px;
+  width: 320px;
   min-height: 420px;
   border-radius: 20px;
   padding: 1.75rem;
