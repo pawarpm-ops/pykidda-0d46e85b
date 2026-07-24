@@ -178,7 +178,8 @@ function Carousel({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        onPointerLeave={endDrag}
+        onPointerLeave={(e) => { hoveringRef.current = false; endDrag(e); }}
+        onPointerEnter={() => { hoveringRef.current = true; }}
       >
         {doubled.map((item, i) => (
           <Card key={`${item.id}-${i}`} item={item} index={i % items.length} onQrOpen={onQrOpen} />
