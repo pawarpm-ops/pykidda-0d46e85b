@@ -39,12 +39,15 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   return (
     <article className="pk-card" style={style}>
       {item.backgroundImage && (
-        <div
-          className="pk-card__bg"
-          aria-hidden="true"
-          style={{ backgroundImage: `url(${item.backgroundImage})` }}
+        <img
+          src={item.backgroundImage}
+          alt="Scan QR"
+          className="pk-card__qr"
+          loading="lazy"
+          decoding="async"
         />
       )}
+
       <div className="pk-card__num">{num}</div>
       <div className="pk-card__icon">{item.icon}</div>
       <div className="pk-card__eyebrow">PY Kidda Hub</div>
