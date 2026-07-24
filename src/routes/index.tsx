@@ -181,13 +181,6 @@ function Dashboard() {
         {/* Everything You Need — rendered by PyKiddaDashboard's auto-rotating carousel */}
         <PyKiddaDashboard />
 
-        {/* Community */}
-        <SectionHeader
-          eyebrow="Community"
-          title="Stay Connected"
-          subtitle="Join the PY Kidda community and stay up to date."
-        />
-        <InfiniteCardCarousel cards={communityCards} ariaLabel="Community and contact" />
 
         {/* Why Use PY Kidda */}
         <SectionHeader
