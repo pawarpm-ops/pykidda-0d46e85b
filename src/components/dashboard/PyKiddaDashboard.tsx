@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import "./PyKiddaDashboard.css";
+
 import {
   contactCards,
   learningCards,
