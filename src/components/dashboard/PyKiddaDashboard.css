@@ -64,6 +64,13 @@
   animation: pk-marquee 60s linear infinite;
   will-change: transform;
 }
+.pk-carousel__track--js {
+  animation: none !important;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+.pk-carousel__track--js:active { cursor: grabbing; }
 .pk-carousel:hover .pk-carousel__track,
 .pk-carousel:focus-within .pk-carousel__track,
 .pk-carousel__track:active {
