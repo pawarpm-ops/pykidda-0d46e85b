@@ -111,8 +111,8 @@
 }
 .pk-card__qr {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 18px;
+  right: 18px;
 
   width: 96px;
   height: 96px;
@@ -239,8 +239,8 @@
 /* Clickable QR chip */
 .pk-card__qr-btn {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 18px;
+  right: 18px;
 
   padding: 0;
   border: 0;
@@ -248,6 +248,10 @@
   cursor: zoom-in;
   z-index: 3;
   border-radius: 12px;
+  min-width: 108px;
+  min-height: 108px;
+  display: grid;
+  place-items: center;
   transition: transform 160ms ease;
 }
 .pk-card__qr-btn:hover { transform: scale(1.06); }

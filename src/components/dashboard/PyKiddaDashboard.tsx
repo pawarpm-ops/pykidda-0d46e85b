@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "./PyKiddaDashboard.css";
 
 import {
@@ -21,7 +22,15 @@ const COLOR_MAP: Record<string, string> = {
   yellow: "var(--pk-yellow)",
 };
 
-function Card({ item, index }: { item: DashboardCardItem; index: number }) {
+function Card({
+  item,
+  index,
+  onQrOpen,
+}: {
+  item: DashboardCardItem;
+  index: number;
+  onQrOpen: (image: string) => void;
+}) {
   const style = { ["--pk-accent" as string]: COLOR_MAP[item.color] ?? "var(--pk-orange)" } as React.CSSProperties;
   const num = String(index + 1).padStart(2, "0");
   const meta = item.details?.[0];
@@ -29,6 +38,7 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   const isInternal = item.href?.startsWith("/");
   const isHttp = !!item.href && /^https?:/.test(item.href);
   const shouldEscapePreviewFrame = item.href?.includes("instagram.com") ?? false;
+  const qrImage = item.backgroundImage;
   const CTA: React.ElementType = isInternal ? Link : "a";
   const ctaProps: Record<string, unknown> = isInternal
     ? { to: item.href! }
@@ -37,42 +47,27 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
         target: isHttp ? (shouldEscapePreviewFrame ? "_top" : "_blank") : undefined,
         rel: isHttp && !shouldEscapePreviewFrame ? "noopener noreferrer" : undefined,
       };
-
-  const [qrOpen, setQrOpen] = useState(false);
-
-  useEffect(() => {
-    if (!qrOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setQrOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.body.classList.add("pk-qr-open");
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-      document.body.classList.remove("pk-qr-open");
-    };
-
-  }, [qrOpen]);
-
   return (
-    <>
-      <article className="pk-card" style={style}>
-        {item.backgroundImage && (
+    <article className="pk-card" style={style}>
+        {qrImage && (
           <button
             type="button"
             className="pk-card__qr-btn"
+            data-qr-image={qrImage}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onQrOpen(qrImage);
+            }}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setQrOpen(true);
+              onQrOpen(qrImage);
             }}
             aria-label="Enlarge QR code"
           >
             <img
-              src={item.backgroundImage}
+              src={qrImage}
               alt="Scan QR"
               className="pk-card__qr"
               loading="lazy"
@@ -98,39 +93,17 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
           <span aria-hidden="true"><ArrowRight size={18} /></span>
         </CTA>
       </article>
-
-      {qrOpen && item.backgroundImage && (
-        <div
-          className="pk-qr-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label="QR code"
-          onClick={() => setQrOpen(false)}
-        >
-          <div className="pk-qr-modal__inner" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              className="pk-qr-modal__close"
-              onClick={() => setQrOpen(false)}
-              aria-label="Close"
-            >
-              <X size={22} />
-            </button>
-            <img
-              src={item.backgroundImage}
-              alt="Scan QR code"
-              className="pk-qr-modal__img"
-            />
-            <p className="pk-qr-modal__caption">Scan with your camera to open</p>
-          </div>
-        </div>
-      )}
-    </>
   );
 }
 
 
-function Carousel({ items }: { items: DashboardCardItem[] }) {
+function Carousel({
+  items,
+  onQrOpen,
+}: {
+  items: DashboardCardItem[];
+  onQrOpen: (image: string) => void;
+}) {
   // Duplicate list for a seamless left-to-right marquee loop
   const doubled = [...items, ...items];
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -157,7 +130,7 @@ function Carousel({ items }: { items: DashboardCardItem[] }) {
       const last = lastTsRef.current ?? ts;
       const dt = (ts - last) / 1000;
       lastTsRef.current = ts;
-      if (!draggingRef.current && halfWidthRef.current > 0 && !document.body.classList.contains("pk-qr-open")) {
+      if (!draggingRef.current && halfWidthRef.current > 0) {
         // Auto drift: content moves left-to-right visually => translateX increases toward 0 from -half
         offsetRef.current += SPEED * dt;
       }
@@ -207,7 +180,7 @@ function Carousel({ items }: { items: DashboardCardItem[] }) {
         onPointerLeave={endDrag}
       >
         {doubled.map((item, i) => (
-          <Card key={`${item.id}-${i}`} item={item} index={i % items.length} />
+          <Card key={`${item.id}-${i}`} item={item} index={i % items.length} onQrOpen={onQrOpen} />
         ))}
       </div>
     </div>
@@ -215,52 +188,131 @@ function Carousel({ items }: { items: DashboardCardItem[] }) {
 }
 
 export default function PyKiddaDashboard() {
+  const [activeQrImage, setActiveQrImage] = useState<string | null>(null);
+  const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
+  const qrOpenedAtRef = useRef(0);
+
+  useEffect(() => {
+    setPortalHost(document.body);
+  }, []);
+
+  useEffect(() => {
+    if (!activeQrImage) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveQrImage(null);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [activeQrImage]);
+
+  const openQr = (image: string) => {
+    qrOpenedAtRef.current = Date.now();
+    setActiveQrImage(image);
+  };
+
+  const closeQr = () => setActiveQrImage(null);
+
+  useEffect(() => {
+    const openFromPointer = (event: PointerEvent) => {
+      const hit = document.elementFromPoint(event.clientX, event.clientY);
+      const button = hit?.closest?.(".pk-card__qr-btn");
+      if (!(button instanceof HTMLElement)) return;
+      const image = button.dataset.qrImage;
+      if (!image) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      openQr(image);
+    };
+
+    document.addEventListener("pointerdown", openFromPointer, true);
+    return () => document.removeEventListener("pointerdown", openFromPointer, true);
+  }, []);
+
   return (
-    <main className="pk-dash">
-      <section className="pk-dash__section">
-        <div className="pk-dash__head">
-          <div>
-            <div className="pk-dash__eyebrow">Explore your workspace</div>
-            <h2 className="pk-dash__title">
-              Everything you need to <em>grow</em>
-            </h2>
+    <>
+      <main className="pk-dash">
+        <section className="pk-dash__section">
+          <div className="pk-dash__head">
+            <div>
+              <div className="pk-dash__eyebrow">Explore your workspace</div>
+              <h2 className="pk-dash__title">
+                Everything you need to <em>grow</em>
+              </h2>
+            </div>
+            <p className="pk-dash__sub">
+              Choose a feature and take the next small step in your Python journey.
+            </p>
           </div>
-          <p className="pk-dash__sub">
-            Choose a feature and take the next small step in your Python journey.
-          </p>
-        </div>
-        <Carousel items={learningCards} />
-      </section>
+          <Carousel items={learningCards} onQrOpen={openQr} />
+        </section>
 
-      <section className="pk-dash__section">
-        <div className="pk-dash__head">
-          <div>
-            <div className="pk-dash__eyebrow">Stay connected</div>
-            <h2 className="pk-dash__title">
-              Let's keep in <em>touch</em>
-            </h2>
+        <section className="pk-dash__section">
+          <div className="pk-dash__head">
+            <div>
+              <div className="pk-dash__eyebrow">Stay connected</div>
+              <h2 className="pk-dash__title">
+                Let's keep in <em>touch</em>
+              </h2>
+            </div>
+            <p className="pk-dash__sub">
+              Follow the community or reach our team whenever you need help on your Python journey.
+            </p>
           </div>
-          <p className="pk-dash__sub">
-            Follow the community or reach our team whenever you need help on your Python journey.
-          </p>
-        </div>
-        <Carousel items={contactCards} />
-      </section>
+          <Carousel items={contactCards} onQrOpen={openQr} />
+        </section>
 
-      <section className="pk-dash__section">
-        <div className="pk-dash__head">
-          <div>
-            <div className="pk-dash__eyebrow">Built with care</div>
-            <h2 className="pk-dash__title">
-              Why use <em>PY Kidda</em>?
-            </h2>
+        <section className="pk-dash__section">
+          <div className="pk-dash__head">
+            <div>
+              <div className="pk-dash__eyebrow">Built with care</div>
+              <h2 className="pk-dash__title">
+                Why use <em>PY Kidda</em>?
+              </h2>
+            </div>
+            <p className="pk-dash__sub">
+              A safe, thoughtful learning space designed around real students and real teachers.
+            </p>
           </div>
-          <p className="pk-dash__sub">
-            A safe, thoughtful learning space designed around real students and real teachers.
-          </p>
-        </div>
-        <Carousel items={whyPyKiddaCards} />
-      </section>
-    </main>
+          <Carousel items={whyPyKiddaCards} onQrOpen={openQr} />
+        </section>
+      </main>
+
+      {activeQrImage && portalHost && createPortal(
+        <div
+          className="pk-qr-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="QR code"
+          onClick={() => {
+            if (Date.now() - qrOpenedAtRef.current < 300) return;
+            closeQr();
+          }}
+        >
+          <div className="pk-qr-modal__inner" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="pk-qr-modal__close"
+              onClick={closeQr}
+              aria-label="Close"
+            >
+              <X size={22} />
+            </button>
+            <img
+              src={activeQrImage}
+              alt="Scan QR code"
+              className="pk-qr-modal__img"
+            />
+            <p className="pk-qr-modal__caption">Scan with your camera to open</p>
+          </div>
+        </div>,
+        portalHost,
+      )}
+    </>
   );
 }
