@@ -21,6 +21,7 @@ export interface DashboardCardItem {
   color: DashboardCardColor;
   badge?: string;
   details?: string[];
+  backgroundImage?: string;
 }
 
 export interface Contributor {
