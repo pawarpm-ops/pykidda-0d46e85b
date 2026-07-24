@@ -53,60 +53,6 @@ function Dashboard() {
 
 
 
-  const learnCards: CarouselCard[] = [
-    {
-      id: "learn",
-      header: (
-        <IconTile from="#F97316" to="#FBBF24">
-          <BookOpen className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Python Learning",
-      description:
-        "Guided lessons and Pyko AI teacher help you learn Python from the ground up, at your own pace.",
-      status: "Self-paced • Beginner to advanced",
-      cta: { label: "Start Learning", onClick: () => navigate({ to: "/help" }) },
-    },
-    {
-      id: "mock",
-      header: (
-        <IconTile from="#FB923C" to="#F97316">
-          <ShieldCheck className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Mock Tests",
-      description:
-        "Full-screen, secure coding mock tests that mirror real exam conditions with auto-submit safeguards.",
-      status: "Timed • Anti-cheat",
-      cta: { label: "Take a Mock Test", onClick: () => navigate({ to: "/mock-tests" }) },
-    },
-    {
-      id: "practice",
-      header: (
-        <IconTile from="#FBBF24" to="#FB923C">
-          <Code2 className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Practice Questions",
-      description:
-        "Solve syllabus questions in the browser with instant execution and AI-powered mistake analysis.",
-      status: "In-browser Python",
-      cta: { label: "Practice Now", onClick: () => navigate({ to: "/practice" }) },
-    },
-    {
-      id: "homework",
-      header: (
-        <IconTile from="#F97316" to="#FB923C">
-          <ClipboardList className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Homework",
-      description:
-        "Teacher-assigned coding tasks with due dates and clear feedback so you never fall behind.",
-      status: "Assigned by your teacher",
-      cta: { label: "Open Homework", onClick: () => navigate({ to: "/homework" }) },
-    },
-  ];
 
   const communityCards: CarouselCard[] = [
     {
