@@ -110,6 +110,7 @@ function Carousel({
   const offsetRef = useRef(0); // negative = shifted left
   const halfWidthRef = useRef(0);
   const draggingRef = useRef(false);
+  const hoveringRef = useRef(false);
   const lastXRef = useRef(0);
   const lastTsRef = useRef<number | null>(null);
   const SPEED = 40; // px per second, left-to-right drift
@@ -130,7 +131,7 @@ function Carousel({
       const last = lastTsRef.current ?? ts;
       const dt = (ts - last) / 1000;
       lastTsRef.current = ts;
-      if (!draggingRef.current && halfWidthRef.current > 0) {
+      if (!draggingRef.current && !hoveringRef.current && halfWidthRef.current > 0) {
         // Auto drift: content moves left-to-right visually => translateX increases toward 0 from -half
         offsetRef.current += SPEED * dt;
       }
@@ -177,7 +178,8 @@ function Carousel({
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        onPointerLeave={endDrag}
+        onPointerLeave={(e) => { hoveringRef.current = false; endDrag(e); }}
+        onPointerEnter={() => { hoveringRef.current = true; }}
       >
         {doubled.map((item, i) => (
           <Card key={`${item.id}-${i}`} item={item} index={i % items.length} onQrOpen={onQrOpen} />
