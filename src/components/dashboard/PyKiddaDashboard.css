@@ -105,7 +105,8 @@
 .pk-card__qr {
   position: absolute;
   top: 14px;
-  right: 14px;
+  left: 14px;
+
   width: 96px;
   height: 96px;
   border-radius: 10px;
@@ -232,7 +233,8 @@
 .pk-card__qr-btn {
   position: absolute;
   top: 14px;
-  right: 14px;
+  left: 14px;
+
   padding: 0;
   border: 0;
   background: transparent;
@@ -314,3 +316,6 @@
   font-size: 0.95rem;
   font-weight: 500;
 }
+
+/* Freeze marquee while the QR lightbox is open so the card stays put */
+body.pk-qr-open .pk-carousel__track { animation-play-state: paused !important; }
