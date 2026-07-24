@@ -15,7 +15,7 @@ import PyKiddaDashboard from "@/components/dashboard/PyKiddaDashboard";
 import meenakshiAsset from "@/assets/meenakshi.png.asset.json";
 import prashantAsset from "@/assets/prashant.png.asset.json";
 import vaishnaviAsset from "@/assets/vaishnavi.jpg.asset.json";
-import siddharthAsset from "@/assets/siddharth.jpg.asset.json";
+import siddharthAsset from "@/assets/siddharth-portrait.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
