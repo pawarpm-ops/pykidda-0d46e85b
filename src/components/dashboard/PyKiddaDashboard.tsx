@@ -25,21 +25,23 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   const meta = item.details?.[0];
   const metaRight = item.details?.[1];
   const isInternal = item.href?.startsWith("/");
-  const isExternal = !!item.href && /^(https?:|mailto:|tel:)/.test(item.href);
+  const isHttp = !!item.href && /^https?:/.test(item.href);
   const CTA: React.ElementType = isInternal ? Link : "a";
   const ctaProps: Record<string, unknown> = isInternal
     ? { to: item.href! }
     : {
         href: item.href ?? "#",
-        target: item.href?.startsWith("http") ? "_blank" : undefined,
-        rel: "noopener noreferrer",
+        target: isHttp ? "_blank" : undefined,
+        rel: isHttp ? "noopener noreferrer" : undefined,
         onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
-          if (!isExternal) return;
+          if (!isHttp) return;
           e.preventDefault();
-          if (item.href!.startsWith("http")) {
+          // Force a real top-level navigation so it escapes the preview iframe
+          // instead of being blocked by the target site's X-Frame-Options.
+          try {
+            (window.top ?? window).open(item.href!, "_blank", "noopener,noreferrer");
+          } catch {
             window.open(item.href!, "_blank", "noopener,noreferrer");
-          } else {
-            window.location.href = item.href!;
           }
         },
       };
