@@ -303,7 +303,7 @@
 
 .py-kidda-hero__motto-roll {
   --pk-word-h: 3.2rem;
-  --pk-visible: 5; /* odd number, center is focus */
+  --pk-visible: 3; /* odd number, center is focus */
   position: relative;
   margin: 36px 0 0;
   height: calc(var(--pk-word-h) * var(--pk-visible));
@@ -312,15 +312,15 @@
   mask-image: linear-gradient(
     180deg,
     transparent 0%,
-    #000 22%,
-    #000 78%,
+    #000 32%,
+    #000 68%,
     transparent 100%
   );
   -webkit-mask-image: linear-gradient(
     180deg,
     transparent 0%,
-    #000 22%,
-    #000 78%,
+    #000 32%,
+    #000 68%,
     transparent 100%
   );
 }
@@ -328,7 +328,8 @@
 .py-kidda-hero__motto-track {
   display: flex;
   flex-direction: column;
-  animation: pk-motto-roll 4.5s cubic-bezier(0.7, 0, 0.3, 1) infinite;
+  /* Each word holds ~1s at center, then eases to the next over ~0.55s. */
+  animation: pk-motto-roll 4.65s cubic-bezier(0.6, 0, 0.25, 1) infinite;
   will-change: transform;
 }
 
@@ -343,24 +344,26 @@
   color: #f8fafc;
   text-align: left;
   padding-left: 8px;
-  transition: filter 400ms ease, opacity 400ms ease, transform 400ms ease;
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
 }
 
-/* Center focus row (index 2 of 5 visible) is sharp; others blur & dim */
-.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 1) { filter: blur(6px); opacity: 0.35; }
-.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 2) { filter: blur(2.5px); opacity: 0.6; }
-.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 3) { filter: blur(0); opacity: 1; }
-.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 4) { filter: blur(2.5px); opacity: 0.6; }
-.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 5) { filter: blur(6px); opacity: 0.35; }
+/* With 3 rows visible, the center row is always the 2nd of every triplet. */
+.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(3n + 1) { opacity: 0.35; filter: blur(3px); }
+.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(3n + 2) { opacity: 1;    filter: blur(0); }
+.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(3n + 3) { opacity: 0.35; filter: blur(3px); }
 
+/*
+ * Seamless loop: 3 unique words duplicated once (6 total: Learn, Code, Grow, Learn, Code, Grow).
+ * translateY(0)         => visible rows 1,2,3 => center: Code
+ * translateY(-1 * wordH) => visible rows 2,3,4 => center: Grow
+ * translateY(-2 * wordH) => visible rows 3,4,5 => center: Learn
+ * translateY(-3 * wordH) => visible rows 4,5,6 => center: Code (same as start → invisible wrap)
+ */
 @keyframes pk-motto-roll {
-  0%   { transform: translateY(0); }
-  28%  { transform: translateY(0); }
-  33%  { transform: translateY(calc(var(--pk-word-h) * -1)); }
-  61%  { transform: translateY(calc(var(--pk-word-h) * -1)); }
-  66%  { transform: translateY(calc(var(--pk-word-h) * -2)); }
-  94%  { transform: translateY(calc(var(--pk-word-h) * -2)); }
-  100% { transform: translateY(calc(var(--pk-word-h) * -3)); }
+  0%,  22%  { transform: translateY(0); }
+  33%, 55%  { transform: translateY(calc(var(--pk-word-h) * -1)); }
+  66%, 88%  { transform: translateY(calc(var(--pk-word-h) * -2)); }
+  100%      { transform: translateY(calc(var(--pk-word-h) * -3)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
