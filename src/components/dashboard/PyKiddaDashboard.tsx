@@ -34,25 +34,6 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
         href: item.href ?? "#",
         target: isHttp ? (shouldEscapePreviewFrame ? "_top" : "_blank") : undefined,
         rel: isHttp && !shouldEscapePreviewFrame ? "noopener noreferrer" : undefined,
-        onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
-          if (!isHttp || !shouldEscapePreviewFrame) return;
-          e.preventDefault();
-
-          // Instagram refuses to render inside the Lovable preview iframe.
-          // Open a real tab/top page and never fall back to iframe navigation.
-          try {
-            const opened = window.open(item.href!, "_blank", "noopener,noreferrer");
-            if (opened) return;
-          } catch {
-            // Continue to the top-level navigation attempt below.
-          }
-
-          try {
-            window.top?.location.assign(item.href!);
-          } catch {
-            window.alert(`Open Instagram here: ${item.href}`);
-          }
-        },
       };
 
   return (
