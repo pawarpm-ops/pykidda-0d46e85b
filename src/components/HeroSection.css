@@ -118,7 +118,6 @@
 }
 
 .py-kidda-hero__label {
-  position: relative;
   display: inline-flex;
   margin-bottom: 22px;
   padding: 8px 14px;
@@ -133,71 +132,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   backdrop-filter: blur(10px);
-  isolation: isolate;
 }
-
-/* Rotating conic glow around the pill border */
-.py-kidda-hero__label::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 999px;
-  padding: 2px;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(251, 191, 36, 0.9) 40deg,
-    rgba(249, 115, 22, 1) 70deg,
-    rgba(253, 224, 71, 0.9) 100deg,
-    transparent 140deg,
-    transparent 360deg
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  animation: pk-label-spin 3.2s linear infinite;
-  pointer-events: none;
-  z-index: -1;
-}
-
-/* Sparkle traveling along the border */
-.py-kidda-hero__label::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 999px;
-  padding: 2px;
-  background:
-    radial-gradient(
-      circle at 100% 50%,
-      rgba(255, 255, 255, 1) 0,
-      rgba(253, 224, 71, 0.95) 2px,
-      rgba(249, 115, 22, 0.6) 5px,
-      transparent 10px
-    );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  filter: drop-shadow(0 0 6px rgba(253, 224, 71, 0.9))
-          drop-shadow(0 0 12px rgba(249, 115, 22, 0.75));
-  animation: pk-label-spin 3.2s linear infinite;
-  pointer-events: none;
-}
-
-
-@keyframes pk-label-spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .py-kidda-hero__label::before,
-  .py-kidda-hero__label::after { animation: none; }
-}
-
 
 .py-kidda-hero__label-dot {
   width: 7px;
