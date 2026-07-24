@@ -18,6 +18,7 @@ import type {
   Contributor,
   DashboardCardItem,
 } from "./dashboardTypes";
+import pykiddaQrAsset from "@/assets/pykidda_qr.png.asset.json";
 
 export const learningCards: DashboardCardItem[] = [
   {
@@ -106,10 +107,11 @@ export const contactCards: DashboardCardItem[] = [
     description:
       "Discover learning tips, platform updates and highlights from the PY Kidda community.",
     actionLabel: "Follow Instagram",
-    href: "#",
+    href: "https://www.instagram.com/pykidda/",
     icon: <Instagram aria-hidden="true" />,
     color: "pink",
     badge: "Follow",
+    backgroundImage: pykiddaQrAsset.url,
   },
   {
     id: "contact-us",

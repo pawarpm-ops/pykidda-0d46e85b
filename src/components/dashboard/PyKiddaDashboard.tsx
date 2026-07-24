@@ -32,6 +32,13 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
 
   return (
     <article className="pk-card" style={style}>
+      {item.backgroundImage && (
+        <div
+          className="pk-card__bg"
+          aria-hidden="true"
+          style={{ backgroundImage: `url(${item.backgroundImage})` }}
+        />
+      )}
       <div className="pk-card__num">{num}</div>
       <div className="pk-card__icon">{item.icon}</div>
       <div className="pk-card__eyebrow">PY Kidda Hub</div>
