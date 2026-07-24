@@ -138,7 +138,7 @@ function Carousel({ items }: { items: DashboardCardItem[] }) {
           <Card key={`${item.id}-${i}`} item={item} index={i % items.length} />
         ))}
       </div>
-      <div className="pk-carousel__hint">← Cards drift gently from left to right →</div>
+      
     </div>
   );
 }
