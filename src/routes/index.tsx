@@ -38,7 +38,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const navigate = useNavigate();
+
 
 
 
