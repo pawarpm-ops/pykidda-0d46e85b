@@ -5,9 +5,6 @@ import {
   Code2,
   ClipboardList,
   GraduationCap,
-  MessageCircle,
-  Send,
-  Instagram,
   Mail,
   ShieldCheck,
   Lock,
@@ -54,58 +51,6 @@ function Dashboard() {
 
 
 
-  const communityCards: CarouselCard[] = [
-    {
-      id: "whatsapp",
-      header: (
-        <IconTile from="#22c55e" to="#16a34a">
-          <MessageCircle className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "WhatsApp",
-      description: "Join the WhatsApp group for quick help, updates and announcements.",
-      cta: COMMUNITY.whatsapp
-        ? { label: "Join WhatsApp", href: COMMUNITY.whatsapp }
-        : { label: "Coming Soon", disabled: true },
-    },
-    {
-      id: "telegram",
-      header: (
-        <IconTile from="#38bdf8" to="#0ea5e9">
-          <Send className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Telegram",
-      description: "Follow the Telegram channel for resources, notes and study drops.",
-      cta: COMMUNITY.telegram
-        ? { label: "Open Telegram", href: COMMUNITY.telegram }
-        : { label: "Coming Soon", disabled: true },
-    },
-    {
-      id: "instagram",
-      header: (
-        <IconTile from="#f472b6" to="#a855f7">
-          <Instagram className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Instagram",
-      description: "See behind-the-scenes, student wins and daily Python tips.",
-      cta: COMMUNITY.instagram
-        ? { label: "Follow Us", href: COMMUNITY.instagram }
-        : { label: "Coming Soon", disabled: true },
-    },
-    {
-      id: "contact",
-      header: (
-        <IconTile from="#FBBF24" to="#F97316">
-          <Mail className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Contact Us",
-      description: "Have a question or a suggestion? Reach us directly by email.",
-      cta: { label: "Email PY Kidda", href: `mailto:${COMMUNITY.contactEmail}` },
-    },
-  ];
 
   const whyCards: CarouselCard[] = [
     {
@@ -181,13 +126,6 @@ function Dashboard() {
         {/* Everything You Need — rendered by PyKiddaDashboard's auto-rotating carousel */}
         <PyKiddaDashboard />
 
-        {/* Community */}
-        <SectionHeader
-          eyebrow="Community"
-          title="Stay Connected"
-          subtitle="Join the PY Kidda community and stay up to date."
-        />
-        <InfiniteCardCarousel cards={communityCards} ariaLabel="Community and contact" />
 
         {/* Why Use PY Kidda */}
         <SectionHeader
