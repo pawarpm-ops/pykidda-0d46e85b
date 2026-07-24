@@ -362,7 +362,6 @@ function Dashboard() {
           </div>
         </section>
 
-        <PyKiddaDashboard />
 
         <footer className="border-t border-white/10 py-8 pb-28 lg:pb-8 text-center text-xs text-[#94A3B8]">
           PY Kidda · Be a PY Kidda with Us · © Siddharth Prashant Pawar
