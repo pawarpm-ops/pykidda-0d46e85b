@@ -301,15 +301,70 @@
   transform: translateX(3px);
 }
 
-.py-kidda-hero__motto {
-  margin: 32px 0 0;
-  color: rgba(203, 213, 225, 0.68);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, monospace;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+.py-kidda-hero__motto-roll {
+  --pk-word-h: 3.2rem;
+  --pk-visible: 5; /* odd number, center is focus */
+  position: relative;
+  margin: 36px 0 0;
+  height: calc(var(--pk-word-h) * var(--pk-visible));
+  width: min(100%, 420px);
+  overflow: hidden;
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 22%,
+    #000 78%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    #000 22%,
+    #000 78%,
+    transparent 100%
+  );
+}
+
+.py-kidda-hero__motto-track {
+  display: flex;
+  flex-direction: column;
+  animation: pk-motto-roll 4.5s cubic-bezier(0.7, 0, 0.3, 1) infinite;
+  will-change: transform;
+}
+
+.py-kidda-hero__motto-word {
+  height: var(--pk-word-h);
+  line-height: var(--pk-word-h);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  font-size: 2.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+  text-align: left;
+  padding-left: 8px;
+  transition: filter 400ms ease, opacity 400ms ease, transform 400ms ease;
+}
+
+/* Center focus row (index 2 of 5 visible) is sharp; others blur & dim */
+.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 1) { filter: blur(6px); opacity: 0.35; }
+.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 2) { filter: blur(2.5px); opacity: 0.6; }
+.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 3) { filter: blur(0); opacity: 1; }
+.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 4) { filter: blur(2.5px); opacity: 0.6; }
+.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(5n + 5) { filter: blur(6px); opacity: 0.35; }
+
+@keyframes pk-motto-roll {
+  0%   { transform: translateY(0); }
+  28%  { transform: translateY(0); }
+  33%  { transform: translateY(calc(var(--pk-word-h) * -1)); }
+  61%  { transform: translateY(calc(var(--pk-word-h) * -1)); }
+  66%  { transform: translateY(calc(var(--pk-word-h) * -2)); }
+  94%  { transform: translateY(calc(var(--pk-word-h) * -2)); }
+  100% { transform: translateY(calc(var(--pk-word-h) * -3)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .py-kidda-hero__motto-track { animation: none; }
 }
 
 /* Tablet */

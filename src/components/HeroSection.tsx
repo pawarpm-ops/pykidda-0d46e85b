@@ -107,7 +107,13 @@ export default function HeroSection() {
           </Link>
         </div>
 
-        <p className="py-kidda-hero__motto">Learn · Code · Grow</p>
+        <div className="py-kidda-hero__motto-roll" aria-label="Learn Code Grow">
+          <div className="py-kidda-hero__motto-track">
+            {["Learn", "Code", "Grow", "Learn", "Code", "Grow"].map((w, i) => (
+              <span key={i} className="py-kidda-hero__motto-word">{w}</span>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
