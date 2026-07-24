@@ -347,10 +347,8 @@
   text-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
 }
 
-/* With 3 rows visible, the center row is always the 2nd of every triplet. */
-.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(3n + 1) { opacity: 0.35; filter: blur(3px); }
-.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(3n + 2) { opacity: 1;    filter: blur(0); }
-.py-kidda-hero__motto-track > .py-kidda-hero__motto-word:nth-child(3n + 3) { opacity: 0.35; filter: blur(3px); }
+/* All words render sharp; the mask gradient fades the top/bottom rows. */
+
 
 /*
  * Seamless loop: 3 unique words duplicated once (6 total: Learn, Code, Grow, Learn, Code, Grow).
