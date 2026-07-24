@@ -101,81 +101,129 @@ function Dashboard() {
         </div>
 
         {/* Creator Spotlight */}
-        <section className="relative my-20 overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-br from-[#11172C] to-[#0B1022] p-6 sm:p-10">
+        <section className="relative my-20 overflow-hidden rounded-[24px] border border-white/10 bg-gradient-to-br from-[#0B1022] via-[#0A0E20] to-[#070A18]">
+          {/* Giant faded PY monogram */}
           <div
-            className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full"
             aria-hidden
-            style={{
-              background:
-                "radial-gradient(circle, rgba(249,115,22,0.35) 0%, transparent 65%)",
-              animation: "pk-glow-pulse 6s ease-in-out infinite",
-            }}
-          />
-          <div
-            className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full"
-            aria-hidden
-            style={{
-              background:
-                "radial-gradient(circle, rgba(251,191,36,0.25) 0%, transparent 65%)",
-              animation: "pk-glow-pulse 8s ease-in-out infinite",
-            }}
-          />
-          <div className="relative grid items-center gap-8 md:grid-cols-[auto_1fr]">
-            <div className="relative mx-auto md:mx-0">
+            className="pointer-events-none absolute right-4 bottom-0 select-none text-[220px] font-black leading-none text-white/[0.03] sm:text-[300px] lg:text-[360px]"
+          >
+            PY
+          </div>
+
+          <div className="relative grid gap-0 md:grid-cols-2">
+            {/* LEFT: Portrait with arch frame + orbital rings */}
+            <div className="relative flex items-center justify-center overflow-hidden border-b border-white/5 bg-[#0A0E22] px-8 py-14 md:border-b-0 md:border-r md:py-16">
+              {/* Orbital rings */}
               <div
-                className="absolute inset-0 -m-2 rounded-full"
                 aria-hidden
+                className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-500/10"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-500/15"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 top-1/2 h-[340px] w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-400/20"
+              />
+              {/* Orbit dots */}
+              <span
+                aria-hidden
+                className="absolute left-1/2 top-[7%] h-2 w-2 -translate-x-1/2 rounded-full bg-amber-400 shadow-[0_0_12px_2px_rgba(251,191,36,0.7)]"
+              />
+              <span
+                aria-hidden
+                className="absolute left-[6%] top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-amber-400 shadow-[0_0_12px_2px_rgba(251,191,36,0.7)]"
+              />
+              {/* Grid dot texture */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-[0.08]"
                 style={{
-                  background:
-                    "conic-gradient(from 0deg, #F97316, #FBBF24, #FB923C, #F97316)",
-                  filter: "blur(12px)",
-                  opacity: 0.55,
+                  backgroundImage:
+                    "radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px)",
+                  backgroundSize: "22px 22px",
                 }}
               />
-              <img
-                src={siddharthAsset.url}
-                alt="Siddharth Pawar, creator of PY Kidda"
-                loading="lazy"
-                className="relative h-40 w-40 rounded-full object-cover ring-4 ring-[#0B1022] sm:h-48 sm:w-48"
-                style={{ objectPosition: "center top" }}
-              />
-            </div>
-            <div className="text-center md:text-left">
-              <p className="text-xs font-semibold uppercase tracking-wider text-orange-300">
-                Creator
-              </p>
-              <h3 className="mt-2 text-2xl font-black sm:text-3xl">Siddharth Pawar</h3>
-              <p className="mt-3 max-w-2xl text-[#94A3B8]">
-                “I am Siddharth Pawar, and I created this platform for students who want to
-                learn, code, and then grow.”
-              </p>
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 md:justify-start">
-                <StepPill icon={<GraduationCap className="h-4 w-4" />} label="Learn" />
-                <ArrowChev />
-                <StepPill icon={<Code2 className="h-4 w-4" />} label="Code" />
-                <ArrowChev />
-                <StepPill icon={<Rocket className="h-4 w-4" />} label="Grow" />
-              </div>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-3 md:justify-start">
-                <a
-                  href={`tel:${COMMUNITY.contactPhone}`}
-                  className="pk-touch inline-flex min-h-11 items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-slate-900 shadow-lg transition hover:brightness-110"
+
+              {/* Arched portrait frame */}
+              <div className="relative">
+                <div
+                  className="relative w-[240px] p-[3px] sm:w-[280px] lg:w-[320px]"
                   style={{
                     background:
-                      "linear-gradient(90deg, #FBBF24 0%, #F97316 50%, #FB923C 100%)",
-                    boxShadow: "0 10px 24px -14px rgba(249,115,22,0.6)",
+                      "linear-gradient(180deg, #F5C36A 0%, #B7822D 100%)",
+                    borderRadius: "9999px 9999px 24px 24px",
+                    boxShadow:
+                      "0 20px 60px -20px rgba(251,191,36,0.35), inset 0 0 0 1px rgba(255,255,255,0.08)",
                   }}
                 >
-                  <Phone className="h-4 w-4" aria-hidden />
-                  Call {COMMUNITY.contactPhone}
-                </a>
-                <a
-                  href={`mailto:${COMMUNITY.contactEmail}`}
-                  className="pk-touch inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 hover:border-orange-400/60"
+                  <div
+                    className="overflow-hidden bg-[#0A0E22]"
+                    style={{ borderRadius: "9999px 9999px 22px 22px" }}
+                  >
+                    <img
+                      src={siddharthAsset.url}
+                      alt="Siddharth Pawar, creator of PY Kidda"
+                      loading="lazy"
+                      className="block h-[300px] w-full object-cover sm:h-[360px] lg:h-[420px]"
+                      style={{ objectPosition: "center top" }}
+                    />
+                  </div>
+                </div>
+
+                {/* Creator of PY Kidda pill */}
+                <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-400/30 bg-[#0B1022] px-4 py-2 text-xs font-semibold text-amber-200 shadow-lg">
+                  <span className="mr-1.5 text-amber-400">✦</span>
+                  Creator of PY Kidda
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: Content */}
+            <div className="flex flex-col justify-center px-6 py-12 sm:px-10 md:px-12 lg:px-16 lg:py-16">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-amber-400">
+                Meet the Creator
+              </p>
+              <h2 className="mt-4 text-4xl font-bold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+                Built by
+                <br />
+                <span
+                  className="bg-clip-text text-transparent"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(90deg, #FBBF24 0%, #F97316 60%, #FB923C 100%)",
+                  }}
                 >
-                  <Mail className="h-4 w-4" aria-hidden />
-                  {COMMUNITY.contactEmail}
-                </a>
+                  Siddharth Pawar
+                </span>
+              </h2>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-[#94A3B8] sm:text-lg">
+                “I am Siddharth Pawar, and I created this platform for students who
+                want to learn, code, and then grow.”
+              </p>
+
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <BlockPill label="LEARN" />
+                <ArrowChev />
+                <BlockPill label="CODE" />
+                <ArrowChev />
+                <BlockPill label="GROW" />
+              </div>
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <ContactCard
+                  href={`tel:${COMMUNITY.contactPhone}`}
+                  eyebrow="Call Siddharth"
+                  value={COMMUNITY.contactPhone}
+                  icon={<Phone className="h-5 w-5 text-slate-900" />}
+                />
+                <ContactCard
+                  href={`mailto:${COMMUNITY.contactEmail}`}
+                  eyebrow="Email"
+                  value={COMMUNITY.contactEmail}
+                  icon={<Mail className="h-5 w-5 text-slate-900" />}
+                />
               </div>
             </div>
           </div>
