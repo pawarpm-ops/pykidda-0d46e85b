@@ -60,8 +60,19 @@
 .pk-carousel__track {
   display: flex;
   gap: 1.5rem;
-  transition: transform 700ms cubic-bezier(0.65, 0, 0.35, 1);
+  width: max-content;
+  animation: pk-marquee 60s linear infinite;
   will-change: transform;
+}
+.pk-carousel:hover .pk-carousel__track {
+  animation-play-state: paused;
+}
+@keyframes pk-marquee {
+  from { transform: translateX(calc(-50% - 0.75rem)); }
+  to { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pk-carousel__track { animation: none; }
 }
 .pk-card {
   flex: 0 0 calc((100% - 4.5rem) / 4);
