@@ -25,10 +25,24 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
   const meta = item.details?.[0];
   const metaRight = item.details?.[1];
   const isInternal = item.href?.startsWith("/");
+  const isExternal = !!item.href && /^(https?:|mailto:|tel:)/.test(item.href);
   const CTA: React.ElementType = isInternal ? Link : "a";
-  const ctaProps = isInternal
+  const ctaProps: Record<string, unknown> = isInternal
     ? { to: item.href! }
-    : { href: item.href ?? "#", target: item.href?.startsWith("http") ? "_blank" : undefined, rel: "noreferrer" };
+    : {
+        href: item.href ?? "#",
+        target: item.href?.startsWith("http") ? "_blank" : undefined,
+        rel: "noopener noreferrer",
+        onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+          if (!isExternal) return;
+          e.preventDefault();
+          if (item.href!.startsWith("http")) {
+            window.open(item.href!, "_blank", "noopener,noreferrer");
+          } else {
+            window.location.href = item.href!;
+          }
+        },
+      };
 
   return (
     <article className="pk-card" style={style}>
