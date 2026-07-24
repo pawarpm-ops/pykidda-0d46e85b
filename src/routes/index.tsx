@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import HeroSection from "@/components/HeroSection";
 import {
   BookOpen,
@@ -6,18 +6,10 @@ import {
   ClipboardList,
   GraduationCap,
   Mail,
-  ShieldCheck,
-  Lock,
-  UserCheck,
-  HelpCircle,
   Rocket,
   Phone,
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
-import {
-  InfiniteCardCarousel,
-  type CarouselCard,
-} from "@/components/dashboard/InfiniteCardCarousel";
 import { COMMUNITY } from "@/config/community";
 import PyKiddaDashboard from "@/components/dashboard/PyKiddaDashboard";
 import meenakshiAsset from "@/assets/meenakshi.png.asset.json";
@@ -46,62 +38,12 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const navigate = useNavigate();
 
 
 
 
 
-  const whyCards: CarouselCard[] = [
-    {
-      id: "safe",
-      header: (
-        <IconTile from="#F97316" to="#FBBF24">
-          <ShieldCheck className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Safe Mock Tests",
-      description:
-        "Full-screen enforcement, tab-switch detection and auto-submit keep every attempt fair.",
-      cta: { label: "See Mock Tests", onClick: () => navigate({ to: "/mock-tests" }) },
-    },
-    {
-      id: "data",
-      header: (
-        <IconTile from="#FB923C" to="#F97316">
-          <Lock className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Data Safety",
-      description:
-        "Your submissions and progress are stored securely. Only you and your teacher can see them.",
-      cta: { label: "View Profile", onClick: () => navigate({ to: "/profile" }) },
-    },
-    {
-      id: "teacher",
-      header: (
-        <IconTile from="#FBBF24" to="#FB923C">
-          <UserCheck className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Teacher Manual Grading",
-      description:
-        "Scheduled mock tests are reviewed by your teacher, with feedback you can actually learn from.",
-      cta: { label: "See Your Results", onClick: () => navigate({ to: "/mock-tests" }) },
-    },
-    {
-      id: "doubts",
-      header: (
-        <IconTile from="#F97316" to="#FB923C">
-          <HelpCircle className="h-6 w-6 text-slate-900" />
-        </IconTile>
-      ),
-      title: "Doubt Solving",
-      description:
-        "Pyko AI explains your mistakes and answers questions the moment you get stuck.",
-      cta: { label: "Ask Pyko", onClick: () => navigate({ to: "/help" }) },
-    },
-  ];
+
 
   return (
     <div
@@ -127,13 +69,6 @@ function Dashboard() {
         <PyKiddaDashboard />
 
 
-        {/* Why Use PY Kidda */}
-        <SectionHeader
-          eyebrow="Why PY Kidda"
-          title="Why Use PY Kidda?"
-          subtitle="Built for real learning, not gimmicks."
-        />
-        <InfiniteCardCarousel cards={whyCards} ariaLabel="Why use PY Kidda" />
 
         {/* People Behind PY Kidda */}
         <SectionHeader
