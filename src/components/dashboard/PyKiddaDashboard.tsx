@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import "./PyKiddaDashboard.css";
@@ -54,37 +53,17 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
 }
 
 function Carousel({ items }: { items: DashboardCardItem[] }) {
-  const [offset, setOffset] = useState(0);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const paused = useRef(false);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      if (paused.current) return;
-      setOffset((o) => (o + 1) % items.length);
-    }, 3500);
-    return () => window.clearInterval(id);
-  }, [items.length]);
-
-  // Duplicate list for seamless loop
+  // Duplicate list for a seamless left-to-right marquee loop
   const doubled = [...items, ...items];
 
   return (
-    <div
-      className="pk-carousel"
-      onMouseEnter={() => (paused.current = true)}
-      onMouseLeave={() => (paused.current = false)}
-    >
-      <div
-        ref={trackRef}
-        className="pk-carousel__track"
-        style={{ transform: `translateX(calc(${-offset} * (100% + 1.5rem) / var(--pk-visible, 4)))` }}
-      >
+    <div className="pk-carousel">
+      <div className="pk-carousel__track">
         {doubled.map((item, i) => (
           <Card key={`${item.id}-${i}`} item={item} index={i % items.length} />
         ))}
       </div>
-      <div className="pk-carousel__hint">← Four learning paths rotate automatically →</div>
+      <div className="pk-carousel__hint">← Cards drift gently from left to right →</div>
     </div>
   );
 }
