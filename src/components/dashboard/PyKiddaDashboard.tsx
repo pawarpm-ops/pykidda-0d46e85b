@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "./PyKiddaDashboard.css";
 
 import {
@@ -39,6 +40,45 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
       };
 
   const [qrOpen, setQrOpen] = useState(false);
+  const [portalHost, setPortalHost] = useState<HTMLElement | null>(null);
+  const qrButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    setPortalHost(document.body);
+  }, []);
+
+  useEffect(() => {
+    if (!item.backgroundImage) return;
+
+    const openFromQrPress = (event: PointerEvent | MouseEvent) => {
+      const button = qrButtonRef.current;
+      if (!button) return;
+
+      const rect = button.getBoundingClientRect();
+      const isInsideButton =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
+
+      const target = event.target;
+      const isButtonTarget =
+        target instanceof Element && Boolean(target.closest(".pk-card__qr-btn"));
+
+      if (!isInsideButton && !isButtonTarget) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setQrOpen(true);
+    };
+
+    document.addEventListener("pointerdown", openFromQrPress, true);
+    document.addEventListener("click", openFromQrPress, true);
+    return () => {
+      document.removeEventListener("pointerdown", openFromQrPress, true);
+      document.removeEventListener("click", openFromQrPress, true);
+    };
+  }, [item.backgroundImage]);
 
   useEffect(() => {
     if (!qrOpen) return;
@@ -48,11 +88,9 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    document.body.classList.add("pk-qr-open");
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
-      document.body.classList.remove("pk-qr-open");
     };
 
   }, [qrOpen]);
@@ -62,12 +100,17 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
       <article className="pk-card" style={style}>
         {item.backgroundImage && (
           <button
+            ref={qrButtonRef}
             type="button"
             className="pk-card__qr-btn"
-            onClick={(e) => {
+            onPointerDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setQrOpen(true);
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
             }}
             aria-label="Enlarge QR code"
           >
@@ -99,7 +142,7 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
         </CTA>
       </article>
 
-      {qrOpen && item.backgroundImage && (
+      {qrOpen && item.backgroundImage && portalHost && createPortal(
         <div
           className="pk-qr-modal"
           role="dialog"
@@ -123,7 +166,8 @@ function Card({ item, index }: { item: DashboardCardItem; index: number }) {
             />
             <p className="pk-qr-modal__caption">Scan with your camera to open</p>
           </div>
-        </div>
+        </div>,
+        portalHost,
       )}
     </>
   );
@@ -157,7 +201,7 @@ function Carousel({ items }: { items: DashboardCardItem[] }) {
       const last = lastTsRef.current ?? ts;
       const dt = (ts - last) / 1000;
       lastTsRef.current = ts;
-      if (!draggingRef.current && halfWidthRef.current > 0 && !document.body.classList.contains("pk-qr-open")) {
+      if (!draggingRef.current && halfWidthRef.current > 0) {
         // Auto drift: content moves left-to-right visually => translateX increases toward 0 from -half
         offsetRef.current += SPEED * dt;
       }
