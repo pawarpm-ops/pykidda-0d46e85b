@@ -232,13 +232,8 @@ function Dashboard() {
         <HeroSection />
 
 
-        {/* Everything You Need */}
-        <SectionHeader
-          eyebrow="Grow with PY Kidda"
-          title="Everything You Need to Grow"
-          subtitle="Learn, practise, test and get feedback — all in one place."
-        />
-        <InfiniteCardCarousel cards={learnCards} ariaLabel="Everything You Need to Grow" />
+        {/* Everything You Need — rendered by PyKiddaDashboard's auto-rotating carousel */}
+        <PyKiddaDashboard />
 
         {/* Community */}
         <SectionHeader
